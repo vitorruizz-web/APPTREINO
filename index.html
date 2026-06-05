@@ -1468,15 +1468,11 @@ document.getElementById("videoModal").addEventListener("click", function(e){ if(
 document.getElementById("deleteCancelBtn").addEventListener("click", closeDeleteModal);
 document.getElementById("deleteConfirmBtn").addEventListener("click", confirmDelete);
 document.getElementById("deleteModal").addEventListener("click", function(e){ if(e.target===this) closeDeleteModal(); });
-
-document.getElementById("editLoadCancelBtn").addEventListener("click", closeEditLoadModal);
-document.getElementById("editLoadConfirmBtn").addEventListener("click", confirmEditLoad);
-document.getElementById("editLoadModal").addEventListener("click", function(e){ if(e.target===this) closeEditLoadModal(); });
-
+ 
 setupAutocomplete("addExInput", "addExSuggestions");
 setupAutocomplete("replaceInput", "replaceSuggestions");
-</script>
- <div class="modal-overlay" id="editLoadModal">
+
+  <div class="modal-overlay" id="editLoadModal" onclick="if(event.target===this) closeEditLoadModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Editar registro</div>
@@ -1484,10 +1480,12 @@ setupAutocomplete("replaceInput", "replaceSuggestions");
     <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Altere a data do registro:</p>
     <input type="date" id="editLoadDate" style="width:100%;padding:10px 14px;font-size:15px;font-family:'Syne',sans-serif;background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;color:var(--text);outline:none;margin-bottom:0.5rem;" />
     <div class="modal-actions">
-      <button class="btn-modal-cancel" id="editLoadCancelBtn">Cancelar</button>
-      <button class="btn-modal-confirm" id="editLoadConfirmBtn">Salvar</button>
+      <button class="btn-modal-cancel" id="editLoadCancelBtn" onclick="closeEditLoadModal()">Cancelar</button>
+      <button class="btn-modal-confirm" id="editLoadConfirmBtn" onclick="confirmEditLoad()">Salvar</button>
     </div>
   </div>
 </div>
+ 
+</script>
 </body>
 </html>
