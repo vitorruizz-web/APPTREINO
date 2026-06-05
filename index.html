@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GYM — Meu Treino</title>
+<title>Treino Vitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
@@ -75,7 +75,8 @@
   .day-selector::-webkit-scrollbar { display: none; }
   .day-btn { flex-shrink: 0; padding: 8px 16px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--surface2); cursor: pointer; font-family: 'Syne',sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); transition: all 0.15s; text-align: center; user-select: none; }
   .day-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .day-btn.rest { opacity: 0.45; cursor: default; pointer-events: none; }
+  .day-btn.rest { opacity: 0.55; }
+  .day-btn.rest:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent2); opacity: 1; }
   .day-btn:hover:not(.rest):not(.active) { background: var(--accent-light); border-color: var(--accent); color: var(--accent2); }
   .day-name-small { display: block; font-size: 10px; font-weight: 400; margin-bottom: 2px; letter-spacing: 1px; }
   .today-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; margin-left: 4px; vertical-align: middle; opacity: 0.8; }
@@ -128,6 +129,13 @@
   .rest-day { text-align: center; padding: 5rem 1rem; }
   .rest-day .big { font-size: 56px; }
   .rest-day p { font-size: 15px; color: var(--muted); margin-top: 1rem; }
+  .btn-add-exercise {
+    display: block; width: 100%; margin-top: 1.5rem; padding: 12px;
+    background: transparent; color: var(--accent); border: 1.5px dashed var(--accent);
+    border-radius: var(--radius-lg); font-family: 'Syne',sans-serif; font-size: 13px;
+    font-weight: 700; cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px;
+  }
+  .btn-add-exercise:hover { background: var(--accent-light); }
 
   /* HISTORY */
   .history-view { padding: 1.25rem; }
@@ -259,6 +267,20 @@
       <h3>Dados</h3>
       <p class="settings-info">Seu histórico de cargas é salvo no servidor e compartilhado entre dispositivos.</p>
       <button class="btn-danger" id="clearHistoryBtn">Apagar meu histórico</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD EXERCISE MODAL -->
+<div class="modal-overlay" id="addExModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Adicionar exercício</div>
+    <div class="modal-subtitle" id="addExSubtitle"></div>
+    <input class="replace-input" id="addExInput" placeholder="Nome do exercício" maxlength="60" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="addExCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="addExConfirmBtn">Adicionar</button>
     </div>
   </div>
 </div>
@@ -639,9 +661,7 @@ function buildDaySelector() {
     var label   = d.rest ? 'DESCANSO' : d.label.split(' ')[0];
     var dot     = isToday ? '<span class="today-dot"></span>' : '';
     btn.innerHTML = '<span class="day-name-small">' + DAY_ABBR[day] + '</span>' + label + dot;
-    if (!d.rest) {
-      btn.addEventListener('click', (function(k){ return function(){ selectDay(k); }; })(day));
-    }
+    btn.addEventListener('click', (function(k){ return function(){ selectDay(k); }; })(day));
     sel.appendChild(btn);
   });
 }
@@ -666,14 +686,27 @@ function getBadgeHtml(badge) {
 function renderWorkout(day) {
   var wv = document.getElementById('workoutView');
   var d  = WORKOUT_DATA[day];
-  if (d.rest) {
-    wv.innerHTML = '<div class="rest-day"><div class="big">💤</div><p>Dia de descanso — recupere-se bem!</p></div>';
+
+  // Dia marcado como descanso E sem exercícios → tela de descanso + botão adicionar
+  if (d.rest && (!d.exercises || d.exercises.length === 0)) {
+    wv.innerHTML =
+      '<div class="rest-day">' +
+        '<div class="big">💤</div>' +
+        '<p>Dia de descanso — recupere-se bem!</p>' +
+        '<button class="btn-add-exercise" onclick="openAddExerciseModal(\'' + day + '\')">+ Adicionar exercício</button>' +
+      '</div>';
     return;
   }
+
+  var titulo = (d.rest && d.exercises && d.exercises.length > 0)
+    ? 'Treino Extra'
+    : d.label;
+  var grupo = d.grupo || 'Extra';
+
   wv.innerHTML =
     '<div class="workout-header">' +
-      '<div class="workout-title">' + d.label + '</div>' +
-      '<div class="workout-subtitle">' + d.grupo + ' · ' + d.exercises.length + ' exercícios</div>' +
+      '<div class="workout-title">' + titulo + '</div>' +
+      '<div class="workout-subtitle">' + grupo + ' · ' + d.exercises.length + ' exercício' + (d.exercises.length !== 1 ? 's' : '') + '</div>' +
     '</div>' +
     '<div id="exerciseList"></div>';
 
@@ -716,6 +749,13 @@ function renderWorkout(day) {
 
     setupHoldToReplace(card, ex, day, idx);
   });
+
+  // Botão de adicionar mais exercícios
+  var addBtn = document.createElement('button');
+  addBtn.className = 'btn-add-exercise';
+  addBtn.textContent = '+ Adicionar exercício';
+  addBtn.addEventListener('click', function(){ openAddExerciseModal(day); });
+  document.getElementById('exerciseList').appendChild(addBtn);
 }
 
 // ─── SAVE LOAD ────────────────────────────────────────────────────────────────
@@ -781,6 +821,38 @@ function setupHoldToReplace(card, ex, day, idx) {
   card.addEventListener('touchstart',  function(e){ startHold(e.touches[0]); }, { passive: true });
   card.addEventListener('touchend',    cancelHold);
   card.addEventListener('touchcancel', cancelHold);
+}
+
+// ─── ADD EXERCISE MODAL ───────────────────────────────────────────────────────
+function openAddExerciseModal(day) {
+  modalTargetDay = day;
+  document.getElementById('addExSubtitle').textContent = WORKOUT_DATA[day].label || 'Dia extra';
+  document.getElementById('addExInput').value = '';
+  document.getElementById('addExModal').classList.add('open');
+  setTimeout(function(){ document.getElementById('addExInput').focus(); }, 250);
+}
+function closeAddExModal() {
+  document.getElementById('addExModal').classList.remove('open');
+  modalTargetDay = null;
+}
+async function confirmAddExercise() {
+  var name = document.getElementById('addExInput').value.trim();
+  if (!name) { document.getElementById('addExInput').focus(); return; }
+  var day  = modalTargetDay;
+  var newId = 'ex_' + Date.now();
+  if (!WORKOUT_DATA[day].exercises) WORKOUT_DATA[day].exercises = [];
+  WORKOUT_DATA[day].exercises.push({ id: newId, name: name, badge: null });
+  // Se era dia de descanso puro, mantém rest:true mas agora tem exercícios
+  closeAddExModal();
+  showLoading('Salvando...');
+  try {
+    await sbSaveWorkoutConfig(WORKOUT_DATA);
+    buildDaySelector();
+    renderWorkout(day);
+  } catch(e) {
+    alert('Erro ao salvar: ' + e.message);
+  }
+  hideLoading();
 }
 
 // ─── REPLACE MODAL ────────────────────────────────────────────────────────────
@@ -984,6 +1056,11 @@ document.getElementById('tabHistorico').addEventListener('click', function(){ sw
 document.getElementById('tabConfig').addEventListener('click', function(){ switchTab('config'); });
 document.getElementById('savePassBtn').addEventListener('click', changePassword);
 document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+
+document.getElementById('addExCancelBtn').addEventListener('click', closeAddExModal);
+document.getElementById('addExConfirmBtn').addEventListener('click', confirmAddExercise);
+document.getElementById('addExInput').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmAddExercise(); });
+document.getElementById('addExModal').addEventListener('click', function(e){ if(e.target===this) closeAddExModal(); });
 
 document.getElementById('replaceCancelBtn').addEventListener('click', closeReplaceModal);
 document.getElementById('replaceConfirmBtn').addEventListener('click', confirmReplace);
