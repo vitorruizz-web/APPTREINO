@@ -96,7 +96,8 @@
   .exercise-card:hover { border-color: var(--border2); }
   .exercise-card.pressing { transform: scale(0.98); box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
   .exercise-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-  .exercise-name { font-size: 14px; font-weight: 700; flex: 1; }
+  .exercise-name { font-size: 14px; font-weight: 700; flex: 1; cursor: pointer; }
+  .exercise-name:hover { color: var(--accent); }
   .exercise-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; white-space: nowrap; cursor: default; }
   .badge-normal   { background: var(--surface2); color: var(--muted); }
   .badge-rp       { background: #EEEDFE; color: #3C3489; }
@@ -106,13 +107,15 @@
   .badge-giant    { background: #E8FDE8; color: #1A6B1A; }
   .badge-21s      { background: #FDF5E8; color: #7A5010; }
 
-  .strategy-btn {
-    width: 22px; height: 22px; border-radius: 50%; background: var(--surface2);
+  .exercise-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .icon-btn {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--surface2);
     border: 0.5px solid var(--border); cursor: pointer; display: flex; align-items: center;
-    justify-content: center; font-size: 11px; color: var(--muted); flex-shrink: 0;
+    justify-content: center; font-size: 13px; color: var(--muted); flex-shrink: 0;
     transition: all 0.15s; line-height: 1;
   }
-  .strategy-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .icon-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .icon-btn.has-link { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
 
   .load-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .load-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 1.5px; white-space: nowrap; }
@@ -125,6 +128,24 @@
   .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .load-meta { font-family: 'DM Mono',monospace; font-size: 11px; color: var(--muted); margin-left: auto; display: flex; align-items: center; gap: 6px; }
   .pr-badge { color: var(--accent); font-weight: 700; font-size: 11px; font-family: 'Syne',sans-serif; }
+
+  /* CHART PANEL */
+  .chart-panel {
+    display: none; margin-top: 12px; padding-top: 12px;
+    border-top: 0.5px solid var(--border); animation: fadeIn 0.2s ease;
+  }
+  .chart-panel.open { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .chart-wrap { position: relative; width: 100%; height: 100px; }
+  .chart-svg { width: 100%; height: 100%; overflow: visible; }
+  .chart-empty { font-size: 12px; color: var(--muted); text-align: center; padding: 1.5rem 0; }
+  .chart-meta-row { display: flex; justify-content: space-between; margin-top: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+  .chart-stat { text-align: center; }
+  .chart-stat-val { font-size: 14px; font-weight: 700; color: var(--text); font-family: 'Syne', sans-serif; }
+  .chart-stat-lbl { font-size: 9px; letter-spacing: 1px; }
+  .chart-stats { display: flex; gap: 0; margin-top: 10px; border-top: 0.5px solid var(--border); padding-top: 10px; }
+  .chart-stats .chart-stat { flex: 1; border-right: 0.5px solid var(--border); }
+  .chart-stats .chart-stat:last-child { border-right: none; }
 
   .rest-day { text-align: center; padding: 5rem 1rem; }
   .rest-day .big { font-size: 56px; }
@@ -182,12 +203,28 @@
   .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 1.25rem; }
   .modal-subtitle { font-size: 11px; color: var(--muted); margin-top: -0.75rem; margin-bottom: 1rem; letter-spacing: 0.5px; }
 
-  .replace-input { width: 100%; padding: 12px 14px; font-size: 14px; font-family: 'Syne',sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 1rem; }
+  .replace-input { width: 100%; padding: 12px 14px; font-size: 14px; font-family: 'Syne',sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 0.5rem; }
   .replace-input:focus { border-color: var(--accent); }
-  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 1rem; }
   .btn-modal-confirm { flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-family: 'Syne',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
   .btn-modal-confirm:hover { background: var(--accent2); }
   .btn-modal-cancel { padding: 12px 20px; background: var(--surface2); color: var(--muted); border: 0.5px solid var(--border); border-radius: var(--radius-md); font-family: 'Syne',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* EXERCISE AUTOCOMPLETE */
+  .ex-suggestions {
+    max-height: 200px; overflow-y: auto; border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); background: var(--surface); margin-bottom: 0.5rem;
+    scrollbar-width: thin;
+  }
+  .ex-suggestion {
+    padding: 10px 14px; font-size: 13px; cursor: pointer;
+    border-bottom: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 2px;
+  }
+  .ex-suggestion:last-child { border-bottom: none; }
+  .ex-suggestion:hover, .ex-suggestion.highlighted { background: var(--accent-light); }
+  .ex-suggestion-name { font-weight: 700; color: var(--text); }
+  .ex-suggestion-cat { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+  .ex-no-results { padding: 10px 14px; font-size: 12px; color: var(--muted); text-align: center; }
 
   .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
   .strategy-option { padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; background: var(--surface2); }
@@ -198,6 +235,15 @@
 
   .hold-hint { font-size: 10px; color: var(--muted); text-align: center; padding: 0 1.25rem 1rem; letter-spacing: 0.5px; }
   .hold-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); border-radius: 0 0 var(--radius-lg) var(--radius-lg); width: 0%; transition: width 0.05s linear; pointer-events: none; }
+
+  /* VIDEO LINK MODAL */
+  .video-input-wrap { display: flex; gap: 8px; align-items: center; margin-bottom: 0.5rem; }
+  .video-input-wrap input { flex: 1; padding: 10px 12px; font-size: 13px; font-family: 'DM Mono', monospace; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 0; letter-spacing: 0; }
+  .video-input-wrap input:focus { border-color: var(--accent); }
+  .video-input-wrap input::placeholder { font-family: 'Syne', sans-serif; font-size: 12px; letter-spacing: 0; }
+  .btn-open-video { padding: 10px 14px; background: var(--accent-light); color: var(--accent2); border: 0.5px solid var(--accent); border-radius: var(--radius-md); font-size: 12px; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn-open-video:hover { background: var(--accent); color: #fff; }
+  .video-hint { font-size: 11px; color: var(--muted); margin-bottom: 0.5rem; }
 </style>
 </head>
 <body>
@@ -244,7 +290,7 @@
   <div id="treinoSection">
     <div class="day-selector" id="daySelector"></div>
     <div class="workout-view" id="workoutView"></div>
-    <div class="hold-hint" id="holdHint">Segure um exercício para substituí-lo</div>
+    <div class="hold-hint" id="holdHint">Segure um exercício para substituí-lo · Clique no nome para ver o gráfico</div>
   </div>
 
   <div class="history-view" id="historicoSection" style="display:none">
@@ -277,7 +323,8 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Adicionar exercício</div>
     <div class="modal-subtitle" id="addExSubtitle"></div>
-    <input class="replace-input" id="addExInput" placeholder="Nome do exercício" maxlength="60" />
+    <input class="replace-input" id="addExInput" placeholder="Digite ou busque o nome do exercício" maxlength="60" autocomplete="off" />
+    <div id="addExSuggestions" class="ex-suggestions" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" id="addExCancelBtn">Cancelar</button>
       <button class="btn-modal-confirm" id="addExConfirmBtn">Adicionar</button>
@@ -291,7 +338,8 @@
     <div class="modal-handle"></div>
     <div class="modal-title">Substituir exercício</div>
     <div class="modal-subtitle" id="replaceSubtitle"></div>
-    <input class="replace-input" id="replaceInput" placeholder="Nome do novo exercício" maxlength="60" />
+    <input class="replace-input" id="replaceInput" placeholder="Digite ou busque o nome do exercício" maxlength="60" autocomplete="off" />
+    <div id="replaceSuggestions" class="ex-suggestions" style="display:none"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" id="replaceCancelBtn">Cancelar</button>
       <button class="btn-modal-confirm" id="replaceConfirmBtn">Substituir</button>
@@ -313,7 +361,140 @@
   </div>
 </div>
 
+<!-- VIDEO LINK MODAL -->
+<div class="modal-overlay" id="videoModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Link do vídeo</div>
+    <div class="modal-subtitle" id="videoSubtitle"></div>
+    <p class="video-hint">Cole um link do YouTube ou qualquer outro vídeo para consultar a execução.</p>
+    <div class="video-input-wrap">
+      <input type="url" id="videoInput" placeholder="https://youtube.com/watch?v=..." />
+      <button class="btn-open-video" id="videoOpenBtn" style="display:none">Abrir ▶</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="videoCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="videoConfirmBtn">Salvar link</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ─── BANCO DE EXERCÍCIOS (curado, ~200 exercícios musculação) ──────────────────
+var EXERCISE_DB = [
+  // PEITO
+  { name: 'Supino Reto', cat: 'Peito' },
+  { name: 'Supino Inclinado', cat: 'Peito' },
+  { name: 'Supino Declinado', cat: 'Peito' },
+  { name: 'Supino Reto Halteres', cat: 'Peito' },
+  { name: 'Supino Inclinado Halteres', cat: 'Peito' },
+  { name: 'Peck Deck', cat: 'Peito' },
+  { name: 'Cross Over', cat: 'Peito' },
+  { name: 'Crucifixo Reto', cat: 'Peito' },
+  { name: 'Crucifixo Inclinado', cat: 'Peito' },
+  { name: 'Pullover', cat: 'Peito' },
+  { name: 'Flexão de Braço', cat: 'Peito' },
+  { name: 'Mergulho no Banco', cat: 'Peito' },
+  { name: 'Chest Press Máquina', cat: 'Peito' },
+  // COSTAS
+  { name: 'Pulley Barra Romana', cat: 'Costas' },
+  { name: 'Pulley Triângulo', cat: 'Costas' },
+  { name: 'Pulley Fechado', cat: 'Costas' },
+  { name: 'Pulley Aberto', cat: 'Costas' },
+  { name: 'Pulley Supinado', cat: 'Costas' },
+  { name: 'Remada Baixa Triângulo', cat: 'Costas' },
+  { name: 'Remada Baixa Barra', cat: 'Costas' },
+  { name: 'Remada Alta', cat: 'Costas' },
+  { name: 'Remada Curvada', cat: 'Costas' },
+  { name: 'Remada Unilateral Haltere', cat: 'Costas' },
+  { name: 'Remada Cavalinho', cat: 'Costas' },
+  { name: 'Remada Sentado Máquina', cat: 'Costas' },
+  { name: 'Barra Fixa', cat: 'Costas' },
+  { name: 'Levantamento Terra', cat: 'Costas' },
+  { name: 'Hiperextensão Lombar', cat: 'Costas' },
+  { name: 'Good Morning', cat: 'Costas' },
+  // OMBROS
+  { name: 'Desenvolvimento', cat: 'Ombro' },
+  { name: 'Desenvolvimento Halteres', cat: 'Ombro' },
+  { name: 'Desenvolvimento Máquina', cat: 'Ombro' },
+  { name: 'Elevação Lateral', cat: 'Ombro' },
+  { name: 'Elevação Horizontal', cat: 'Ombro' },
+  { name: 'Elevação Frontal', cat: 'Ombro' },
+  { name: 'Elevação Lateral Máquina', cat: 'Ombro' },
+  { name: 'Crucifixo Inverso', cat: 'Ombro' },
+  { name: 'Encolhimento Barra', cat: 'Trapézio' },
+  { name: 'Encolhimento Halteres', cat: 'Trapézio' },
+  { name: 'Shrug Máquina', cat: 'Trapézio' },
+  // BÍCEPS
+  { name: 'Rosca Direta Barra', cat: 'Bíceps' },
+  { name: 'Rosca Direta Halteres', cat: 'Bíceps' },
+  { name: 'Rosca Alternada', cat: 'Bíceps' },
+  { name: 'Rosca Scott', cat: 'Bíceps' },
+  { name: 'Rosca Concentrada', cat: 'Bíceps' },
+  { name: 'Rosca Martelo', cat: 'Bíceps' },
+  { name: 'Rosca Martelo Cruzado', cat: 'Bíceps' },
+  { name: 'Rosca 45 Graus', cat: 'Bíceps' },
+  { name: 'Rosca Bayesiana', cat: 'Bíceps' },
+  { name: 'Rosca Corda', cat: 'Bíceps' },
+  { name: 'Rosca Inversa', cat: 'Bíceps' },
+  { name: 'Rosca Máquina', cat: 'Bíceps' },
+  // TRÍCEPS
+  { name: 'Tríceps Pulley Corda', cat: 'Tríceps' },
+  { name: 'Tríceps Pulley Barra', cat: 'Tríceps' },
+  { name: 'Tríceps Pulley Inverso', cat: 'Tríceps' },
+  { name: 'Tríceps Testa Barra', cat: 'Tríceps' },
+  { name: 'Tríceps Testa Haltere', cat: 'Tríceps' },
+  { name: 'Tríceps Testa Corda', cat: 'Tríceps' },
+  { name: 'Tríceps Francês', cat: 'Tríceps' },
+  { name: 'Tríceps Francês Corda', cat: 'Tríceps' },
+  { name: 'Tríceps Coice', cat: 'Tríceps' },
+  { name: 'Tríceps Banco', cat: 'Tríceps' },
+  { name: 'Tríceps Máquina', cat: 'Tríceps' },
+  { name: 'Paralelas', cat: 'Tríceps' },
+  // PERNAS
+  { name: 'Agachamento Livre', cat: 'Perna' },
+  { name: 'Agachamento Smith', cat: 'Perna' },
+  { name: 'Agachamento Sumo', cat: 'Perna' },
+  { name: 'Leg Press', cat: 'Perna' },
+  { name: 'Leg Press Horizontal', cat: 'Perna' },
+  { name: 'Leg Press 45', cat: 'Perna' },
+  { name: 'Cadeira Extensora', cat: 'Perna' },
+  { name: 'Cadeira Flexora', cat: 'Perna' },
+  { name: 'Mesa Flexora', cat: 'Perna' },
+  { name: 'Stiff', cat: 'Perna' },
+  { name: 'Levantamento Terra Romeno', cat: 'Perna' },
+  { name: 'Avanço', cat: 'Perna' },
+  { name: 'Avanço com Halteres', cat: 'Perna' },
+  { name: 'Passada', cat: 'Perna' },
+  { name: 'Glúteo Máquina', cat: 'Glúteo' },
+  { name: 'Hip Thrust', cat: 'Glúteo' },
+  { name: 'Coice Glúteo', cat: 'Glúteo' },
+  { name: 'Adutora Máquina', cat: 'Perna' },
+  { name: 'Abdutora Máquina', cat: 'Perna' },
+  { name: 'Hack Squat', cat: 'Perna' },
+  // PANTURRILHA
+  { name: 'Panturrilha em Pé', cat: 'Panturrilha' },
+  { name: 'Panturrilha Sentado', cat: 'Panturrilha' },
+  { name: 'Gêmeos Máquina', cat: 'Panturrilha' },
+  { name: 'Gêmeos no Leg Press', cat: 'Panturrilha' },
+  // ABDÔMEN
+  { name: 'Abdominal Supra', cat: 'Abdômen' },
+  { name: 'Abdominal Infra', cat: 'Abdômen' },
+  { name: 'Abdominal na Máquina', cat: 'Abdômen' },
+  { name: 'Abdominal Oblíquo', cat: 'Abdômen' },
+  { name: 'Prancha', cat: 'Abdômen' },
+  { name: 'Prancha Lateral', cat: 'Abdômen' },
+  { name: 'Rotação de Tronco', cat: 'Abdômen' },
+  { name: 'Elevação de Pernas', cat: 'Abdômen' },
+  { name: 'Bicicleta', cat: 'Abdômen' },
+  { name: 'Crunch', cat: 'Abdômen' },
+  { name: 'Russian Twist', cat: 'Abdômen' },
+  // ANTEBRAÇO / PUNHO
+  { name: 'Rosca de Punho', cat: 'Antebraço' },
+  { name: 'Rosca de Punho Inversa', cat: 'Antebraço' },
+  { name: 'Farmer Walk', cat: 'Antebraço' },
+];
+
 // ─── CONFIG SUPABASE ──────────────────────────────────────────────────────────
 var SUPABASE_URL  = 'https://gaecbtnwkjalwehbvkoh.supabase.co';
 var SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZWNidG53a2phbHdlaGJ2a29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDY4NjIsImV4cCI6MjA5NjE4Mjg2Mn0.TRHo0oZ8YOLkg-5hlj27kmjDF_kV_aOvz1I8WwEhj5Q';
@@ -411,12 +592,15 @@ var currentDay       = null;
 var currentTab       = 'treino';
 var historyFilter    = 'todos';
 var WORKOUT_DATA     = null;
-var currentUser      = null; // { id, username }
-var userLoads        = {};   // { exId: [{date, kg, name}] } cache local
+var currentUser      = null;
+var userLoads        = {};
+var userVideoLinks   = {};  // { exId: url }
 var isRegisterMode   = false;
 var modalTargetDay   = null;
 var modalTargetIdx   = null;
 var modalTargetStrategy = null;
+var videoTargetExId  = null;
+var openCharts       = {};  // { exId: bool }
 
 // ─── LOADING ──────────────────────────────────────────────────────────────────
 function showLoading(msg) {
@@ -428,8 +612,6 @@ function hideLoading() {
 }
 
 // ─── SUPABASE API ─────────────────────────────────────────────────────────────
-
-// AUTH
 async function sbGetUser(username) {
   var rows = await sbFetch('users?username=eq.' + encodeURIComponent(username) + '&select=id,username,password');
   return rows && rows.length > 0 ? rows[0] : null;
@@ -449,22 +631,17 @@ async function sbUpdatePassword(userId, newPassword) {
     body: { password: newPassword }
   });
 }
-
-// WORKOUT CONFIG
 async function sbGetWorkoutConfig() {
   var rows = await sbFetch('workout_config?id=eq.1&select=data');
   return rows && rows.length > 0 ? rows[0].data : null;
 }
 async function sbSaveWorkoutConfig(data) {
-  // upsert
   await sbFetch('workout_config', {
     method: 'POST',
     prefer: 'resolution=merge-duplicates,return=minimal',
     body: { id: 1, data: data, updated_at: new Date().toISOString() }
   });
 }
-
-// LOADS
 async function sbGetUserLoads(userId) {
   var rows = await sbFetch('workout_loads?user_id=eq.' + userId + '&order=created_at.asc&select=ex_id,ex_name,kg,date');
   return rows || [];
@@ -486,8 +663,6 @@ async function sbSaveLoad(userId, exId, exName, kg) {
 async function sbClearUserLoads(userId) {
   await sbFetch('workout_loads?user_id=eq.' + userId, { method: 'DELETE', prefer: 'return=minimal' });
 }
-
-// ARCHIVED EXERCISES
 async function sbGetArchived() {
   var rows = await sbFetch('archived_exercises?select=id,name');
   return rows || [];
@@ -500,7 +675,17 @@ async function sbArchiveExercise(id, name) {
   });
 }
 
-// ─── LOCAL CACHE HELPERS ──────────────────────────────────────────────────────
+// VIDEO LINKS — armazenados em workout_loads com ex_id especial "video_links_<userId>"
+// Não depende de tabela nova; usa localStorage como fallback confiável
+function getVideoLinksKey(userId) { return 'gym_vlinks_' + userId; }
+function loadVideoLinksLocal(userId) {
+  try { return JSON.parse(localStorage.getItem(getVideoLinksKey(userId)) || '{}'); } catch(e) { return {}; }
+}
+function saveVideoLinksLocal(userId, data) {
+  try { localStorage.setItem(getVideoLinksKey(userId), JSON.stringify(data)); } catch(e) {}
+}
+
+// ─── LOCAL CACHE ──────────────────────────────────────────────────────────────
 function buildLoadsCache(rows) {
   userLoads = {};
   rows.forEach(function(r) {
@@ -528,43 +713,24 @@ async function tryLogin() {
   var password = document.getElementById('pinInput').value;
   var errEl    = document.getElementById('loginError');
   errEl.style.display = 'none';
-
-  if (!username || !password) {
-    errEl.textContent = 'Preencha usuário e senha.';
-    errEl.style.display = 'block'; return;
-  }
-
+  if (!username || !password) { errEl.textContent = 'Preencha usuário e senha.'; errEl.style.display = 'block'; return; }
   showLoading(isRegisterMode ? 'Criando conta...' : 'Entrando...');
   document.getElementById('loginBtn').disabled = true;
-
   try {
     if (isRegisterMode) {
       var existing = await sbGetUser(username);
-      if (existing) {
-        errEl.textContent = 'Usuário já existe. Escolha outro nome.';
-        errEl.style.display = 'block'; hideLoading();
-        document.getElementById('loginBtn').disabled = false; return;
-      }
+      if (existing) { errEl.textContent = 'Usuário já existe.'; errEl.style.display = 'block'; hideLoading(); document.getElementById('loginBtn').disabled = false; return; }
       var newUser = await sbCreateUser(username, password);
       currentUser = { id: newUser.id, username: newUser.username };
     } else {
       var user = await sbGetUser(username);
-      if (!user || user.password !== password) {
-        errEl.textContent = 'Usuário ou senha incorretos.';
-        errEl.style.display = 'block'; hideLoading();
-        document.getElementById('loginBtn').disabled = false; return;
-      }
+      if (!user || user.password !== password) { errEl.textContent = 'Usuário ou senha incorretos.'; errEl.style.display = 'block'; hideLoading(); document.getElementById('loginBtn').disabled = false; return; }
       currentUser = { id: user.id, username: user.username };
     }
-
-    // Salva sessão local
     localStorage.setItem('gym_session', JSON.stringify(currentUser));
-
     await initApp();
   } catch(e) {
-    errEl.textContent = 'Erro de conexão. Verifique sua internet.';
-    errEl.style.display = 'block';
-    console.error(e);
+    errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block'; console.error(e);
   }
   hideLoading();
   document.getElementById('loginBtn').disabled = false;
@@ -572,9 +738,7 @@ async function tryLogin() {
 
 function logout() {
   localStorage.removeItem('gym_session');
-  currentUser  = null;
-  userLoads    = {};
-  WORKOUT_DATA = null;
+  currentUser = null; userLoads = {}; WORKOUT_DATA = null; userVideoLinks = {};
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('usernameInput').value = '';
@@ -586,18 +750,25 @@ function logout() {
 async function initApp() {
   showLoading('Carregando treino...');
   try {
-    // Carrega config de treino do servidor
-    var remoteConfig = await sbGetWorkoutConfig();
-    if (remoteConfig) {
-      WORKOUT_DATA = remoteConfig;
-    } else {
-      WORKOUT_DATA = JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
-      await sbSaveWorkoutConfig(WORKOUT_DATA);
+    // 1. Config de treino
+    var remoteConfig = null;
+    try {
+      remoteConfig = await sbGetWorkoutConfig();
+    } catch(e) { console.warn('Aviso: não foi possível carregar config remota', e); }
+    WORKOUT_DATA = remoteConfig || JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
+    if (!remoteConfig) {
+      try { await sbSaveWorkoutConfig(WORKOUT_DATA); } catch(e) {}
     }
 
-    // Carrega cargas do usuário
-    var loads = await sbGetUserLoads(currentUser.id);
+    // 2. Cargas do usuário
+    var loads = [];
+    try {
+      loads = await sbGetUserLoads(currentUser.id);
+    } catch(e) { console.warn('Aviso: não foi possível carregar cargas', e); }
     buildLoadsCache(loads);
+
+    // 3. Links de vídeo (localStorage, sem Supabase)
+    userVideoLinks = loadVideoLinksLocal(currentUser.id);
 
     // Mostra app
     document.getElementById('loginScreen').style.display = 'none';
@@ -607,30 +778,21 @@ async function initApp() {
 
     buildDaySelector();
     var startDay = WORKOUT_DATA[todayKey] && !WORKOUT_DATA[todayKey].rest
-      ? todayKey
-      : DAYS.find(function(d){ return !WORKOUT_DATA[d].rest; });
+      ? todayKey : DAYS.find(function(d){ return !WORKOUT_DATA[d].rest; });
     selectDay(startDay);
     switchTab('treino');
   } catch(e) {
-    alert('Erro ao carregar dados: ' + e.message);
-    console.error(e);
+    alert('Erro ao carregar dados: ' + e.message); console.error(e);
   }
   hideLoading();
 }
 
-// ─── AUTO LOGIN ───────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async function() {
   var session = localStorage.getItem('gym_session');
   if (session) {
-    try {
-      currentUser = JSON.parse(session);
-      await initApp();
-      return;
-    } catch(e) {
-      localStorage.removeItem('gym_session');
-    }
+    try { currentUser = JSON.parse(session); await initApp(); return; }
+    catch(e) { localStorage.removeItem('gym_session'); }
   }
-  // Mostra login
   document.getElementById('loginScreen').style.display = 'flex';
 });
 
@@ -675,6 +837,72 @@ function selectDay(day) {
   renderWorkout(day);
 }
 
+// ─── SVG SPARKLINE CHART ──────────────────────────────────────────────────────
+function buildSparklineSVG(history) {
+  if (!history || history.length === 0) return null;
+
+  var vals  = history.map(function(h){ return h.kg; });
+  var dates = history.map(function(h){ return h.date; });
+  var minV  = Math.min.apply(null, vals);
+  var maxV  = Math.max.apply(null, vals);
+  var range = maxV - minV || 1;
+  var W = 320, H = 80, pad = 12;
+  var n = vals.length;
+
+  function px(i) { return pad + (i / Math.max(n-1,1)) * (W - pad*2); }
+  function py(v) { return H - pad - ((v - minV) / range) * (H - pad*2); }
+
+  var points = vals.map(function(v,i){ return px(i) + ',' + py(v); }).join(' ');
+  var areaPoints = 'M ' + px(0) + ',' + H + ' L ' + px(0) + ',' + py(vals[0]) + ' ' +
+    vals.map(function(v,i){ return 'L ' + px(i) + ',' + py(v); }).join(' ') +
+    ' L ' + px(n-1) + ',' + H + ' Z';
+
+  // Tooltip dots
+  var dots = vals.map(function(v,i){
+    var isPR = v === maxV;
+    return '<circle cx="' + px(i) + '" cy="' + py(v) + '" r="' + (isPR?4:3) + '" ' +
+      'fill="' + (isPR?'#1D9E75':'#fff') + '" stroke="#1D9E75" stroke-width="1.5">' +
+      '<title>' + dates[i] + ': ' + v + 'kg' + (isPR?' ★ PR':'') + '</title>' +
+      '</circle>';
+  }).join('');
+
+  // x-axis labels (first, last, and possibly middle if many points)
+  var labelIndices = [0];
+  if (n > 2) labelIndices.push(Math.floor(n/2));
+  if (n > 1) labelIndices.push(n-1);
+  labelIndices = labelIndices.filter(function(v,i,a){ return a.indexOf(v)===i; });
+  var xlabels = labelIndices.map(function(i){
+    return '<text x="' + px(i) + '" y="' + (H+2) + '" text-anchor="middle" font-size="8" fill="#888780">' +
+      dates[i].substring(0,5) + '</text>';
+  }).join('');
+
+  // y-axis labels
+  var ylabels = '';
+  if (minV !== maxV) {
+    ylabels +=
+      '<text x="' + (pad-2) + '" y="' + (py(maxV)+4) + '" text-anchor="end" font-size="8" fill="#888780">' + maxV + '</text>' +
+      '<text x="' + (pad-2) + '" y="' + (py(minV)+4) + '" text-anchor="end" font-size="8" fill="#888780">' + minV + '</text>';
+  }
+
+  return '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + (H+14) + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="areag" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#1D9E75" stop-opacity="0.18"/>' +
+      '<stop offset="100%" stop-color="#1D9E75" stop-opacity="0.01"/>' +
+    '</linearGradient></defs>' +
+    '<path d="' + areaPoints + '" fill="url(#areag)"/>' +
+    '<polyline points="' + points + '" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+    dots + xlabels + ylabels +
+    '</svg>';
+}
+
+function toggleChart(exId) {
+  var panel = document.getElementById('chart-' + exId);
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  openCharts[exId] = !isOpen;
+}
+
 // ─── RENDER WORKOUT ───────────────────────────────────────────────────────────
 function getBadgeHtml(badge) {
   if (!badge) return '<span class="exercise-badge badge-normal">NORMAL</span>';
@@ -687,7 +915,6 @@ function renderWorkout(day) {
   var wv = document.getElementById('workoutView');
   var d  = WORKOUT_DATA[day];
 
-  // Dia marcado como descanso E sem exercícios → tela de descanso + botão adicionar
   if (d.rest && (!d.exercises || d.exercises.length === 0)) {
     wv.innerHTML =
       '<div class="rest-day">' +
@@ -698,10 +925,8 @@ function renderWorkout(day) {
     return;
   }
 
-  var titulo = (d.rest && d.exercises && d.exercises.length > 0)
-    ? 'Treino Extra'
-    : d.label;
-  var grupo = d.grupo || 'Extra';
+  var titulo = (d.rest && d.exercises && d.exercises.length > 0) ? 'Treino Extra' : d.label;
+  var grupo  = d.grupo || 'Extra';
 
   wv.innerHTML =
     '<div class="workout-header">' +
@@ -711,6 +936,7 @@ function renderWorkout(day) {
     '<div id="exerciseList"></div>';
 
   var list = document.getElementById('exerciseList');
+
   d.exercises.forEach(function(ex, idx) {
     var hist   = getHistory(ex.id);
     var lastKg = hist.length > 0 ? hist[hist.length-1].kg : '';
@@ -719,18 +945,45 @@ function renderWorkout(day) {
     var prevKg = hist.length > 1 ? hist[hist.length-2].kg : null;
     var histTxt = prevKg !== null ? 'ant: ' + prevKg + 'kg' : (hist.length===1 ? '1x reg.' : '');
     var prTxt   = isPR ? '<span class="pr-badge">★ PR</span>' : '';
+    var hasVideo = !!userVideoLinks[ex.id];
+    var chartOpen = !!openCharts[ex.id];
 
     var card = document.createElement('div');
     card.className = 'exercise-card';
     card.id = 'card-' + ex.id;
     card.setAttribute('data-day', day);
     card.setAttribute('data-idx', idx);
+
+    // Build chart HTML
+    var chartHtml = '';
+    if (hist.length > 0) {
+      var svg = buildSparklineSVG(hist);
+      var prKg = maxKg !== null ? maxKg : '-';
+      var avg = hist.length > 0 ? (hist.reduce(function(a,b){return a+b.kg;},0)/hist.length).toFixed(1) : '-';
+      var diff = hist.length > 1 ? (hist[hist.length-1].kg - hist[hist.length-2].kg) : null;
+      var diffStr = diff !== null ? (diff > 0 ? '+' + diff : diff) + ' kg' : '—';
+      var diffColor = diff > 0 ? 'color:var(--accent)' : (diff < 0 ? 'color:var(--danger)' : '');
+      chartHtml =
+        '<div class="chart-wrap">' + (svg || '') + '</div>' +
+        '<div class="chart-stats">' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + prKg + ' kg</div><div class="chart-stat-lbl">MÁXIMO</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + avg + ' kg</div><div class="chart-stat-lbl">MÉDIA</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val" style="' + diffColor + '">' + diffStr + '</div><div class="chart-stat-lbl">ÚLTIMA VAR.</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + hist.length + 'x</div><div class="chart-stat-lbl">REGISTROS</div></div>' +
+        '</div>';
+    } else {
+      chartHtml = '<div class="chart-empty">Sem registros ainda. Salve sua primeira carga!</div>';
+    }
+
     card.innerHTML =
       '<div class="hold-progress" id="progress-' + ex.id + '"></div>' +
       '<div class="exercise-top">' +
-        '<span class="exercise-name">' + ex.name + '</span>' +
+        '<span class="exercise-name" id="exname-' + ex.id + '">' + ex.name + '</span>' +
         getBadgeHtml(ex.badge) +
-        '<button class="strategy-btn" id="stratbtn-' + ex.id + '" title="Mudar estratégia">⚡</button>' +
+        '<div class="exercise-actions">' +
+          '<button class="icon-btn ' + (hasVideo ? 'has-link' : '') + '" id="videobtn-' + ex.id + '" title="Link do vídeo">▶</button>' +
+          '<button class="icon-btn" id="stratbtn-' + ex.id + '" title="Mudar estratégia">⚡</button>' +
+        '</div>' +
       '</div>' +
       '<div class="load-row">' +
         '<span class="load-label">CARGA</span>' +
@@ -738,19 +991,29 @@ function renderWorkout(day) {
         '<span class="load-unit">kg</span>' +
         '<button class="save-btn" id="btn-' + ex.id + '">Salvar</button>' +
         '<span class="load-meta" id="meta-' + ex.id + '">' + histTxt + ' ' + prTxt + '</span>' +
+      '</div>' +
+      '<div class="chart-panel' + (chartOpen ? ' open' : '') + '" id="chart-' + ex.id + '">' +
+        chartHtml +
       '</div>';
+
     list.appendChild(card);
 
-    document.getElementById('btn-' + ex.id).addEventListener('click', (function(id,name){ return function(){ handleSave(id,name); }; })(ex.id, ex.name));
-    document.getElementById('inp-' + ex.id).addEventListener('keydown', (function(id,name){ return function(e){ if(e.key==='Enter') handleSave(id,name); }; })(ex.id, ex.name));
-    document.getElementById('stratbtn-' + ex.id).addEventListener('click', (function(exId, exName, exBadge, dayKey, exIdx){
-      return function(e) { e.stopPropagation(); openStrategyModal(exId, exName, exBadge, dayKey, exIdx); };
-    })(ex.id, ex.name, ex.badge, day, idx));
+    // Events
+    document.getElementById('btn-' + ex.id).addEventListener('click',
+      (function(id,name){ return function(){ handleSave(id,name); }; })(ex.id, ex.name));
+    document.getElementById('inp-' + ex.id).addEventListener('keydown',
+      (function(id,name){ return function(e){ if(e.key==='Enter') handleSave(id,name); }; })(ex.id, ex.name));
+    document.getElementById('stratbtn-' + ex.id).addEventListener('click',
+      (function(eId, eNm, eBg, dk, ei){ return function(e){ e.stopPropagation(); openStrategyModal(eId,eNm,eBg,dk,ei); }; })(ex.id, ex.name, ex.badge, day, idx));
+    document.getElementById('videobtn-' + ex.id).addEventListener('click',
+      (function(eId, eNm){ return function(e){ e.stopPropagation(); openVideoModal(eId, eNm); }; })(ex.id, ex.name));
+    // Click on name to toggle chart
+    document.getElementById('exname-' + ex.id).addEventListener('click',
+      (function(eId){ return function(e){ e.stopPropagation(); toggleChart(eId); }; })(ex.id));
 
     setupHoldToReplace(card, ex, day, idx);
   });
 
-  // Botão de adicionar mais exercícios
   var addBtn = document.createElement('button');
   addBtn.className = 'btn-add-exercise';
   addBtn.textContent = '+ Adicionar exercício';
@@ -766,8 +1029,7 @@ async function handleSave(exId, exName) {
   var kg   = parseFloat(inp.value);
   if (!kg || isNaN(kg)) { inp.focus(); return; }
 
-  btn.textContent = '...';
-  btn.disabled = true;
+  btn.textContent = '...'; btn.disabled = true;
 
   try {
     await sbSaveLoad(currentUser.id, exId, exName, kg);
@@ -781,8 +1043,28 @@ async function handleSave(exId, exName) {
     var prTxt   = isPR ? '<span class="pr-badge">★ PR</span>' : '';
     meta.innerHTML = histTxt + ' ' + prTxt;
 
-    btn.textContent = '✓ Salvo';
-    btn.classList.add('saved');
+    // Refresh chart inline
+    var chartPanel = document.getElementById('chart-' + exId);
+    if (chartPanel) {
+      var hist   = getHistory(exId);
+      var svg    = buildSparklineSVG(hist);
+      var prKg   = Math.max.apply(null, hist.map(function(h){return h.kg;}));
+      var avg    = (hist.reduce(function(a,b){return a+b.kg;},0)/hist.length).toFixed(1);
+      var diff   = hist.length > 1 ? hist[hist.length-1].kg - hist[hist.length-2].kg : null;
+      var diffStr = diff !== null ? (diff > 0 ? '+'+diff : diff) + ' kg' : '—';
+      var diffColor = diff > 0 ? 'color:var(--accent)' : (diff < 0 ? 'color:var(--danger)' : '');
+      chartPanel.innerHTML =
+        '<div class="chart-wrap">' + (svg||'') + '</div>' +
+        '<div class="chart-stats">' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + prKg + ' kg</div><div class="chart-stat-lbl">MÁXIMO</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + avg + ' kg</div><div class="chart-stat-lbl">MÉDIA</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val" style="' + diffColor + '">' + diffStr + '</div><div class="chart-stat-lbl">ÚLTIMA VAR.</div></div>' +
+          '<div class="chart-stat"><div class="chart-stat-val">' + hist.length + 'x</div><div class="chart-stat-lbl">REGISTROS</div></div>' +
+        '</div>';
+      if (openCharts[exId]) chartPanel.classList.add('open');
+    }
+
+    btn.textContent = '✓ Salvo'; btn.classList.add('saved');
     setTimeout(function(){ btn.textContent = 'Salvar'; btn.classList.remove('saved'); btn.disabled = false; }, 2000);
   } catch(e) {
     btn.textContent = 'Erro';
@@ -794,13 +1076,11 @@ async function handleSave(exId, exName) {
 // ─── HOLD TO REPLACE ─────────────────────────────────────────────────────────
 function setupHoldToReplace(card, ex, day, idx) {
   var holdDuration = 600;
-  var holdTimer = null;
-  var holdStart = null;
+  var holdTimer = null, holdStart = null, animFrame = null;
   var progressEl = document.getElementById('progress-' + ex.id);
-  var animFrame  = null;
 
   function startHold(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('exercise-name')) return;
     holdStart = Date.now();
     card.classList.add('pressing');
     function animate() {
@@ -823,16 +1103,77 @@ function setupHoldToReplace(card, ex, day, idx) {
   card.addEventListener('touchcancel', cancelHold);
 }
 
+// ─── EXERCISE AUTOCOMPLETE ────────────────────────────────────────────────────
+function filterExercises(query) {
+  if (!query || query.length < 2) return [];
+  var q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return EXERCISE_DB.filter(function(e) {
+    var n = e.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return n.indexOf(q) >= 0;
+  }).slice(0, 12);
+}
+
+function renderSuggestions(inputId, suggestionsId, highlightCallback) {
+  var input = document.getElementById(inputId);
+  var box   = document.getElementById(suggestionsId);
+  var query = input.value.trim();
+  var results = filterExercises(query);
+  if (results.length === 0) { box.style.display = 'none'; return; }
+  box.innerHTML = results.map(function(e, i) {
+    return '<div class="ex-suggestion" data-idx="' + i + '" data-name="' + e.name + '">' +
+      '<span class="ex-suggestion-name">' + e.name + '</span>' +
+      '<span class="ex-suggestion-cat">' + e.cat + '</span>' +
+      '</div>';
+  }).join('');
+  box.style.display = 'block';
+  box.querySelectorAll('.ex-suggestion').forEach(function(el) {
+    el.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      input.value = el.getAttribute('data-name');
+      box.style.display = 'none';
+      if (highlightCallback) highlightCallback(el.getAttribute('data-name'));
+    });
+  });
+}
+
+function setupAutocomplete(inputId, suggestionsId) {
+  var input = document.getElementById(inputId);
+  var box   = document.getElementById(suggestionsId);
+  input.addEventListener('input', function(){ renderSuggestions(inputId, suggestionsId); });
+  input.addEventListener('focus', function(){ if (input.value.length >= 2) renderSuggestions(inputId, suggestionsId); });
+  input.addEventListener('blur',  function(){ setTimeout(function(){ box.style.display = 'none'; }, 200); });
+  input.addEventListener('keydown', function(e) {
+    var items = box.querySelectorAll('.ex-suggestion');
+    var highlighted = box.querySelector('.highlighted');
+    var idx = highlighted ? parseInt(highlighted.getAttribute('data-idx')) : -1;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      var next = Math.min(idx+1, items.length-1);
+      items.forEach(function(el){ el.classList.remove('highlighted'); });
+      if (items[next]) { items[next].classList.add('highlighted'); input.value = items[next].getAttribute('data-name'); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      var prev = Math.max(idx-1, 0);
+      items.forEach(function(el){ el.classList.remove('highlighted'); });
+      if (items[prev]) { items[prev].classList.add('highlighted'); input.value = items[prev].getAttribute('data-name'); }
+    } else if (e.key === 'Escape') {
+      box.style.display = 'none';
+    }
+  });
+}
+
 // ─── ADD EXERCISE MODAL ───────────────────────────────────────────────────────
 function openAddExerciseModal(day) {
   modalTargetDay = day;
   document.getElementById('addExSubtitle').textContent = WORKOUT_DATA[day].label || 'Dia extra';
   document.getElementById('addExInput').value = '';
+  document.getElementById('addExSuggestions').style.display = 'none';
   document.getElementById('addExModal').classList.add('open');
   setTimeout(function(){ document.getElementById('addExInput').focus(); }, 250);
 }
 function closeAddExModal() {
   document.getElementById('addExModal').classList.remove('open');
+  document.getElementById('addExSuggestions').style.display = 'none';
   modalTargetDay = null;
 }
 async function confirmAddExercise() {
@@ -842,16 +1183,12 @@ async function confirmAddExercise() {
   var newId = 'ex_' + Date.now();
   if (!WORKOUT_DATA[day].exercises) WORKOUT_DATA[day].exercises = [];
   WORKOUT_DATA[day].exercises.push({ id: newId, name: name, badge: null });
-  // Se era dia de descanso puro, mantém rest:true mas agora tem exercícios
   closeAddExModal();
   showLoading('Salvando...');
   try {
     await sbSaveWorkoutConfig(WORKOUT_DATA);
-    buildDaySelector();
-    renderWorkout(day);
-  } catch(e) {
-    alert('Erro ao salvar: ' + e.message);
-  }
+    buildDaySelector(); renderWorkout(day);
+  } catch(e) { alert('Erro ao salvar: ' + e.message); }
   hideLoading();
 }
 
@@ -860,22 +1197,22 @@ function openReplaceModal(ex, day, idx) {
   modalTargetDay = day; modalTargetIdx = idx;
   document.getElementById('replaceSubtitle').textContent = 'Atual: ' + ex.name;
   document.getElementById('replaceInput').value = '';
+  document.getElementById('replaceSuggestions').style.display = 'none';
   document.getElementById('replaceModal').classList.add('open');
   setTimeout(function(){ document.getElementById('replaceInput').focus(); }, 250);
 }
 function closeReplaceModal() {
   document.getElementById('replaceModal').classList.remove('open');
+  document.getElementById('replaceSuggestions').style.display = 'none';
   modalTargetDay = null; modalTargetIdx = null;
 }
 async function confirmReplace() {
   var newName = document.getElementById('replaceInput').value.trim();
   if (!newName) { document.getElementById('replaceInput').focus(); return; }
-
-  var day    = modalTargetDay;
-  var idx    = modalTargetIdx;
-  var oldEx  = WORKOUT_DATA[day].exercises[idx];
-  var newId  = 'ex_' + Date.now();
-
+  var day   = modalTargetDay;
+  var idx   = modalTargetIdx;
+  var oldEx = WORKOUT_DATA[day].exercises[idx];
+  var newId = 'ex_' + Date.now();
   closeReplaceModal();
   showLoading('Salvando...');
   try {
@@ -883,10 +1220,7 @@ async function confirmReplace() {
     WORKOUT_DATA[day].exercises[idx] = { id: newId, name: newName, badge: oldEx.badge };
     await sbSaveWorkoutConfig(WORKOUT_DATA);
     renderWorkout(day);
-  } catch(e) {
-    alert('Erro ao substituir: ' + e.message);
-    console.error(e);
-  }
+  } catch(e) { alert('Erro ao substituir: ' + e.message); console.error(e); }
   hideLoading();
 }
 
@@ -914,19 +1248,40 @@ function closeStrategyModal() {
   modalTargetDay = null; modalTargetIdx = null; modalTargetStrategy = null;
 }
 async function confirmStrategy() {
-  var day = modalTargetDay;
-  var idx = modalTargetIdx;
+  var day = modalTargetDay; var idx = modalTargetIdx;
   WORKOUT_DATA[day].exercises[idx].badge = modalTargetStrategy;
   closeStrategyModal();
   showLoading('Salvando...');
-  try {
-    await sbSaveWorkoutConfig(WORKOUT_DATA);
-    renderWorkout(day);
-  } catch(e) {
-    alert('Erro ao salvar estratégia: ' + e.message);
-    console.error(e);
-  }
+  try { await sbSaveWorkoutConfig(WORKOUT_DATA); renderWorkout(day); }
+  catch(e) { alert('Erro ao salvar: ' + e.message); }
   hideLoading();
+}
+
+// ─── VIDEO LINK MODAL ─────────────────────────────────────────────────────────
+function openVideoModal(exId, exName) {
+  videoTargetExId = exId;
+  document.getElementById('videoSubtitle').textContent = exName;
+  document.getElementById('videoInput').value = userVideoLinks[exId] || '';
+  var openBtn = document.getElementById('videoOpenBtn');
+  openBtn.style.display = userVideoLinks[exId] ? 'block' : 'none';
+  document.getElementById('videoModal').classList.add('open');
+  setTimeout(function(){ document.getElementById('videoInput').focus(); }, 250);
+}
+function closeVideoModal() {
+  document.getElementById('videoModal').classList.remove('open');
+  videoTargetExId = null;
+}
+async function confirmVideoLink() {
+  var url = document.getElementById('videoInput').value.trim();
+  var exId = videoTargetExId;
+  if (url) { userVideoLinks[exId] = url; }
+  else { delete userVideoLinks[exId]; }
+  closeVideoModal();
+  // Atualiza ícone
+  var vbtn = document.getElementById('videobtn-' + exId);
+  if (vbtn) vbtn.classList.toggle('has-link', !!url);
+  // Salva no localStorage (confiável, sem tabela extra no Supabase)
+  saveVideoLinksLocal(currentUser.id, userVideoLinks);
 }
 
 // ─── HISTORY ──────────────────────────────────────────────────────────────────
@@ -934,7 +1289,6 @@ async function renderHistory() {
   var content = document.getElementById('historyContent');
   content.innerHTML = '<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
 
-  // Reconstrói filtros
   var fDiv  = document.getElementById('historyFilter');
   var fDays = ['todos'].concat(DAYS.filter(function(d){ return !WORKOUT_DATA[d].rest; }));
   fDiv.innerHTML = fDays.map(function(d) {
@@ -946,11 +1300,9 @@ async function renderHistory() {
   });
 
   try {
-    // Recarrega do servidor para ter dados frescos
     var loads = await sbGetUserLoads(currentUser.id);
     buildLoadsCache(loads);
 
-    // Monta lista de exercícios (ativos + arquivados)
     var allEx = [];
     DAYS.forEach(function(d) {
       if (!WORKOUT_DATA[d].rest) WORKOUT_DATA[d].exercises.forEach(function(e){ allEx.push(e); });
@@ -1010,25 +1362,18 @@ async function changePassword() {
   var conf = document.getElementById('confPass').value;
   var msg  = document.getElementById('settingsMsg');
   msg.className = 'settings-msg';
-
   try {
     var user = await sbGetUser(currentUser.username);
-    if (!user || user.password !== cur) {
-      msg.textContent = 'Senha atual incorreta.'; msg.classList.add('err'); msg.style.display='block'; return;
-    }
+    if (!user || user.password !== cur) { msg.textContent = 'Senha atual incorreta.'; msg.classList.add('err'); msg.style.display='block'; return; }
   } catch(e) { msg.textContent = 'Erro de conexão.'; msg.classList.add('err'); msg.style.display='block'; return; }
-
   if (nw.length < 4) { msg.textContent = 'Nova senha precisa ter 4+ caracteres.'; msg.classList.add('err'); msg.style.display='block'; return; }
   if (nw !== conf)   { msg.textContent = 'As senhas não coincidem.'; msg.classList.add('err'); msg.style.display='block'; return; }
-
   showLoading('Salvando...');
   try {
     await sbUpdatePassword(currentUser.id, nw);
-    msg.textContent = 'Senha alterada com sucesso!'; msg.classList.add('ok'); msg.style.display='block';
+    msg.textContent = 'Senha alterada!'; msg.classList.add('ok'); msg.style.display='block';
     ['curPass','newPass','confPass'].forEach(function(id){ document.getElementById(id).value=''; });
-  } catch(e) {
-    msg.textContent = 'Erro ao salvar.'; msg.classList.add('err'); msg.style.display='block';
-  }
+  } catch(e) { msg.textContent = 'Erro ao salvar.'; msg.classList.add('err'); msg.style.display='block'; }
   hideLoading();
 }
 
@@ -1037,11 +1382,8 @@ async function clearHistory() {
   showLoading('Apagando...');
   try {
     await sbClearUserLoads(currentUser.id);
-    userLoads = {};
-    alert('Histórico apagado.');
-  } catch(e) {
-    alert('Erro ao apagar: ' + e.message);
-  }
+    userLoads = {}; alert('Histórico apagado.');
+  } catch(e) { alert('Erro ao apagar: ' + e.message); }
   hideLoading();
 }
 
@@ -1057,6 +1399,12 @@ document.getElementById('tabConfig').addEventListener('click', function(){ switc
 document.getElementById('savePassBtn').addEventListener('click', changePassword);
 document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
 
+// Autocomplete setup (on DOMContentLoaded since elements exist in HTML)
+document.addEventListener('DOMContentLoaded', function() {
+  setupAutocomplete('addExInput', 'addExSuggestions');
+  setupAutocomplete('replaceInput', 'replaceSuggestions');
+});
+
 document.getElementById('addExCancelBtn').addEventListener('click', closeAddExModal);
 document.getElementById('addExConfirmBtn').addEventListener('click', confirmAddExercise);
 document.getElementById('addExInput').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmAddExercise(); });
@@ -1070,6 +1418,24 @@ document.getElementById('replaceModal').addEventListener('click', function(e){ i
 document.getElementById('strategyCancelBtn').addEventListener('click', closeStrategyModal);
 document.getElementById('strategyConfirmBtn').addEventListener('click', confirmStrategy);
 document.getElementById('strategyModal').addEventListener('click', function(e){ if(e.target===this) closeStrategyModal(); });
+
+document.getElementById('videoCancelBtn').addEventListener('click', closeVideoModal);
+document.getElementById('videoConfirmBtn').addEventListener('click', confirmVideoLink);
+document.getElementById('videoModal').addEventListener('click', function(e){ if(e.target===this) closeVideoModal(); });
+document.getElementById('videoInput').addEventListener('input', function() {
+  var url = this.value.trim();
+  var btn = document.getElementById('videoOpenBtn');
+  btn.style.display = url ? 'block' : 'none';
+});
+document.getElementById('videoOpenBtn').addEventListener('click', function() {
+  var url = document.getElementById('videoInput').value.trim();
+  if (url) window.open(url, '_blank');
+});
+document.getElementById('videoInput').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmVideoLink(); });
+
+// Init autocomplete immediately for the modal inputs that exist in HTML
+setupAutocomplete('addExInput', 'addExSuggestions');
+setupAutocomplete('replaceInput', 'replaceSuggestions');
 </script>
 </body>
 </html>
