@@ -215,7 +215,7 @@
   }
   .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
   .history-table { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-  .history-row { display: grid; grid-template-columns: 1fr 90px 72px 48px; padding: 10px 1.25rem; border-bottom: 0.5px solid var(--border); align-items: center; gap: 8px; }
+  .history-row { display: grid; grid-template-columns: 1fr 90px 80px 72px; padding: 10px 1.25rem; border-bottom: 0.5px solid var(--border); align-items: center; gap: 8px; }
   .history-row:last-child { border-bottom: none; }
   .history-row.hdr { background: var(--surface2); font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
   .history-row:not(.hdr):hover { background: var(--surface2); }
@@ -792,7 +792,7 @@ async function sbSaveWorkoutConfig(userId, data) {
   await sbFetch("workout_config", { method:"POST", prefer:"resolution=merge-duplicates,return=minimal", body:{ user_id:userId, data, updated_at:new Date().toISOString() } });
 }
 async function sbGetUserLoads(userId) {
-  var r = await sbFetch("workout_loads?user_id=eq." + userId + "&order=created_at.asc&select=ex_id,ex_name,kg,date");
+  var r = await sbFetch("workout_loads?user_id=eq." + userId + "&order=created_at.asc&select=id,ex_id,ex_name,kg,date");
   return r || [];
 }
 async function sbSaveLoad(userId, exId, exName, kg) {
@@ -800,6 +800,12 @@ async function sbSaveLoad(userId, exId, exName, kg) {
 }
 async function sbClearUserLoads(userId) {
   await sbFetch("workout_loads?user_id=eq." + userId, { method:"DELETE", prefer:"return=minimal" });
+}
+ async function sbDeleteLoad(loadId) {
+  await sbFetch("workout_loads?id=eq." + loadId, { method: "DELETE", prefer: "return=minimal" });
+}
+async function sbUpdateLoadDate(loadId, newDate) {
+  await sbFetch("workout_loads?id=eq." + loadId, { method: "PATCH", prefer: "return=minimal", body: { date: newDate } });
 }
 async function sbGetArchived() {
   var r = await sbFetch("archived_exercises?select=id,name");
@@ -1297,6 +1303,50 @@ async function confirmVideoLink() {
 }
 
 // ─── HISTORY ──────────────────────────────────────────────────────────────────
+var editLoadTarget = null;
+
+function openEditLoadModal(loadId, exName, currentDate) {
+  editLoadTarget = loadId;
+  document.getElementById("editLoadSubtitle").textContent = exName;
+  // currentDate vem como "dd/mm/yyyy", input date precisa de "yyyy-mm-dd"
+  var parts = currentDate.split("/");
+  var isoDate = parts.length === 3 ? parts[2] + "-" + parts[1] + "-" + parts[0] : "";
+  document.getElementById("editLoadDate").value = isoDate;
+  document.getElementById("editLoadModal").classList.add("open");
+}
+function closeEditLoadModal() {
+  document.getElementById("editLoadModal").classList.remove("open");
+  editLoadTarget = null;
+}
+async function confirmEditLoad() {
+  var isoDate = document.getElementById("editLoadDate").value;
+  if (!isoDate) { document.getElementById("editLoadDate").focus(); return; }
+  var parts = isoDate.split("-");
+  var brDate = parts[2] + "/" + parts[1] + "/" + parts[0];
+  var loadId = editLoadTarget;
+  closeEditLoadModal();
+  showLoading("Salvando...");
+  try {
+    await sbUpdateLoadDate(loadId, brDate);
+    var loads = await sbGetUserLoads(currentUser.id);
+    buildLoadsCache(loads);
+    renderHistory();
+  } catch(e) { alert("Erro ao salvar: " + e.message); console.error(e); }
+  hideLoading();
+}
+
+async function deleteLoad(loadId) {
+  if (!confirm("Excluir este registro?")) return;
+  showLoading("Excluindo...");
+  try {
+    await sbDeleteLoad(loadId);
+    var loads = await sbGetUserLoads(currentUser.id);
+    buildLoadsCache(loads);
+    renderHistory();
+  } catch(e) { alert("Erro ao excluir: " + e.message); console.error(e); }
+  hideLoading();
+}
+
 async function renderHistory() {
   var content = document.getElementById("historyContent");
   content.innerHTML = "<div class=\"empty-state\"><div class=\"loading-spinner\" style=\"margin:0 auto\"></div></div>";
@@ -1316,18 +1366,37 @@ async function renderHistory() {
     DAYS.forEach(function(d){ if(WORKOUT_DATA[d].exercises) WORKOUT_DATA[d].exercises.forEach(function(e){ allEx.push(e); }); });
     var archived = await sbGetArchived();
     archived.forEach(function(e){ allEx.push(e); });
-    var rows = [];
-    allEx.forEach(function(ex){ getHistory(ex.id).forEach(function(h){ rows.push({ name:ex.name, date:h.date, kg:h.kg, exId:ex.id }); }); });
+
+    // Monta rows com id do banco
+    var exMap = {};
+    allEx.forEach(function(ex){ exMap[ex.id] = ex; });
+    var rows = loads.map(function(r){ return { loadId: r.id, name: r.ex_name, date: r.date, kg: parseFloat(r.kg), exId: r.ex_id }; });
+
     if (historyFilter !== "todos") {
       var ids = (WORKOUT_DATA[historyFilter].exercises||[]).map(function(e){ return e.id; });
       rows = rows.filter(function(r){ return ids.indexOf(r.exId)>=0; });
     }
     rows.sort(function(a,b){ return b.date.split("/").reverse().join("").localeCompare(a.date.split("/").reverse().join("")); });
+
     var prMap = {};
     allEx.forEach(function(ex){ var h=getHistory(ex.id); if(h.length>0) prMap[ex.id]=Math.max.apply(null,h.map(function(x){ return x.kg; })); });
+
     if (!rows.length) { content.innerHTML = "<div class=\"empty-state\"><div class=\"icon\">📊</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>"; return; }
-    content.innerHTML = "<div class=\"history-table\"><div class=\"history-row hdr\"><div>Exercício</div><div>Data</div><div>Carga</div><div></div></div>" +
-      rows.map(function(r){ var pr=getHistory(r.exId).length>1&&r.kg===prMap[r.exId]; return "<div class=\"history-row\"><div class=\"h-name\">"+r.name+"</div><div class=\"h-date\">"+r.date+"</div><div class=\"h-load\">"+r.kg+" kg</div><div class=\"h-pr\">"+(pr?"★ PR":"")+"</div></div>"; }).join("") +
+
+    content.innerHTML = "<div class=\"history-table\">" +
+      "<div class=\"history-row hdr\"><div>Exercício</div><div>Data</div><div>Carga</div><div></div></div>" +
+      rows.map(function(r){
+        var pr = getHistory(r.exId).length > 1 && r.kg === prMap[r.exId];
+        return "<div class=\"history-row\" id=\"hrow-"+r.loadId+"\">" +
+          "<div class=\"h-name\">"+r.name+"</div>" +
+          "<div class=\"h-date\">"+r.date+"</div>" +
+          "<div class=\"h-load\">"+r.kg+" kg"+(pr?" <span class=\"h-pr\">★</span>":"")+"</div>" +
+          "<div style=\"display:flex;gap:4px;justify-content:flex-end\">" +
+            "<button class=\"icon-btn\" title=\"Editar data\" onclick=\"openEditLoadModal('"+r.loadId+"','"+r.name.replace(/'/g,"\\'")+"','"+r.date+"')\">✏️</button>" +
+            "<button class=\"icon-btn danger\" title=\"Excluir\" onclick=\"deleteLoad('"+r.loadId+"')\">🗑</button>" +
+          "</div>" +
+        "</div>";
+      }).join("") +
       "</div><div class=\"count-line\">" + rows.length + " registro" + (rows.length!==1?"s":"") + "</div>";
   } catch(e) {
     content.innerHTML = "<div class=\"empty-state\"><div class=\"icon\">⚠️</div><p>Erro ao carregar histórico.</p></div>";
@@ -1400,8 +1469,25 @@ document.getElementById("deleteCancelBtn").addEventListener("click", closeDelete
 document.getElementById("deleteConfirmBtn").addEventListener("click", confirmDelete);
 document.getElementById("deleteModal").addEventListener("click", function(e){ if(e.target===this) closeDeleteModal(); });
 
+document.getElementById("editLoadCancelBtn").addEventListener("click", closeEditLoadModal);
+document.getElementById("editLoadConfirmBtn").addEventListener("click", confirmEditLoad);
+document.getElementById("editLoadModal").addEventListener("click", function(e){ if(e.target===this) closeEditLoadModal(); });
+
 setupAutocomplete("addExInput", "addExSuggestions");
 setupAutocomplete("replaceInput", "replaceSuggestions");
 </script>
+ <div class="modal-overlay" id="editLoadModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar registro</div>
+    <div class="modal-subtitle" id="editLoadSubtitle"></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Altere a data do registro:</p>
+    <input type="date" id="editLoadDate" style="width:100%;padding:10px 14px;font-size:15px;font-family:'Syne',sans-serif;background:var(--surface2);border:0.5px solid var(--border);border-radius:8px;color:var(--text);outline:none;margin-bottom:0.5rem;" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="editLoadCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="editLoadConfirmBtn">Salvar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
