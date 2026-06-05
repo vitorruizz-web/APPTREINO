@@ -23,6 +23,7 @@
   }
   body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+  /* LOGIN */
   .login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1.5rem; padding: 1rem; }
   .login-logo { font-size: 56px; font-weight: 800; letter-spacing: -4px; color: var(--accent); }
   .login-sub { font-size: 12px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
@@ -35,6 +36,7 @@
   .btn-primary:hover { background: var(--accent2); }
   .login-error { font-size: 12px; color: var(--danger); margin-top: -0.5rem; margin-bottom: 0.75rem; display: none; }
 
+  /* APP */
   .main-app { display: none; max-width: 680px; margin: 0 auto; }
   .header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
   .header-logo { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -1.5px; }
@@ -44,6 +46,7 @@
   .btn-logout { padding: 5px 12px; border: 0.5px solid var(--border); border-radius: var(--radius-md); background: transparent; font-family: 'Syne',sans-serif; font-size: 11px; cursor: pointer; color: var(--muted); }
   .btn-logout:hover { background: var(--surface2); }
 
+  /* DAY SELECTOR */
   .day-selector { display: flex; gap: 8px; padding: 1rem 1.25rem; overflow-x: auto; background: var(--surface); border-bottom: 0.5px solid var(--border); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .day-selector::-webkit-scrollbar { display: none; }
   .day-btn { flex-shrink: 0; padding: 8px 16px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--surface2); cursor: pointer; font-family: 'Syne',sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); transition: all 0.15s; text-align: center; user-select: none; }
@@ -53,19 +56,45 @@
   .day-name-small { display: block; font-size: 10px; font-weight: 400; margin-bottom: 2px; letter-spacing: 1px; }
   .today-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; margin-left: 4px; vertical-align: middle; opacity: 0.8; }
 
+  /* WORKOUT */
   .workout-view { padding: 1.25rem; }
   .workout-header { margin-bottom: 1.25rem; }
   .workout-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
   .workout-subtitle { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1.5px; text-transform: uppercase; }
 
-  .exercise-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s; }
+  /* EXERCISE CARD */
+  .exercise-card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s;
+    user-select: none; -webkit-user-select: none; position: relative;
+  }
   .exercise-card:hover { border-color: var(--border2); }
+  .exercise-card.pressing {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 2px var(--accent);
+    border-color: var(--accent);
+  }
   .exercise-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
   .exercise-name { font-size: 14px; font-weight: 700; flex: 1; }
-  .exercise-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; white-space: nowrap; }
-  .badge-rp { background: #EEEDFE; color: #3C3489; }
-  .badge-ds { background: #FAEEDA; color: #633806; }
+  .exercise-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; white-space: nowrap; cursor: default; }
+  .badge-normal   { background: var(--surface2); color: var(--muted); }
+  .badge-rp       { background: #EEEDFE; color: #3C3489; }
+  .badge-ds       { background: #FAEEDA; color: #633806; }
+  .badge-myo      { background: #FDE8F0; color: #8B1A4A; }
+  .badge-cluster  { background: #E8F4FD; color: #1A5C8B; }
+  .badge-giant    { background: #E8FDE8; color: #1A6B1A; }
+  .badge-21s      { background: #FDF5E8; color: #7A5010; }
 
+  /* STRATEGY BUTTON */
+  .strategy-btn {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--surface2);
+    border: 0.5px solid var(--border); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; color: var(--muted); flex-shrink: 0;
+    transition: all 0.15s; line-height: 1;
+  }
+  .strategy-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  /* LOAD ROW */
   .load-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .load-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 1.5px; white-space: nowrap; }
   .load-input { width: 82px; padding: 7px 10px; font-family: 'DM Mono',monospace; font-size: 15px; font-weight: 500; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); text-align: center; outline: none; transition: border-color 0.15s; }
@@ -81,6 +110,7 @@
   .rest-day .big { font-size: 56px; }
   .rest-day p { font-size: 15px; color: var(--muted); margin-top: 1rem; }
 
+  /* HISTORY */
   .history-view { padding: 1.25rem; }
   .history-title { font-size: 22px; font-weight: 800; margin-bottom: 1.25rem; }
   .history-filter { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
@@ -100,6 +130,7 @@
   .empty-state p { font-size: 14px; line-height: 1.6; }
   .count-line { font-size: 11px; color: var(--muted); text-align: center; margin-top: 1rem; }
 
+  /* SETTINGS */
   .settings-section { padding: 1.25rem; }
   .settings-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 360px; }
   .settings-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
@@ -111,10 +142,61 @@
   .settings-msg { font-size: 12px; margin-top: 0.5rem; display: none; }
   .settings-msg.ok { color: var(--accent); }
   .settings-msg.err { color: var(--danger); }
+
+  /* MODAL BASE */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 100; align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--surface); border-radius: 16px 16px 0 0; padding: 1.5rem;
+    width: 100%; max-width: 680px; animation: slideUp 0.22s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 1.25rem; }
+  .modal-subtitle { font-size: 11px; color: var(--muted); margin-top: -0.75rem; margin-bottom: 1rem; letter-spacing: 0.5px; }
+
+  /* REPLACE MODAL */
+  .replace-input {
+    width: 100%; padding: 12px 14px; font-size: 14px; font-family: 'Syne',sans-serif;
+    background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    color: var(--text); outline: none; margin-bottom: 1rem;
+  }
+  .replace-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; }
+  .btn-modal-confirm { flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-family: 'Syne',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-modal-confirm:hover { background: var(--accent2); }
+  .btn-modal-cancel { padding: 12px 20px; background: var(--surface2); color: var(--muted); border: 0.5px solid var(--border); border-radius: var(--radius-md); font-family: 'Syne',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-modal-cancel:hover { background: var(--border); }
+
+  /* STRATEGY MODAL */
+  .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .strategy-option {
+    padding: 12px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    cursor: pointer; transition: all 0.15s; background: var(--surface2);
+  }
+  .strategy-option:hover { border-color: var(--accent); background: var(--accent-light); }
+  .strategy-option.selected { border-color: var(--accent); background: var(--accent-light); }
+  .strategy-option-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .strategy-option-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* HOLD HINT */
+  .hold-hint { font-size: 10px; color: var(--muted); text-align: center; padding: 0 1.25rem 1rem; letter-spacing: 0.5px; }
+
+  /* PROGRESS BAR for hold */
+  .hold-progress {
+    position: absolute; bottom: 0; left: 0; height: 2px;
+    background: var(--accent); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    width: 0%; transition: width 0.05s linear; pointer-events: none;
+  }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div style="text-align:center">
     <div class="login-logo">GYM</div>
@@ -128,6 +210,7 @@
   </div>
 </div>
 
+<!-- APP -->
 <div class="main-app" id="mainApp">
   <div class="header">
     <div class="header-logo">GYM</div>
@@ -138,15 +221,19 @@
       <button class="btn-logout" id="logoutBtn">Sair</button>
     </div>
   </div>
+
   <div id="treinoSection">
     <div class="day-selector" id="daySelector"></div>
     <div class="workout-view" id="workoutView"></div>
+    <div class="hold-hint" id="holdHint">Segure um exercício para substituí-lo</div>
   </div>
+
   <div class="history-view" id="historicoSection" style="display:none">
     <div class="history-title">Evolução de Cargas</div>
     <div class="history-filter" id="historyFilter"></div>
     <div id="historyContent"></div>
   </div>
+
   <div class="settings-section" id="configSection" style="display:none">
     <div class="settings-card">
       <h3>Alterar senha</h3>
@@ -159,17 +246,59 @@
   </div>
 </div>
 
+<!-- REPLACE MODAL -->
+<div class="modal-overlay" id="replaceModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="replaceTitle">Substituir exercício</div>
+    <div class="modal-subtitle" id="replaceSubtitle"></div>
+    <input class="replace-input" id="replaceInput" placeholder="Nome do novo exercício" maxlength="60" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="replaceCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="replaceConfirmBtn">Substituir</button>
+    </div>
+  </div>
+</div>
+
+<!-- STRATEGY MODAL -->
+<div class="modal-overlay" id="strategyModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="strategyTitle">Estratégia de treino</div>
+    <div class="modal-subtitle" id="strategySubtitle"></div>
+    <div class="strategy-grid" id="strategyGrid"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="strategyCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="strategyConfirmBtn">Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <script>
-var WORKOUT_DATA = {
+// ─── DADOS ───────────────────────────────────────────────────────────────────
+
+var STRATEGIES = [
+  { key: null,      label: 'Normal',        desc: 'Séries convencionais',                   badgeClass: 'badge-normal' },
+  { key: 'RP',      label: 'Rest Pause',    desc: 'Pausa curta dentro da série',            badgeClass: 'badge-rp' },
+  { key: 'DS',      label: 'Drop Set',      desc: 'Reduz carga ao atingir a falha',         badgeClass: 'badge-ds' },
+  { key: 'MYO',     label: 'Myo-reps',      desc: 'Ativa + mini séries de 3–5 reps',        badgeClass: 'badge-myo' },
+  { key: 'CLUSTER', label: 'Cluster Set',   desc: 'Micro pausas dentro da série',           badgeClass: 'badge-cluster' },
+  { key: 'GIANT',   label: 'Série Gigante', desc: '4+ exercícios sem descanso',             badgeClass: 'badge-giant' },
+  { key: '21S',     label: '21s',           desc: '7 parcial baixo + 7 parcial alto + 7 completo', badgeClass: 'badge-21s' }
+];
+
+var BADGE_LABELS = { RP: 'REST PAUSE', DS: 'DROP SET', MYO: 'MYO-REPS', CLUSTER: 'CLUSTER', GIANT: 'SÉRIE GIGANTE', '21S': '21s' };
+
+var DEFAULT_WORKOUT = {
   segunda: { label: 'Descanso', exercises: [], rest: true },
   terca: { label: 'Triceps e Biceps', grupo: 'Membros', exercises: [
     { id: 'ex1',  name: 'Triceps Frances Corda',  badge: null },
-    { id: 'ex2',  name: 'Triceps Testa Corda',    badge: 'REST PAUSE' },
-    { id: 'ex3',  name: 'Triceps Corda',          badge: 'DROP SET' },
+    { id: 'ex2',  name: 'Triceps Testa Corda',    badge: 'RP' },
+    { id: 'ex3',  name: 'Triceps Corda',          badge: 'DS' },
     { id: 'ex4',  name: 'Triceps Pulley Inverso', badge: null },
     { id: 'ex5',  name: 'Rosca Bayesiana',        badge: null },
-    { id: 'ex6',  name: 'Rosca Corda',            badge: 'REST PAUSE' },
-    { id: 'ex7',  name: 'Rosca Scott',            badge: 'DROP SET' }
+    { id: 'ex6',  name: 'Rosca Corda',            badge: 'RP' },
+    { id: 'ex7',  name: 'Rosca Scott',            badge: 'DS' }
   ]},
   quarta: { label: 'Perna e Trapezio', grupo: 'Membros', exercises: [
     { id: 'ex8',  name: 'Cadeira Extensora', badge: null },
@@ -186,7 +315,7 @@ var WORKOUT_DATA = {
     { id: 'ex16', name: 'Supino Declinado',      badge: null },
     { id: 'ex17', name: 'Supino Inclinado',      badge: null },
     { id: 'ex18', name: 'Cross Over',            badge: null },
-    { id: 'ex19', name: 'Triceps Frances Corda', badge: 'REST PAUSE' },
+    { id: 'ex19', name: 'Triceps Frances Corda', badge: 'RP' },
     { id: 'ex20', name: 'Triceps Maquina',       badge: null },
     { id: 'ex21', name: 'Triceps Banco',         badge: null }
   ]},
@@ -204,7 +333,7 @@ var WORKOUT_DATA = {
     { id: 'ex30', name: 'Pulley Fechado',         badge: null },
     { id: 'ex31', name: 'Remada Baixa Triangulo', badge: null },
     { id: 'ex32', name: 'Rosca Concentrada',      badge: null },
-    { id: 'ex33', name: 'Rosca 45',               badge: 'REST PAUSE' },
+    { id: 'ex33', name: 'Rosca 45',               badge: 'RP' },
     { id: 'ex34', name: 'Rosca Martelo Cruzado',  badge: null },
     { id: 'ex35', name: 'Abdominal',              badge: null }
   ]}
@@ -214,13 +343,39 @@ var DAYS     = ['segunda','terca','quarta','quinta','sexta','sabado','domingo'];
 var DAY_ABBR = { segunda:'SEG', terca:'TER', quarta:'QUA', quinta:'QUI', sexta:'SEX', sabado:'SAB', domingo:'DOM' };
 var todayMap = [6,0,1,2,3,4,5];
 var todayKey = DAYS[todayMap[new Date().getDay()]];
-var currentDay = null;
-var currentTab = 'treino';
+var currentDay  = null;
+var currentTab  = 'treino';
 var historyFilter = 'todos';
-var PASS_KEY = 'gym_password';
+var PASS_KEY    = 'gym_password';
+var WORKOUT_KEY = 'gym_workout_v2';
+
+// exercício alvo dos modais
+var modalTargetDay = null;
+var modalTargetIdx = null;
+var modalTargetStrategy = null;
+
+// ─── WORKOUT STATE (persistido) ──────────────────────────────────────────────
+
+function loadWorkoutData() {
+  try {
+    var saved = localStorage.getItem(WORKOUT_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
+}
+
+function saveWorkoutData() {
+  try { localStorage.setItem(WORKOUT_KEY, JSON.stringify(WORKOUT_DATA)); } catch(e) {}
+}
+
+var WORKOUT_DATA = loadWorkoutData();
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
 
 function getPassword() { return localStorage.getItem(PASS_KEY) || 'gym123'; }
 function setPassword(pw) { localStorage.setItem(PASS_KEY, pw); }
+
+// ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
 
 function loadKey(key) {
   try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
@@ -237,9 +392,18 @@ function saveLoad(exId, exName, kg) {
 }
 function getAllExercises() {
   var all = [];
-  DAYS.forEach(function(d) { if (!WORKOUT_DATA[d].rest) WORKOUT_DATA[d].exercises.forEach(function(e) { all.push(e); }); });
+  DAYS.forEach(function(d) {
+    if (!WORKOUT_DATA[d].rest) {
+      WORKOUT_DATA[d].exercises.forEach(function(e) { all.push(e); });
+    }
+  });
+  // Também inclui exercícios substituídos que estão no histórico (archived)
+  var archived = loadKey('gym_archived_exercises') || [];
+  archived.forEach(function(e) { all.push(e); });
   return all;
 }
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
 
 function tryLogin() {
   var val = document.getElementById('pinInput').value;
@@ -268,14 +432,14 @@ function changePassword() {
   msg.className = 'settings-msg';
   if (cur !== getPassword())  { msg.textContent = 'Senha atual incorreta.'; msg.classList.add('err'); msg.style.display='block'; return; }
   if (nw.length < 4)          { msg.textContent = 'Nova senha precisa ter 4+ caracteres.'; msg.classList.add('err'); msg.style.display='block'; return; }
-  if (nw !== conf)            { msg.textContent = 'As senhas nao coincidem.'; msg.classList.add('err'); msg.style.display='block'; return; }
+  if (nw !== conf)            { msg.textContent = 'As senhas não coincidem.'; msg.classList.add('err'); msg.style.display='block'; return; }
   setPassword(nw);
   msg.textContent = 'Senha alterada com sucesso!';
   msg.classList.add('ok'); msg.style.display='block';
-  document.getElementById('curPass').value = '';
-  document.getElementById('newPass').value = '';
-  document.getElementById('confPass').value = '';
+  ['curPass','newPass','confPass'].forEach(function(id){ document.getElementById(id).value=''; });
 }
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
 
 function switchTab(tab) {
   currentTab = tab;
@@ -286,26 +450,33 @@ function switchTab(tab) {
   document.getElementById('treinoSection').style.display    = tab==='treino'    ? 'block' : 'none';
   document.getElementById('historicoSection').style.display = tab==='historico' ? 'block' : 'none';
   document.getElementById('configSection').style.display    = tab==='config'    ? 'block' : 'none';
+  document.getElementById('holdHint').style.display         = tab==='treino'    ? 'block' : 'none';
   if (tab === 'historico') renderHistory();
 }
 
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
 function initApp() {
   buildDaySelector();
-  var startDay = WORKOUT_DATA[todayKey].rest ? DAYS.find(function(d) { return !WORKOUT_DATA[d].rest; }) : todayKey;
+  var startDay = WORKOUT_DATA[todayKey] && !WORKOUT_DATA[todayKey].rest
+    ? todayKey
+    : DAYS.find(function(d){ return !WORKOUT_DATA[d].rest; });
   selectDay(startDay);
 }
+
+// ─── DAY SELECTOR ─────────────────────────────────────────────────────────────
 
 function buildDaySelector() {
   var sel = document.getElementById('daySelector');
   sel.innerHTML = '';
   DAYS.forEach(function(day) {
-    var d = WORKOUT_DATA[day];
+    var d   = WORKOUT_DATA[day];
     var btn = document.createElement('div');
     btn.className = 'day-btn' + (d.rest ? ' rest' : '');
     btn.id = 'daybtn-' + day;
     var isToday = day === todayKey;
-    var label = d.rest ? 'DESCANSO' : d.label.split(' ')[0];
-    var dot = isToday ? '<span class="today-dot"></span>' : '';
+    var label   = d.rest ? 'DESCANSO' : d.label.split(' ')[0];
+    var dot     = isToday ? '<span class="today-dot"></span>' : '';
     btn.innerHTML = '<span class="day-name-small">' + DAY_ABBR[day] + '</span>' + label + dot;
     if (!d.rest) {
       btn.addEventListener('click', (function(k){ return function(){ selectDay(k); }; })(day));
@@ -323,6 +494,15 @@ function selectDay(day) {
   renderWorkout(day);
 }
 
+// ─── RENDER WORKOUT ───────────────────────────────────────────────────────────
+
+function getBadgeHtml(badge) {
+  if (!badge) return '<span class="exercise-badge badge-normal">NORMAL</span>';
+  var cls   = { RP:'badge-rp', DS:'badge-ds', MYO:'badge-myo', CLUSTER:'badge-cluster', GIANT:'badge-giant', '21S':'badge-21s' }[badge] || 'badge-normal';
+  var label = BADGE_LABELS[badge] || badge;
+  return '<span class="exercise-badge ' + cls + '">' + label + '</span>';
+}
+
 function renderWorkout(day) {
   var wv = document.getElementById('workoutView');
   var d  = WORKOUT_DATA[day];
@@ -330,27 +510,35 @@ function renderWorkout(day) {
     wv.innerHTML = '<div class="rest-day"><div class="big">💤</div><p>Dia de descanso — recupere-se bem!</p></div>';
     return;
   }
-  wv.innerHTML = '<div class="workout-header"><div class="workout-title">' + d.label + '</div><div class="workout-subtitle">' + d.grupo + ' · ' + d.exercises.length + ' exercicios</div></div><div id="exerciseList"></div>';
+  wv.innerHTML =
+    '<div class="workout-header">' +
+      '<div class="workout-title">' + d.label + '</div>' +
+      '<div class="workout-subtitle">' + d.grupo + ' · ' + d.exercises.length + ' exercícios</div>' +
+    '</div>' +
+    '<div id="exerciseList"></div>';
+
   var list = document.getElementById('exerciseList');
-  d.exercises.forEach(function(ex) {
+  d.exercises.forEach(function(ex, idx) {
     var hist   = getHistory(ex.id);
     var lastKg = hist.length > 0 ? hist[hist.length-1].kg : '';
     var maxKg  = hist.length > 0 ? Math.max.apply(null, hist.map(function(h){ return h.kg; })) : null;
     var isPR   = hist.length > 1 && parseFloat(lastKg) === maxKg;
     var prevKg = hist.length > 1 ? hist[hist.length-2].kg : null;
-    var badgeHtml = '';
-    if (ex.badge) {
-      var cls = ex.badge === 'REST PAUSE' ? 'badge-rp' : 'badge-ds';
-      badgeHtml = '<span class="exercise-badge ' + cls + '">' + ex.badge + '</span>';
-    }
     var histTxt = prevKg !== null ? 'ant: ' + prevKg + 'kg' : (hist.length===1 ? '1x reg.' : '');
     var prTxt   = isPR ? '<span class="pr-badge">★ PR</span>' : '';
 
     var card = document.createElement('div');
     card.className = 'exercise-card';
     card.id = 'card-' + ex.id;
+    card.setAttribute('data-day', day);
+    card.setAttribute('data-idx', idx);
     card.innerHTML =
-      '<div class="exercise-top"><span class="exercise-name">' + ex.name + '</span>' + badgeHtml + '</div>' +
+      '<div class="hold-progress" id="progress-' + ex.id + '"></div>' +
+      '<div class="exercise-top">' +
+        '<span class="exercise-name">' + ex.name + '</span>' +
+        getBadgeHtml(ex.badge) +
+        '<button class="strategy-btn" id="stratbtn-' + ex.id + '" title="Mudar estratégia">⚡</button>' +
+      '</div>' +
       '<div class="load-row">' +
         '<span class="load-label">CARGA</span>' +
         '<input class="load-input" type="number" min="0" step="0.5" value="' + lastKg + '" placeholder="0" id="inp-' + ex.id + '" />' +
@@ -360,10 +548,159 @@ function renderWorkout(day) {
       '</div>';
     list.appendChild(card);
 
-    document.getElementById('btn-' + ex.id).addEventListener('click', (function(id, name){ return function(){ handleSave(id, name); }; })(ex.id, ex.name));
-    document.getElementById('inp-' + ex.id).addEventListener('keydown', (function(id, name){ return function(e){ if(e.key==='Enter') handleSave(id, name); }; })(ex.id, ex.name));
+    // Salvar carga
+    document.getElementById('btn-' + ex.id).addEventListener('click', (function(id,name){ return function(){ handleSave(id,name); }; })(ex.id, ex.name));
+    document.getElementById('inp-' + ex.id).addEventListener('keydown', (function(id,name){ return function(e){ if(e.key==='Enter') handleSave(id,name); }; })(ex.id, ex.name));
+
+    // Estratégia
+    document.getElementById('stratbtn-' + ex.id).addEventListener('click', (function(exId, exName, exBadge, dayKey, exIdx){
+      return function(e) {
+        e.stopPropagation();
+        openStrategyModal(exId, exName, exBadge, dayKey, exIdx);
+      };
+    })(ex.id, ex.name, ex.badge, day, idx));
+
+    // Hold para substituir
+    setupHoldToReplace(card, ex, day, idx);
   });
 }
+
+// ─── HOLD TO REPLACE ─────────────────────────────────────────────────────────
+
+function setupHoldToReplace(card, ex, day, idx) {
+  var holdDuration = 600; // ms
+  var holdTimer = null;
+  var holdStart = null;
+  var progressEl = document.getElementById('progress-' + ex.id);
+  var animFrame  = null;
+
+  function startHold(e) {
+    // Não ativa se o toque foi num input ou botão
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+    holdStart = Date.now();
+    card.classList.add('pressing');
+
+    function animate() {
+      var elapsed = Date.now() - holdStart;
+      var pct = Math.min((elapsed / holdDuration) * 100, 100);
+      progressEl.style.width = pct + '%';
+      if (pct < 100) {
+        animFrame = requestAnimationFrame(animate);
+      }
+    }
+    animFrame = requestAnimationFrame(animate);
+
+    holdTimer = setTimeout(function() {
+      cancelHold();
+      openReplaceModal(ex, day, idx);
+    }, holdDuration);
+  }
+
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    cancelAnimationFrame(animFrame);
+    card.classList.remove('pressing');
+    progressEl.style.width = '0%';
+  }
+
+  // Mouse
+  card.addEventListener('mousedown',  startHold);
+  card.addEventListener('mouseup',    cancelHold);
+  card.addEventListener('mouseleave', cancelHold);
+
+  // Touch
+  card.addEventListener('touchstart', function(e){ startHold(e.touches[0]); }, { passive: true });
+  card.addEventListener('touchend',   cancelHold);
+  card.addEventListener('touchcancel',cancelHold);
+}
+
+// ─── REPLACE MODAL ────────────────────────────────────────────────────────────
+
+function openReplaceModal(ex, day, idx) {
+  modalTargetDay = day;
+  modalTargetIdx = idx;
+  document.getElementById('replaceTitle').textContent = 'Substituir exercício';
+  document.getElementById('replaceSubtitle').textContent = 'Atual: ' + ex.name;
+  document.getElementById('replaceInput').value = '';
+  document.getElementById('replaceModal').classList.add('open');
+  setTimeout(function(){ document.getElementById('replaceInput').focus(); }, 250);
+}
+
+function closeReplaceModal() {
+  document.getElementById('replaceModal').classList.remove('open');
+  modalTargetDay = null;
+  modalTargetIdx = null;
+}
+
+function confirmReplace() {
+  var newName = document.getElementById('replaceInput').value.trim();
+  if (!newName) { document.getElementById('replaceInput').focus(); return; }
+
+  var day = modalTargetDay;
+  var idx = modalTargetIdx;
+  var oldEx = WORKOUT_DATA[day].exercises[idx];
+
+  // Arquiva o exercício antigo para o histórico continuar visível
+  var archived = loadKey('gym_archived_exercises') || [];
+  var alreadyArchived = archived.some(function(a){ return a.id === oldEx.id; });
+  if (!alreadyArchived) archived.push({ id: oldEx.id, name: oldEx.name });
+  saveKey('gym_archived_exercises', archived);
+
+  // Cria novo exercício com ID único
+  var newId = 'ex_' + Date.now();
+  WORKOUT_DATA[day].exercises[idx] = { id: newId, name: newName, badge: oldEx.badge };
+  saveWorkoutData();
+
+  closeReplaceModal();
+  renderWorkout(day);
+}
+
+// ─── STRATEGY MODAL ───────────────────────────────────────────────────────────
+
+function openStrategyModal(exId, exName, currentBadge, day, idx) {
+  modalTargetDay      = day;
+  modalTargetIdx      = idx;
+  modalTargetStrategy = currentBadge;
+
+  document.getElementById('strategyTitle').textContent   = 'Estratégia de treino';
+  document.getElementById('strategySubtitle').textContent = exName;
+
+  var grid = document.getElementById('strategyGrid');
+  grid.innerHTML = '';
+  STRATEGIES.forEach(function(s) {
+    var div = document.createElement('div');
+    div.className = 'strategy-option' + (s.key === currentBadge ? ' selected' : '');
+    div.innerHTML =
+      '<div class="strategy-option-name">' + s.label + '</div>' +
+      '<div class="strategy-option-desc">' + s.desc + '</div>';
+    div.addEventListener('click', function() {
+      grid.querySelectorAll('.strategy-option').forEach(function(el){ el.classList.remove('selected'); });
+      div.classList.add('selected');
+      modalTargetStrategy = s.key;
+    });
+    grid.appendChild(div);
+  });
+
+  document.getElementById('strategyModal').classList.add('open');
+}
+
+function closeStrategyModal() {
+  document.getElementById('strategyModal').classList.remove('open');
+  modalTargetDay      = null;
+  modalTargetIdx      = null;
+  modalTargetStrategy = null;
+}
+
+function confirmStrategy() {
+  var day = modalTargetDay;
+  var idx = modalTargetIdx;
+  WORKOUT_DATA[day].exercises[idx].badge = modalTargetStrategy;
+  saveWorkoutData();
+  closeStrategyModal();
+  renderWorkout(day);
+}
+
+// ─── SAVE LOAD ────────────────────────────────────────────────────────────────
 
 function handleSave(exId, exName) {
   var inp  = document.getElementById('inp-'  + exId);
@@ -383,6 +720,8 @@ function handleSave(exId, exName) {
   setTimeout(function(){ btn.textContent = 'Salvar'; btn.classList.remove('saved'); }, 2000);
 }
 
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+
 function renderHistory() {
   var allEx = getAllExercises();
   var fDiv  = document.getElementById('historyFilter');
@@ -392,23 +731,29 @@ function renderHistory() {
     var cls = historyFilter===d ? ' active' : '';
     return '<button class="filter-btn' + cls + '" data-day="' + d + '">' + label + '</button>';
   }).join('');
-  fDiv.querySelectorAll('.filter-btn').forEach(function(btn) {
+  fDiv.querySelectorAll('.filter-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ setFilter(btn.getAttribute('data-day')); });
   });
 
   var rows = [];
   allEx.forEach(function(ex) {
-    getHistory(ex.id).forEach(function(h) { rows.push({ name: ex.name, date: h.date, kg: h.kg, exId: ex.id }); });
+    getHistory(ex.id).forEach(function(h) {
+      rows.push({ name: ex.name, date: h.date, kg: h.kg, exId: ex.id });
+    });
   });
+
   if (historyFilter !== 'todos') {
     var ids = WORKOUT_DATA[historyFilter].exercises.map(function(e){ return e.id; });
+    // também inclui arquivados desse dia? Não por enquanto — filtra só os ativos
     rows = rows.filter(function(r){ return ids.indexOf(r.exId) >= 0; });
   }
+
   rows.sort(function(a,b) {
     var da = a.date.split('/').reverse().join('');
     var db = b.date.split('/').reverse().join('');
     return db.localeCompare(da);
   });
+
   var prMap = {};
   allEx.forEach(function(ex) {
     var h = getHistory(ex.id);
@@ -425,10 +770,17 @@ function renderHistory() {
     var pr = isMulti && r.kg === prMap[r.exId];
     return '<div class="history-row"><div class="h-name">' + r.name + '</div><div class="h-date">' + r.date + '</div><div class="h-load">' + r.kg + ' kg</div><div class="h-pr">' + (pr ? '★ PR' : '') + '</div></div>';
   }).join('');
-  content.innerHTML = '<div class="history-table"><div class="history-row hdr"><div>Exercicio</div><div>Data</div><div>Carga</div><div></div></div>' + rowsHtml + '</div><div class="count-line">' + rows.length + ' registro' + (rows.length!==1?'s':'') + '</div>';
+  content.innerHTML =
+    '<div class="history-table">' +
+      '<div class="history-row hdr"><div>Exercício</div><div>Data</div><div>Carga</div><div></div></div>' +
+      rowsHtml +
+    '</div>' +
+    '<div class="count-line">' + rows.length + ' registro' + (rows.length!==1?'s':'') + '</div>';
 }
 
 function setFilter(day) { historyFilter = day; renderHistory(); }
+
+// ─── EVENTS ───────────────────────────────────────────────────────────────────
 
 document.getElementById('loginBtn').addEventListener('click', tryLogin);
 document.getElementById('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') tryLogin(); });
@@ -437,6 +789,17 @@ document.getElementById('tabTreino').addEventListener('click', function(){ switc
 document.getElementById('tabHistorico').addEventListener('click', function(){ switchTab('historico'); });
 document.getElementById('tabConfig').addEventListener('click', function(){ switchTab('config'); });
 document.getElementById('savePassBtn').addEventListener('click', changePassword);
+
+// Replace modal
+document.getElementById('replaceCancelBtn').addEventListener('click', closeReplaceModal);
+document.getElementById('replaceConfirmBtn').addEventListener('click', confirmReplace);
+document.getElementById('replaceInput').addEventListener('keydown', function(e){ if(e.key==='Enter') confirmReplace(); });
+document.getElementById('replaceModal').addEventListener('click', function(e){ if(e.target===this) closeReplaceModal(); });
+
+// Strategy modal
+document.getElementById('strategyCancelBtn').addEventListener('click', closeStrategyModal);
+document.getElementById('strategyConfirmBtn').addEventListener('click', confirmStrategy);
+document.getElementById('strategyModal').addEventListener('click', function(e){ if(e.target===this) closeStrategyModal(); });
 </script>
 </body>
 </html>
