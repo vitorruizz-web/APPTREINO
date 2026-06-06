@@ -604,17 +604,21 @@ var BADGE_LABELS={RP:"REST PAUSE",DS:"DROP SET",MYO:"MYO-REPS",CLUSTER:"CLUSTER"
 
 var SETS_REPS_OPTIONS=[
   {key:null,label:"\u2014 Sem configura\u00e7\u00e3o",desc:"Remover configura\u00e7\u00e3o de s\u00e9ries"},
+
   {key:"1x5",label:"1 \u00d7 5",desc:"For\u00e7a m\u00e1xima"},
   {key:"1x8",label:"1 \u00d7 8",desc:"1 s\u00e9rie de 8 reps"},
   {key:"1x10",label:"1 \u00d7 10",desc:"1 s\u00e9rie de 10 reps"},
   {key:"1x12",label:"1 \u00d7 12",desc:"1 s\u00e9rie de 12 reps"},
   {key:"1x15",label:"1 \u00d7 15",desc:"1 s\u00e9rie de 15 reps"},
+
   {key:"2x5",label:"2 \u00d7 5",desc:"For\u00e7a"},
   {key:"2x6",label:"2 \u00d7 6",desc:"For\u00e7a / hipertrofia"},
   {key:"2x8",label:"2 \u00d7 8",desc:"2 s\u00e9ries de 8 reps"},
   {key:"2x10",label:"2 \u00d7 10",desc:"2 s\u00e9ries de 10 reps"},
   {key:"2x12",label:"2 \u00d7 12",desc:"2 s\u00e9ries de 12 reps"},
   {key:"2x15",label:"2 \u00d7 15",desc:"Resist\u00eancia"},
+  {key:"2xF",label:"2 \u00d7 Falha",desc:"2 s\u00e9ries at\u00e9 a falha"},
+
   {key:"3x3",label:"3 \u00d7 3",desc:"For\u00e7a m\u00e1xima"},
   {key:"3x4",label:"3 \u00d7 4",desc:"For\u00e7a"},
   {key:"3x5",label:"3 \u00d7 5",desc:"For\u00e7a / pot\u00eancia"},
@@ -630,6 +634,11 @@ var SETS_REPS_OPTIONS=[
   {key:"3x10-12",label:"3 \u00d7 10\u201312",desc:"Hipertrofia"},
   {key:"3x10-15",label:"3 \u00d7 10\u201315",desc:"Hipertrofia / resist\u00eancia"},
   {key:"3x12-15",label:"3 \u00d7 12\u201315",desc:"Resist\u00eancia muscular"},
+  {key:"3xF",label:"3 \u00d7 Falha",desc:"3 s\u00e9ries at\u00e9 a falha"},
+  {key:"3x30s",label:"3 \u00d7 30s",desc:"Prancha / isom\u00e9trico"},
+  {key:"3x45s",label:"3 \u00d7 45s",desc:"Isom\u00e9trico 45 seg"},
+  {key:"3x60s",label:"3 \u00d7 60s",desc:"Isom\u00e9trico 60 seg"},
+
   {key:"4x4",label:"4 \u00d7 4",desc:"For\u00e7a"},
   {key:"4x5",label:"4 \u00d7 5",desc:"For\u00e7a"},
   {key:"4x6",label:"4 \u00d7 6",desc:"For\u00e7a / hipertrofia"},
@@ -644,21 +653,19 @@ var SETS_REPS_OPTIONS=[
   {key:"4x10-12",label:"4 \u00d7 10\u201312",desc:"Hipertrofia / volume"},
   {key:"4x10-15",label:"4 \u00d7 10\u201315",desc:"Hipertrofia / resist\u00eancia"},
   {key:"4x12-15",label:"4 \u00d7 12\u201315",desc:"Resist\u00eancia muscular"},
+  {key:"4xF",label:"4 \u00d7 Falha",desc:"4 s\u00e9ries at\u00e9 a falha"},
+  {key:"4x30s",label:"4 \u00d7 30s",desc:"4 s\u00e9ries de 30 seg"},
+  {key:"4x45s",label:"4 \u00d7 45s",desc:"4 s\u00e9ries de 45 seg"},
+  {key:"4x60s",label:"4 \u00d7 60s",desc:"4 s\u00e9ries de 60 seg"},
+
   {key:"5x3",label:"5 \u00d7 3",desc:"For\u00e7a m\u00e1xima"},
   {key:"5x5",label:"5 \u00d7 5",desc:"StrongLifts / for\u00e7a"},
   {key:"5x8",label:"5 \u00d7 8",desc:"Volume alto"},
   {key:"5x10",label:"5 \u00d7 10",desc:"GVT cl\u00e1ssico"},
+
   {key:"6x6",label:"6 \u00d7 6",desc:"For\u00e7a / volume"},
-  {key:"10x10",label:"10 \u00d7 10",desc:"German Volume Training"},
-  {key:"3xF",label:"3 \u00d7 Falha",desc:"3 s\u00e9ries at\u00e9 a falha"},
-  {key:"4xF",label:"4 \u00d7 Falha",desc:"4 s\u00e9ries at\u00e9 a falha"},
-  {key:"2xF",label:"2 \u00d7 Falha",desc:"2 s\u00e9ries at\u00e9 a falha"},
-  {key:"3x30s",label:"3 \u00d7 30s",desc:"Prancha / isom\u00e9trico"},
-  {key:"3x45s",label:"3 \u00d7 45s",desc:"Isom\u00e9trico 45 seg"},
-  {key:"3x60s",label:"3 \u00d7 60s",desc:"Isom\u00e9trico 60 seg"},
-  {key:"4x30s",label:"4 \u00d7 30s",desc:"4 s\u00e9ries de 30 seg"},
-  {key:"4x45s",label:"4 \u00d7 45s",desc:"4 s\u00e9ries de 45 seg"},
-  {key:"4x60s",label:"4 \u00d7 60s",desc:"4 s\u00e9ries de 60 seg"}
+
+  {key:"10x10",label:"10 \u00d7 10",desc:"German Volume Training"}
 ];
 
 function formatSetsRepsTag(key){
