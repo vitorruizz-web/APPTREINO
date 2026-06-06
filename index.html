@@ -76,28 +76,41 @@
   .login-toggle a:hover { text-decoration: underline; }
 
   .main-app { display: none; max-width: 680px; margin: 0 auto; }
+
+  /* ── HEADER RESPONSIVO ────────────────────────────────────────────────── */
   .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.25rem; border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 0.75rem 1rem; border-bottom: 0.5px solid var(--border);
     background: var(--surface); position: sticky; top: 0; z-index: 10;
+    flex-wrap: nowrap; min-width: 0;
   }
-  .header-logo { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: -1.5px; }
-  .header-user { font-size: 11px; color: var(--muted); font-family: "DM Mono", monospace; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
+  .header-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 1; overflow: hidden; }
+  .header-logo { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: -1.5px; white-space: nowrap; }
+  .header-user { font-size: 10px; color: var(--muted); font-family: "DM Mono", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+  .header-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
   .btn-tab {
-    padding: 6px 16px; border: 0.5px solid var(--border); border-radius: 20px; background: transparent;
-    font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--muted);
-    transition: all 0.15s; letter-spacing: 0.5px;
+    padding: 5px 10px; border: 0.5px solid var(--border); border-radius: 20px; background: transparent;
+    font-family: "Syne",sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; color: var(--muted);
+    transition: all 0.15s; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0;
   }
   .btn-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .btn-logout {
-    padding: 5px 12px; border: 0.5px solid var(--border); border-radius: var(--radius-md);
-    background: transparent; font-family: "Syne",sans-serif; font-size: 11px; cursor: pointer; color: var(--muted);
+    padding: 5px 8px; border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    background: transparent; font-family: "Syne",sans-serif; font-size: 11px; cursor: pointer;
+    color: var(--muted); white-space: nowrap; flex-shrink: 0;
   }
   .btn-logout:hover { background: var(--surface2); }
   .header-avatar {
-    width: 30px; height: 30px; border-radius: 50%;
-    object-fit: cover; object-position: center top; border: 1.5px solid var(--accent); flex-shrink: 0; cursor: pointer;
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    object-fit: cover; object-position: center top; border: 1.5px solid var(--accent); cursor: pointer;
+  }
+
+  /* tela estreita: oculta label "Sair" e mostra ícone */
+  @media (max-width: 480px) {
+    .btn-logout .logout-label { display: none; }
+    .btn-logout::after { content: "↩"; font-size: 13px; }
+    .btn-tab { padding: 5px 8px; font-size: 10px; }
+    .header-user { max-width: 60px; }
   }
 
   .day-selector {
@@ -123,17 +136,30 @@
   .workout-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
   .workout-subtitle { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1.5px; text-transform: uppercase; }
 
+  /* ── EXERCISE CARD ────────────────────────────────────────────────────── */
   .exercise-card {
     background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
-    padding: 1rem 1.25rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s;
+    padding: 1rem 1rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s;
     user-select: none; -webkit-user-select: none; position: relative;
   }
   .exercise-card:hover { border-color: var(--border2); }
   .exercise-card.pressing { transform: scale(0.98); box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
-  .exercise-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-  .exercise-name { font-size: 14px; font-weight: 700; flex: 1; cursor: pointer; }
+
+  /* linha superior: nome + badge (1ª linha) + ações (sempre na direita, nunca clipadas) */
+  .exercise-top {
+    display: flex; align-items: flex-start; gap: 6px; margin-bottom: 10px;
+    flex-wrap: nowrap; min-width: 0;
+  }
+  .exercise-name-badge {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+    flex: 1 1 0; min-width: 0;
+  }
+  .exercise-name {
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    word-break: break-word; line-height: 1.3;
+  }
   .exercise-name:hover { color: var(--accent); }
-  .exercise-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; white-space: nowrap; cursor: default; }
+  .exercise-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; letter-spacing: 0.5px; white-space: nowrap; cursor: default; flex-shrink: 0; }
   .badge-normal   { background: var(--surface2); color: var(--muted); }
   .badge-rp       { background: #EEEDFE; color: #3C3489; }
   .badge-ds       { background: #FAEEDA; color: #633806; }
@@ -141,9 +167,14 @@
   .badge-cluster  { background: #E8F4FD; color: #1A5C8B; }
   .badge-giant    { background: #E8FDE8; color: #1A6B1A; }
   .badge-21s      { background: #FDF5E8; color: #7A5010; }
-  .exercise-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+  /* ações sempre agrupadas, nunca quebram */
+  .exercise-actions {
+    display: flex; gap: 4px; align-items: center;
+    flex-shrink: 0; margin-left: auto;
+  }
   .icon-btn {
-    width: 26px; height: 26px; border-radius: 50%; background: var(--surface2);
+    width: 28px; height: 28px; border-radius: 50%; background: var(--surface2);
     border: 0.5px solid var(--border); cursor: pointer; display: flex; align-items: center;
     justify-content: center; font-size: 13px; color: var(--muted); flex-shrink: 0;
     transition: all 0.15s; line-height: 1;
@@ -151,6 +182,7 @@
   .icon-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
   .icon-btn.has-link { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
   .icon-btn.danger:hover { background: #FDE8E8; border-color: var(--danger); color: var(--danger); }
+
   .load-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .load-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 1.5px; white-space: nowrap; }
   .load-input {
@@ -206,7 +238,7 @@
   }
   .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
   .history-table { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-  .history-row { display: grid; grid-template-columns: 1fr 90px 70px 60px; padding: 10px 1.25rem; border-bottom: 0.5px solid var(--border); align-items: center; gap: 8px; }
+  .history-row { display: grid; grid-template-columns: 1fr 90px 70px 60px; padding: 10px 1rem; border-bottom: 0.5px solid var(--border); align-items: center; gap: 8px; }
   .history-row:last-child { border-bottom: none; }
   .history-row.hdr { background: var(--surface2); font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; }
   .history-row:not(.hdr):hover { background: var(--surface2); }
@@ -355,9 +387,9 @@
 <!-- APP -->
 <div class="main-app" id="mainApp">
   <div class="header">
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div class="header-left">
       <img class="header-avatar" id="headerAvatar" src="" alt="avatar" title="Clique para trocar avatar" />
-      <div>
+      <div style="min-width:0">
         <div class="header-logo">GYM</div>
         <div class="header-user" id="headerUser"></div>
       </div>
@@ -366,7 +398,7 @@
       <button class="btn-tab active" id="tabTreino">Treino</button>
       <button class="btn-tab" id="tabHistorico">Histórico</button>
       <button class="btn-tab" id="tabConfig">⚙</button>
-      <button class="btn-logout" id="logoutBtn">Sair</button>
+      <button class="btn-logout" id="logoutBtn"><span class="logout-label">Sair</span></button>
     </div>
   </div>
 
@@ -407,8 +439,6 @@
 </div>
 
 <!-- MODALS -->
-
-<!-- ADD EXERCISE -->
 <div class="modal-overlay" id="addExModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -423,7 +453,6 @@
   </div>
 </div>
 
-<!-- REPLACE -->
 <div class="modal-overlay" id="replaceModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -438,7 +467,6 @@
   </div>
 </div>
 
-<!-- STRATEGY -->
 <div class="modal-overlay" id="strategyModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -452,7 +480,6 @@
   </div>
 </div>
 
-<!-- VIDEO LINK -->
 <div class="modal-overlay" id="videoModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -470,7 +497,6 @@
   </div>
 </div>
 
-<!-- DELETE CONFIRM -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -484,7 +510,6 @@
   </div>
 </div>
 
-<!-- EDIT LOAD DATE -->
 <div class="modal-overlay" id="editLoadModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -834,6 +859,36 @@ function addToCache(exId, exName, kg) {
   userLoads[exId].push({ date: new Date().toLocaleDateString("pt-BR"), kg: parseFloat(kg), name: exName });
 }
 
+// ─── REFRESH CARD UI after cache change ──────────────────────────────────────
+// Atualiza a exibição de meta + gráfico de um exercício no card da tela treino
+function refreshCardUI(exId) {
+  var hist   = getHistory(exId);
+  var meta   = document.getElementById("meta-" + exId);
+  var inp    = document.getElementById("inp-"  + exId);
+  var cp     = document.getElementById("chart-" + exId);
+
+  if (!meta) return; // card não está visível
+
+  if (hist.length === 0) {
+    // nenhum registro: limpa input e meta
+    if (inp) inp.value = "";
+    meta.innerHTML = "";
+  } else {
+    var lastKg  = hist[hist.length - 1].kg;
+    var maxKg   = Math.max.apply(null, hist.map(function(h){ return h.kg; }));
+    var isPR    = hist.length > 1 && lastKg === maxKg;
+    var prevKg  = hist.length > 1 ? hist[hist.length - 2].kg : null;
+    var histTxt = prevKg !== null ? "ant: " + prevKg + "kg" : (hist.length === 1 ? "1x reg." : "");
+    meta.innerHTML = histTxt + " " + (isPR ? '<span class="pr-badge">★ PR</span>' : "");
+    if (inp) inp.value = lastKg;
+  }
+
+  if (cp) {
+    cp.innerHTML = buildChartInner(hist);
+    if (openCharts[exId]) cp.classList.add("open");
+  }
+}
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function setLoginMode(register) {
   isRegisterMode = register;
@@ -1103,8 +1158,10 @@ function renderWorkout(day) {
     card.innerHTML =
       '<div class="hold-progress" id="progress-' + ex.id + '"></div>' +
       '<div class="exercise-top">' +
-        '<span class="exercise-name" id="exname-' + ex.id + '">' + ex.name + '</span>' +
-        getBadgeHtml(ex.badge) +
+        '<div class="exercise-name-badge">' +
+          '<span class="exercise-name" id="exname-' + ex.id + '">' + ex.name + '</span>' +
+          getBadgeHtml(ex.badge) +
+        '</div>' +
         '<div class="exercise-actions">' +
           '<button class="icon-btn ' + (hasVideo ? "has-link" : "") + '" id="videobtn-' + ex.id + '" title="Link do vídeo">▶</button>' +
           '<button class="icon-btn" id="stratbtn-' + ex.id + '" title="Mudar estratégia">⚡</button>' +
@@ -1122,7 +1179,6 @@ function renderWorkout(day) {
 
     list.appendChild(card);
 
-    // eventos via closures explícitas
     (function(id, nm) {
       document.getElementById("btn-" + id).addEventListener("click", function(){ handleSave(id, nm); });
       document.getElementById("inp-" + id).addEventListener("keydown", function(e){ if(e.key==="Enter") handleSave(id, nm); });
@@ -1342,7 +1398,7 @@ async function confirmDelete() {
     await sbSaveWorkoutConfig(currentUser.id, WORKOUT_DATA);
     buildDaySelector();
     renderWorkout(day);
-  } catch(e) { alert("Erro ao excluir: " + e.message); console.error(e); }
+  } catch(e) { alert("Erro ao excluir: " + e.message); }
   hideLoading();
 }
 
@@ -1429,6 +1485,11 @@ async function confirmEditLoad() {
     await sbUpdateLoadDate(loadId, brDate);
     var loads = await sbGetUserLoads(currentUser.id);
     buildLoadsCache(loads);
+    // ── atualiza cards visíveis na tela treino ──
+    if (currentDay) {
+      var dayExIds = (WORKOUT_DATA[currentDay].exercises || []).map(function(e){ return e.id; });
+      dayExIds.forEach(function(id){ refreshCardUI(id); });
+    }
     renderHistory();
   } catch(e) { alert("Erro ao salvar: " + e.message); console.error(e); }
   hideLoading();
@@ -1438,9 +1499,21 @@ async function deleteLoad(loadId) {
   if (!confirm("Excluir este registro?")) return;
   showLoading("Excluindo...");
   try {
+    // guarda o ex_id antes de deletar para atualizar o card
+    var exIdToRefresh = null;
+    Object.keys(userLoads).forEach(function(eid) {
+      userLoads[eid].forEach(function(entry) {
+        if (entry.id === loadId) exIdToRefresh = eid;
+      });
+    });
+
     await sbDeleteLoad(loadId);
     var loads = await sbGetUserLoads(currentUser.id);
     buildLoadsCache(loads);
+
+    // ── atualiza o card na tela treino se ele estiver visível ──
+    if (exIdToRefresh) refreshCardUI(exIdToRefresh);
+
     renderHistory();
   } catch(e) { alert("Erro ao excluir: " + e.message); console.error(e); }
   hideLoading();
@@ -1547,6 +1620,10 @@ async function clearHistory() {
   try {
     await sbClearUserLoads(currentUser.id);
     userLoads = {};
+    // atualiza todos os cards visíveis
+    if (currentDay) {
+      (WORKOUT_DATA[currentDay].exercises || []).forEach(function(ex){ refreshCardUI(ex.id); });
+    }
     alert("Histórico apagado.");
   } catch(e) { alert("Erro ao apagar: " + e.message); }
   hideLoading();
