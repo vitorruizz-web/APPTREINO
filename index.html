@@ -131,8 +131,6 @@
   .day-btn.rest { opacity: 0.55; }
   .day-btn.rest:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent2); opacity: 1; }
   .day-btn:hover:not(.rest):not(.active) { background: var(--accent-light); border-color: var(--accent); color: var(--accent2); }
-  .day-name-small { display: block; font-size: 10px; font-weight: 400; margin-bottom: 2px; letter-spacing: 1px; }
-  .today-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; margin-left: 4px; vertical-align: middle; opacity: 0.8; }
 
   .workout-view { padding: 1.25rem; }
   .workout-header { margin-bottom: 1.25rem; }
@@ -609,13 +607,11 @@ var BADGE_LABELS={RP:"REST PAUSE",DS:"DROP SET",MYO:"MYO-REPS",CLUSTER:"CLUSTER"
 
 var SETS_REPS_OPTIONS=[
   {key:null,label:"\u2014 Sem configura\u00e7\u00e3o",desc:"Remover configura\u00e7\u00e3o de s\u00e9ries"},
-
   {key:"1x5",label:"1 \u00d7 5",desc:"For\u00e7a m\u00e1xima"},
   {key:"1x8",label:"1 \u00d7 8",desc:"1 s\u00e9rie de 8 reps"},
   {key:"1x10",label:"1 \u00d7 10",desc:"1 s\u00e9rie de 10 reps"},
   {key:"1x12",label:"1 \u00d7 12",desc:"1 s\u00e9rie de 12 reps"},
   {key:"1x15",label:"1 \u00d7 15",desc:"1 s\u00e9rie de 15 reps"},
-
   {key:"2x5",label:"2 \u00d7 5",desc:"For\u00e7a"},
   {key:"2x6",label:"2 \u00d7 6",desc:"For\u00e7a / hipertrofia"},
   {key:"2x8",label:"2 \u00d7 8",desc:"2 s\u00e9ries de 8 reps"},
@@ -623,7 +619,6 @@ var SETS_REPS_OPTIONS=[
   {key:"2x12",label:"2 \u00d7 12",desc:"2 s\u00e9ries de 12 reps"},
   {key:"2x15",label:"2 \u00d7 15",desc:"Resist\u00eancia"},
   {key:"2xF",label:"2 \u00d7 Falha",desc:"2 s\u00e9ries at\u00e9 a falha"},
-
   {key:"3x3",label:"3 \u00d7 3",desc:"For\u00e7a m\u00e1xima"},
   {key:"3x4",label:"3 \u00d7 4",desc:"For\u00e7a"},
   {key:"3x5",label:"3 \u00d7 5",desc:"For\u00e7a / pot\u00eancia"},
@@ -643,7 +638,6 @@ var SETS_REPS_OPTIONS=[
   {key:"3x30s",label:"3 \u00d7 30s",desc:"Prancha / isom\u00e9trico"},
   {key:"3x45s",label:"3 \u00d7 45s",desc:"Isom\u00e9trico 45 seg"},
   {key:"3x60s",label:"3 \u00d7 60s",desc:"Isom\u00e9trico 60 seg"},
-
   {key:"4x4",label:"4 \u00d7 4",desc:"For\u00e7a"},
   {key:"4x5",label:"4 \u00d7 5",desc:"For\u00e7a"},
   {key:"4x6",label:"4 \u00d7 6",desc:"For\u00e7a / hipertrofia"},
@@ -662,14 +656,11 @@ var SETS_REPS_OPTIONS=[
   {key:"4x30s",label:"4 \u00d7 30s",desc:"4 s\u00e9ries de 30 seg"},
   {key:"4x45s",label:"4 \u00d7 45s",desc:"4 s\u00e9ries de 45 seg"},
   {key:"4x60s",label:"4 \u00d7 60s",desc:"4 s\u00e9ries de 60 seg"},
-
   {key:"5x3",label:"5 \u00d7 3",desc:"For\u00e7a m\u00e1xima"},
   {key:"5x5",label:"5 \u00d7 5",desc:"StrongLifts / for\u00e7a"},
   {key:"5x8",label:"5 \u00d7 8",desc:"Volume alto"},
   {key:"5x10",label:"5 \u00d7 10",desc:"GVT cl\u00e1ssico"},
-
   {key:"6x6",label:"6 \u00d7 6",desc:"For\u00e7a / volume"},
-
   {key:"10x10",label:"10 \u00d7 10",desc:"German Volume Training"}
 ];
 
@@ -678,20 +669,34 @@ function formatSetsRepsTag(key){
   return key.replace(/x/,"<span class='sr-x'>\u00d7</span>").replace(/-/g,"\u2013").replace("F","Falha");
 }
 
-var DEFAULT_WORKOUT={
-  segunda:{label:"Segunda-feira",exercises:[],rest:true},
-  terca:{label:"Ter\u00e7a-feira",exercises:[],rest:true},
-  quarta:{label:"Quarta-feira",exercises:[],rest:true},
-  quinta:{label:"Quinta-feira",exercises:[],rest:true},
-  sexta:{label:"Sexta-feira",exercises:[],rest:true},
-  sabado:{label:"S\u00e1bado",exercises:[],rest:true},
-  domingo:{label:"Domingo",exercises:[],rest:true}
+// ── TREINO A–G em vez dos dias da semana ──────────────────────────────────────
+var DAYS = ["treino_a","treino_b","treino_c","treino_d","treino_e","treino_f","treino_g"];
+
+var DAY_LABELS = {
+  treino_a: "Treino A",
+  treino_b: "Treino B",
+  treino_c: "Treino C",
+  treino_d: "Treino D",
+  treino_e: "Treino E",
+  treino_f: "Treino F",
+  treino_g: "Treino G"
 };
 
-var DAYS=["segunda","terca","quarta","quinta","sexta","sabado","domingo"];
-var DAY_ABBR={segunda:"SEG",terca:"TER",quarta:"QUA",quinta:"QUI",sexta:"SEX",sabado:"SAB",domingo:"DOM"};
-var todayMap=[6,0,1,2,3,4,5];
-var todayKey=DAYS[todayMap[new Date().getDay()]];
+var DAY_ABBR = {
+  treino_a: "A",
+  treino_b: "B",
+  treino_c: "C",
+  treino_d: "D",
+  treino_e: "E",
+  treino_f: "F",
+  treino_g: "G"
+};
+
+var DEFAULT_WORKOUT = {};
+DAYS.forEach(function(d){
+  DEFAULT_WORKOUT[d] = {label: DAY_LABELS[d], exercises: [], rest: true};
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 var currentDay=null,currentTab="treino",historyFilter="todos";
 var WORKOUT_DATA=null,currentUser=null,userLoads={},userVideoLinks={};
@@ -854,13 +859,47 @@ function logout(){
   document.getElementById("loginBtn").disabled=false;setLoginMode(false);
 }
 
+// Migra dados antigos (segunda/terca/...) para o novo esquema (treino_a/b/...)
+function migrateWorkoutData(data){
+  var oldKeys=["segunda","terca","quarta","quinta","sexta","sabado","domingo"];
+  var hasOld=oldKeys.some(function(k){return data[k]!==undefined;});
+  if(!hasOld) return data;
+  var newData={};
+  DAYS.forEach(function(newKey,i){
+    var oldKey=oldKeys[i];
+    if(data[oldKey]){
+      newData[newKey]={
+        label: DAY_LABELS[newKey],
+        exercises: data[oldKey].exercises||[],
+        rest: data[oldKey].rest!==undefined ? data[oldKey].rest : true,
+        grupo: data[oldKey].grupo||undefined
+      };
+    } else {
+      newData[newKey]={label:DAY_LABELS[newKey],exercises:[],rest:true};
+    }
+  });
+  return newData;
+}
+
 async function initApp(){
   showLoading("Carregando treino...");
   try{
     var remoteConfig=null;
     try{remoteConfig=await sbGetWorkoutConfig(currentUser.id);}catch(e){console.warn(e);}
+    if(remoteConfig){
+      remoteConfig=migrateWorkoutData(remoteConfig);
+    }
     WORKOUT_DATA=remoteConfig||JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
+    // Garante que todas as chaves existem
+    DAYS.forEach(function(d){
+      if(!WORKOUT_DATA[d]) WORKOUT_DATA[d]={label:DAY_LABELS[d],exercises:[],rest:true};
+      else WORKOUT_DATA[d].label=DAY_LABELS[d];
+    });
     if(!remoteConfig){try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);}catch(e){}}
+    else if(remoteConfig&&Object.keys(remoteConfig).some(function(k){return["segunda","terca","quarta","quinta","sexta","sabado","domingo"].indexOf(k)>=0;})){
+      // Salva migração
+      try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);}catch(e){}
+    }
     var loads=[];
     try{loads=await sbGetUserLoads(currentUser.id);}catch(e){console.warn(e);}
     buildLoadsCache(loads);
@@ -902,10 +941,7 @@ function buildDaySelector(){
     var d=WORKOUT_DATA[day];var btn=document.createElement("div");
     var hasEx=d.exercises&&d.exercises.length>0;
     btn.className="day-btn"+(d.rest&&!hasEx?" rest":"");btn.id="daybtn-"+day;
-    var isToday=day===todayKey;
-    var label=(d.rest&&!hasEx)?"DESCANSO":(d.label||day).split(" ").slice(0,2).join(" ");
-    var dot=isToday?'<span class="today-dot"></span>':"";
-    btn.innerHTML='<span class="day-name-small">'+DAY_ABBR[day]+"</span>"+label+dot;
+    btn.innerHTML=DAY_LABELS[day];
     btn.addEventListener("click",(function(k){return function(){selectDay(k);};})(day));
     sel.appendChild(btn);
   });
@@ -959,11 +995,11 @@ function renderWorkout(day){
   var d=WORKOUT_DATA[day];
   var hasEx=d.exercises&&d.exercises.length>0;
   if(d.rest&&!hasEx){
-    wv.innerHTML='<div class="rest-day"><div class="big">\ud83d\udca4</div><p>Dia de descanso \u2014 ou adicione exerc\u00edcios!</p><button class="btn-add-exercise" id="addExRestBtn">+ Adicionar exerc\u00edcio</button></div>';
+    wv.innerHTML='<div class="rest-day"><div class="big">\ud83d\udca4</div><p>Nenhum exerc\u00edcio neste treino \u2014 adicione agora!</p><button class="btn-add-exercise" id="addExRestBtn">+ Adicionar exerc\u00edcio</button></div>';
     document.getElementById("addExRestBtn").addEventListener("click",function(){openAddExerciseModal(day);});
     return;
   }
-  var titulo=(d.rest&&hasEx)?"Treino Extra":(d.label||day);
+  var titulo=DAY_LABELS[day];
   wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+" \u00b7 ":"")+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?"s":"")+'</div></div><div id="exerciseList"></div>';
   var list=document.getElementById("exerciseList");
 
@@ -1104,7 +1140,7 @@ setupAutocomplete("replaceInput","replaceSuggestions");
 
 function openAddExerciseModal(day){
   modalTargetDay=day;
-  document.getElementById("addExSubtitle").textContent=WORKOUT_DATA[day].label||day;
+  document.getElementById("addExSubtitle").textContent=DAY_LABELS[day]||day;
   document.getElementById("addExInput").value="";document.getElementById("addExSuggestions").style.display="none";
   document.getElementById("addExModal").classList.add("open");
   setTimeout(function(){document.getElementById("addExInput").focus();},250);
@@ -1116,6 +1152,7 @@ async function confirmAddExercise(){
   var day=modalTargetDay,newId="ex_"+Date.now();
   if(!WORKOUT_DATA[day].exercises)WORKOUT_DATA[day].exercises=[];
   WORKOUT_DATA[day].exercises.push({id:newId,name:name,badge:null,setsReps:null});
+  WORKOUT_DATA[day].rest=false;
   closeAddExModal();showLoading("Salvando...");
   try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);buildDaySelector();renderWorkout(day);}catch(e){alert("Erro ao salvar: "+e.message);}
   hideLoading();
@@ -1154,6 +1191,7 @@ async function confirmDelete(){
   try{
     await sbArchiveExercise(ex.id,ex.name);
     WORKOUT_DATA[day].exercises.splice(idx,1);
+    if(WORKOUT_DATA[day].exercises.length===0) WORKOUT_DATA[day].rest=true;
     await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);buildDaySelector();renderWorkout(day);
   } catch(e){alert("Erro ao excluir: "+e.message);}
   hideLoading();
@@ -1269,7 +1307,10 @@ async function renderHistory(){
   content.innerHTML='<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
   var fDiv=document.getElementById("historyFilter");
   var fDays=["todos"].concat(DAYS.filter(function(d){return WORKOUT_DATA[d].exercises&&WORKOUT_DATA[d].exercises.length>0;}));
-  fDiv.innerHTML=fDays.map(function(d){var label=d==="todos"?"Todos":DAY_ABBR[d]+": "+(WORKOUT_DATA[d].label||d).split(" ")[0];return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';}).join("");
+  fDiv.innerHTML=fDays.map(function(d){
+    var label=d==="todos"?"Todos":DAY_LABELS[d];
+    return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';
+  }).join("");
   fDiv.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){historyFilter=btn.getAttribute("data-day");renderHistory();});});
   try{
     var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
