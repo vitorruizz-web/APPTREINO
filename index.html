@@ -26,38 +26,75 @@
   /* ── TOAST ──────────────────────────────────────────────────────────────── */
   .gym-toast {
     position: fixed;
-    bottom: 80px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
+    transform: translate(-50%, -50%) scale(0.7);
     background: var(--surface);
-    border: 1.5px solid var(--border2);
-    border-radius: 999px;
-    padding: 12px 22px;
+    border: 2px solid var(--border2);
+    border-radius: 20px;
+    padding: 20px 28px;
     font-family: "Syne", sans-serif;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     color: var(--text);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.12);
     z-index: 9999;
     pointer-events: none;
-    white-space: nowrap;
-    max-width: 90vw;
+    white-space: normal;
+    max-width: min(88vw, 380px);
     text-align: center;
+    line-height: 1.4;
+    letter-spacing: -0.3px;
     opacity: 0;
-    transition: opacity 0.22s ease, transform 0.22s ease;
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .gym-toast.show {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%) scale(1);
   }
+  .gym-toast.hide {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .gym-toast-icon {
+    display: block;
+    font-size: 36px;
+    margin-bottom: 10px;
+    line-height: 1;
+    animation: none;
+  }
+  .gym-toast.show .gym-toast-icon { animation: iconBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both; }
+  @keyframes iconBounce {
+    0%   { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    60%  { transform: scale(1.25) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .gym-toast-msg { display: block; }
+
   .gym-toast.pr  { border-color: var(--accent); color: var(--accent2); background: var(--accent-light); }
   .gym-toast.same { border-color: #f0a500; color: #7A5010; background: #FAEEDA; }
   .gym-toast.down { border-color: var(--danger); color: var(--danger); background: #FCEBEB; }
+  .gym-toast.first { border-color: #185FA5; color: #185FA5; background: #E8F2FD; }
   @media (prefers-color-scheme: dark) {
     .gym-toast.same { color: #FAC775; background: #412402; border-color: #BA7517; }
     .gym-toast.down { color: #F09595; background: #501313; border-color: #A32D2D; }
     .gym-toast.pr   { color: #9FE1CB; background: #04342C; border-color: #1D9E75; }
+    .gym-toast.first { color: #82BFEF; background: #0B2340; border-color: #185FA5; }
   }
+  /* backdrop escuro atrás do toast */
+  .gym-toast-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(3px);
+    transition: opacity 0.18s ease;
+  }
+  .gym-toast-backdrop.show { opacity: 1; }
+  .gym-toast-backdrop.hide { opacity: 0; transition: opacity 0.22s ease; }
   /* ─────────────────────────────────────────────────────────────────────── */
 
   .loading-overlay {
@@ -466,7 +503,11 @@
 </head>
 <body>
 
-<div class="gym-toast" id="gymToast"></div>
+<div class="gym-toast-backdrop" id="gymToastBackdrop"></div>
+<div class="gym-toast" id="gymToast">
+  <span class="gym-toast-icon" id="gymToastIcon"></span>
+  <span class="gym-toast-msg" id="gymToastMsg"></span>
+</div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
@@ -646,40 +687,106 @@
     </div>
   </div>
 </div>
-
 <script>
 /* ── TOAST ─────────────────────────────────────────────────────────────────── */
 var toastTimer = null;
-function showToast(msg, type) {
+var toastHideTimer = null;
+
+function showToast(icon, msg, type) {
   var el = document.getElementById("gymToast");
+  var backdrop = document.getElementById("gymToastBackdrop");
+  var iconEl = document.getElementById("gymToastIcon");
+  var msgEl = document.getElementById("gymToastMsg");
   if (!el) return;
+
   clearTimeout(toastTimer);
-  el.textContent = msg;
-  el.className = "gym-toast " + (type || "");
+  clearTimeout(toastHideTimer);
+
+  /* reset para forçar re-animação */
+  el.classList.remove("show", "hide");
+  backdrop.classList.remove("show", "hide");
   void el.offsetWidth;
-  el.classList.add("show");
-  toastTimer = setTimeout(function () {
+
+  iconEl.textContent = icon;
+  msgEl.textContent = msg;
+  el.className = "gym-toast " + (type || "");
+  backdrop.className = "gym-toast-backdrop";
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      el.classList.add("show");
+      backdrop.classList.add("show");
+    });
+  });
+
+  toastTimer = setTimeout(function() {
     el.classList.remove("show");
-  }, 3200);
+    el.classList.add("hide");
+    backdrop.classList.remove("show");
+    backdrop.classList.add("hide");
+    toastHideTimer = setTimeout(function() {
+      el.classList.remove("hide");
+      backdrop.classList.remove("hide");
+    }, 250);
+  }, 3400);
 }
 
-var TOAST_PR   = ["Agora sim, vai ficar monstrão! 💪🔥", "BIRLLL tá saindo da jaula o monstro! 🦍🚀"];
-var TOAST_SAME = ["Tá treinando fofo ein... to de olho nesse treino 👀😏", "Treinando fofo? Sobe essa carga! 😤⬆️"];
-var TOAST_DOWN = ["Ih... olha o frangão 🐔😂", "Veio treinar para isso? Devia ter ficado em casa 🛋️😅"];
+/* ── MENSAGENS POR SITUAÇÃO ─────────────────────────────────────────────────── */
+var TOASTS = {
+  pr: [
+    { icon: "🏆", msg: "NOVO RECORDE! Você é uma máquina!" },
+    { icon: "🔥", msg: "PR QUEBRADO! Tá saindo da jaula o monstro!" },
+    { icon: "🦍", msg: "BIRLLL! Monstro na área!" },
+    { icon: "⚡", msg: "Carga nova máxima! Continua assim!" },
+    { icon: "🚀", msg: "Decolando! Recorde batido hoje!" },
+    { icon: "💥", msg: "QUE CARGA! Novo PR registrado!" },
+    { icon: "👑", msg: "Rei do treino! PR conquistado!" },
+    { icon: "🎯", msg: "Meta alcançada! Recorde pessoal novo!" }
+  ],
+  same: [
+    { icon: "😏", msg: "Tá treinando fofo... sobe essa carga!" },
+    { icon: "👀", msg: "Mesma carga? Tô de olho em você!" },
+    { icon: "😤", msg: "Hora de dar um up! Você aguenta mais!" },
+    { icon: "🤨", msg: "Estacionou? Bora evoluir!" },
+    { icon: "💭", msg: "Manteve a carga... quando vai subir?" },
+    { icon: "😅", msg: "Confortável demais esse peso, né?" },
+    { icon: "📊", msg: "Estável. Mas estável não vira monstro!" }
+  ],
+  down: [
+    { icon: "🐔", msg: "Ih... olha o frangão aparecendo!" },
+    { icon: "😂", msg: "Regrediu?! Devia ter ficado em casa!" },
+    { icon: "📉", msg: "Carga caiu... descansou pouco?" },
+    { icon: "🛋️", msg: "Parece que o sofá te chamou antes da academia!" },
+    { icon: "😬", msg: "Ops... menos que da última vez. Bora voltar forte!" },
+    { icon: "🤕", msg: "Tá mole hoje? Acontece, descansa e volta!" },
+    { icon: "😴", msg: "Carga caindo... dormiu mal?" }
+  ],
+  first: [
+    { icon: "🌱", msg: "Primeiro registro! Agora é só crescer!" },
+    { icon: "🎉", msg: "Começou! Daqui a pouco vira monstro!" },
+    { icon: "✅", msg: "Base registrada! A evolução começa agora!" },
+    { icon: "📌", msg: "Ponto zero marcado! Vamos superar isso!" }
+  ]
+};
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function triggerSaveToast(newKg, previousMax, histLen) {
+  var t;
   if (histLen === 1) {
-    showToast("Primeiro registro salvo! Agora é só crescer 💾✅", "pr");
+    t = pick(TOASTS.first);
+    showToast(t.icon, t.msg, "first");
     return;
   }
   if (newKg > previousMax) {
-    showToast(pick(TOAST_PR), "pr");
+    t = pick(TOASTS.pr);
+    showToast(t.icon, t.msg, "pr");
   } else if (newKg === previousMax) {
-    showToast(pick(TOAST_SAME), "same");
+    t = pick(TOASTS.same);
+    showToast(t.icon, t.msg, "same");
   } else {
-    showToast(pick(TOAST_DOWN), "down");
+    t = pick(TOASTS.down);
+    showToast(t.icon, t.msg, "down");
   }
 }
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -1131,7 +1238,6 @@ async function handleSave(exId, exName) {
     setTimeout(function() { inp.style.borderColor = ""; }, 1000); return;
   }
 
-  /* captura o máximo ANTES de adicionar o novo registro */
   var histBefore = getHistory(exId);
   var prevMax = histBefore.length > 0 ? Math.max.apply(null, histBefore.map(function(h) { return h.kg; })) : null;
 
@@ -1149,7 +1255,6 @@ async function handleSave(exId, exName) {
     var cp = document.getElementById("chart-" + exId);
     if (cp) { cp.innerHTML = buildChartInner(hist); if (openCharts[exId]) cp.classList.add("open"); }
 
-    /* ── dispara o toast de motivação ── */
     triggerSaveToast(kg, prevMax, hist.length);
 
     btn.textContent = "\u2713 Salvo"; btn.classList.add("saved");
