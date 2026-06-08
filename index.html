@@ -23,6 +23,43 @@
   }
   body { font-family: "Syne", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+  /* ── TOAST ──────────────────────────────────────────────────────────────── */
+  .gym-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    border: 1.5px solid var(--border2);
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-family: "Syne", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 9999;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90vw;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .gym-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .gym-toast.pr  { border-color: var(--accent); color: var(--accent2); background: var(--accent-light); }
+  .gym-toast.same { border-color: #f0a500; color: #7A5010; background: #FAEEDA; }
+  .gym-toast.down { border-color: var(--danger); color: var(--danger); background: #FCEBEB; }
+  @media (prefers-color-scheme: dark) {
+    .gym-toast.same { color: #FAC775; background: #412402; border-color: #BA7517; }
+    .gym-toast.down { color: #F09595; background: #501313; border-color: #A32D2D; }
+    .gym-toast.pr   { color: #9FE1CB; background: #04342C; border-color: #1D9E75; }
+  }
+  /* ─────────────────────────────────────────────────────────────────────── */
+
   .loading-overlay {
     display: none; position: fixed; inset: 0; background: var(--bg);
     z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 1rem;
@@ -132,7 +169,6 @@
   .workout-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
   .workout-subtitle { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1.5px; text-transform: uppercase; }
 
-  /* ── DRAG & DROP ─────────────────────────────────────────────────────────── */
   .exercise-card {
     background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
     padding: 1rem 1rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s;
@@ -167,9 +203,7 @@
     max-width: 480px;
     min-width: 240px;
   }
-  .drag-ghost-name {
-    font-size: 14px; font-weight: 700; margin-bottom: 4px;
-  }
+  .drag-ghost-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .drag-ghost-badge {
     font-size: 10px; color: var(--accent2); background: var(--accent-light);
     border: 0.5px solid var(--accent); border-radius: 6px;
@@ -178,19 +212,12 @@
   }
 
   .drop-indicator {
-    height: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-    margin: -5px 0 5px;
-    display: none;
-    box-shadow: 0 0 8px var(--accent);
+    height: 3px; background: var(--accent); border-radius: 2px;
+    margin: -5px 0 5px; display: none; box-shadow: 0 0 8px var(--accent);
     animation: pulse-line 0.8s ease-in-out infinite alternate;
   }
   .drop-indicator.visible { display: block; }
-  @keyframes pulse-line {
-    from { opacity: 0.7; }
-    to { opacity: 1; }
-  }
+  @keyframes pulse-line { from { opacity: 0.7; } to { opacity: 1; } }
 
   .drag-handle {
     display: flex; align-items: center; justify-content: center;
@@ -202,7 +229,6 @@
   .drag-handle:hover { color: var(--accent); background: var(--accent-light); }
   .drag-handle:active { cursor: grabbing; }
   .drag-handle svg { pointer-events: none; }
-  /* ────────────────────────────────────────────────────────────────────────── */
 
   .sets-reps-tag {
     display: inline-flex; align-items: center; gap: 3px;
@@ -306,66 +332,21 @@
   .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
   .history-table { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 
-  /* ── HISTORY ROW ─────────────────────────────────────────────────────────── */
   .history-row {
-    display: flex;
-    align-items: flex-start;   /* ← alinha pelo topo quando nome quebra linha */
-    padding: 11px 1rem;
-    border-bottom: 0.5px solid var(--border);
-    gap: 8px;
-    min-width: 0;
+    display: flex; align-items: flex-start; padding: 11px 1rem;
+    border-bottom: 0.5px solid var(--border); gap: 8px; min-width: 0;
   }
   .history-row:last-child { border-bottom: none; }
   .history-row.hdr {
-    background: var(--surface2);
-    font-size: 10px; font-weight: 700; color: var(--muted);
-    letter-spacing: 1.5px; text-transform: uppercase;
-    align-items: center;        /* ← cabeçalho permanece centralizado */
+    background: var(--surface2); font-size: 10px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1.5px; text-transform: uppercase; align-items: center;
   }
   .history-row:not(.hdr):hover { background: var(--surface2); }
-
-  /* Nome: ocupa o espaço restante, quebra linha quando necessário */
-  .h-name {
-    font-size: 13px;
-    font-weight: 700;
-    flex: 1 1 0;
-    min-width: 0;
-    white-space: normal;        /* ← permite quebra de linha */
-    word-break: break-word;     /* ← quebra palavras longas se necessário */
-    line-height: 1.4;
-  }
+  .h-name { font-size: 13px; font-weight: 700; flex: 1 1 0; min-width: 0; white-space: normal; word-break: break-word; line-height: 1.4; }
   .history-row.hdr .h-name { white-space: nowrap; }
-
-  /* Data: largura fixa, nunca encolhe */
-  .h-date {
-    font-family: "DM Mono",monospace;
-    font-size: 11px;
-    color: var(--muted);
-    flex-shrink: 0;
-    white-space: nowrap;
-    width: 82px;
-    padding-top: 1px;
-  }
-
-  /* Carga: largura fixa, nunca encolhe */
-  .h-load {
-    font-family: "DM Mono",monospace;
-    font-size: 13px;
-    font-weight: 500;
-    flex-shrink: 0;
-    white-space: nowrap;
-    width: 58px;
-    padding-top: 0px;
-  }
-
-  /* Botões de ação: sempre visíveis, nunca encolhem */
-  .h-actions {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-    align-items: center;
-  }
-
+  .h-date { font-family: "DM Mono",monospace; font-size: 11px; color: var(--muted); flex-shrink: 0; white-space: nowrap; width: 82px; padding-top: 1px; }
+  .h-load { font-family: "DM Mono",monospace; font-size: 13px; font-weight: 500; flex-shrink: 0; white-space: nowrap; width: 58px; padding-top: 0px; }
+  .h-actions { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
   .h-pr { font-size: 11px; color: var(--accent); font-weight: 700; font-family: "Syne",sans-serif; }
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
   .empty-state .icon { font-size: 40px; margin-bottom: 0.75rem; }
@@ -484,6 +465,8 @@
 </style>
 </head>
 <body>
+
+<div class="gym-toast" id="gymToast"></div>
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
@@ -665,6 +648,42 @@
 </div>
 
 <script>
+/* ── TOAST ─────────────────────────────────────────────────────────────────── */
+var toastTimer = null;
+function showToast(msg, type) {
+  var el = document.getElementById("gymToast");
+  if (!el) return;
+  clearTimeout(toastTimer);
+  el.textContent = msg;
+  el.className = "gym-toast " + (type || "");
+  void el.offsetWidth;
+  el.classList.add("show");
+  toastTimer = setTimeout(function () {
+    el.classList.remove("show");
+  }, 3200);
+}
+
+var TOAST_PR   = ["Agora sim, vai ficar monstrão! 💪🔥", "BIRLLL tá saindo da jaula o monstro! 🦍🚀"];
+var TOAST_SAME = ["Tá treinando fofo ein... to de olho nesse treino 👀😏", "Treinando fofo? Sobe essa carga! 😤⬆️"];
+var TOAST_DOWN = ["Ih... olha o frangão 🐔😂", "Veio treinar para isso? Devia ter ficado em casa 🛋️😅"];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function triggerSaveToast(newKg, previousMax, histLen) {
+  if (histLen === 1) {
+    showToast("Primeiro registro salvo! Agora é só crescer 💾✅", "pr");
+    return;
+  }
+  if (newKg > previousMax) {
+    showToast(pick(TOAST_PR), "pr");
+  } else if (newKg === previousMax) {
+    showToast(pick(TOAST_SAME), "same");
+  } else {
+    showToast(pick(TOAST_DOWN), "down");
+  }
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 var EXERCISE_DB = [
   {name:"Supino Reto",cat:"Peito"},{name:"Supino Inclinado",cat:"Peito"},{name:"Supino Declinado",cat:"Peito"},
   {name:"Supino Reto Halteres",cat:"Peito"},{name:"Supino Inclinado Halteres",cat:"Peito"},{name:"Peck Deck",cat:"Peito"},
@@ -766,19 +785,9 @@ var editLoadTarget=null;
 var openCharts={};
 
 var dnd = {
-  active: false,
-  draggingEl: null,
-  ghostEl: null,
-  dragExId: null,
-  dragDay: null,
-  dragOrigIdx: null,
-  dropIdx: null,
-  startY: 0,
-  startX: 0,
-  offsetX: 0,
-  offsetY: 0,
-  indicators: [],
-  saveTimer: null
+  active: false, draggingEl: null, ghostEl: null, dragExId: null, dragDay: null,
+  dragOrigIdx: null, dropIdx: null, startY: 0, startX: 0, offsetX: 0, offsetY: 0,
+  indicators: [], saveTimer: null
 };
 
 var AVATAR_PRESETS=[
@@ -1061,44 +1070,19 @@ function renderWorkout(day){
 }
 
 function startDrag(e, exId, day, origIdx, isTouch) {
-  dnd.active = true;
-  dnd.dragExId = exId;
-  dnd.dragDay = day;
-  dnd.dragOrigIdx = origIdx;
-  dnd.dropIdx = origIdx;
-
-  var card = document.getElementById("card-" + exId);
-  var rect = card.getBoundingClientRect();
-
-  dnd.offsetX = (e.clientX || e.pageX) - rect.left;
-  dnd.offsetY = (e.clientY || e.pageY) - rect.top;
-
-  var ghost = document.createElement("div");
-  ghost.className = "drag-ghost";
+  dnd.active = true; dnd.dragExId = exId; dnd.dragDay = day; dnd.dragOrigIdx = origIdx; dnd.dropIdx = origIdx;
+  var card = document.getElementById("card-" + exId); var rect = card.getBoundingClientRect();
+  dnd.offsetX = (e.clientX || e.pageX) - rect.left; dnd.offsetY = (e.clientY || e.pageY) - rect.top;
+  var ghost = document.createElement("div"); ghost.className = "drag-ghost";
   ghost.style.width = rect.width + "px";
   ghost.style.left = (e.clientX || e.pageX) - dnd.offsetX + "px";
   ghost.style.top = (e.clientY || e.pageY) - dnd.offsetY + "px";
-
   var ex = WORKOUT_DATA[day].exercises[origIdx];
-  ghost.innerHTML =
-    '<div class="drag-ghost-name">' + ex.name + '</div>' +
-    (ex.setsReps ? '<span class="drag-ghost-badge">' + ex.setsReps + '</span>' : '') +
-    (ex.badge ? '<span class="drag-ghost-badge" style="margin-left:4px">' + (BADGE_LABELS[ex.badge] || ex.badge) + '</span>' : '');
-  document.body.appendChild(ghost);
-  dnd.ghostEl = ghost;
-  dnd.draggingEl = card;
-
-  card.classList.add("dragging");
-  showDropIndicator(origIdx);
-
-  if (!isTouch) {
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onDragEnd);
-  } else {
-    document.addEventListener("touchmove", onDragMoveTouch, { passive: false });
-    document.addEventListener("touchend", onDragEndTouch);
-    document.addEventListener("touchcancel", onDragEndTouch);
-  }
+  ghost.innerHTML = '<div class="drag-ghost-name">' + ex.name + '</div>' + (ex.setsReps ? '<span class="drag-ghost-badge">' + ex.setsReps + '</span>' : '') + (ex.badge ? '<span class="drag-ghost-badge" style="margin-left:4px">' + (BADGE_LABELS[ex.badge] || ex.badge) + '</span>' : '');
+  document.body.appendChild(ghost); dnd.ghostEl = ghost; dnd.draggingEl = card;
+  card.classList.add("dragging"); showDropIndicator(origIdx);
+  if (!isTouch) { document.addEventListener("mousemove", onDragMove); document.addEventListener("mouseup", onDragEnd); }
+  else { document.addEventListener("touchmove", onDragMoveTouch, { passive: false }); document.addEventListener("touchend", onDragEndTouch); document.addEventListener("touchcancel", onDragEndTouch); }
 }
 
 function onDragMove(e) { moveDrag(e.clientX, e.clientY); }
@@ -1106,80 +1090,75 @@ function onDragMoveTouch(e) { e.preventDefault(); if (e.touches[0]) moveDrag(e.t
 
 function moveDrag(cx, cy) {
   if (!dnd.active || !dnd.ghostEl) return;
-  dnd.ghostEl.style.left = (cx - dnd.offsetX) + "px";
-  dnd.ghostEl.style.top = (cy - dnd.offsetY) + "px";
-
-  var list = document.getElementById("exerciseList");
-  if (!list) return;
-  var cards = list.querySelectorAll(".exercise-card");
-  var newIdx = WORKOUT_DATA[dnd.dragDay].exercises.length;
-  for (var i = 0; i < cards.length; i++) {
-    var r = cards[i].getBoundingClientRect();
-    var midY = r.top + r.height / 2;
-    if (cy < midY) { newIdx = parseInt(cards[i].getAttribute("data-idx")); break; }
-  }
+  dnd.ghostEl.style.left = (cx - dnd.offsetX) + "px"; dnd.ghostEl.style.top = (cy - dnd.offsetY) + "px";
+  var list = document.getElementById("exerciseList"); if (!list) return;
+  var cards = list.querySelectorAll(".exercise-card"); var newIdx = WORKOUT_DATA[dnd.dragDay].exercises.length;
+  for (var i = 0; i < cards.length; i++) { var r = cards[i].getBoundingClientRect(); var midY = r.top + r.height / 2; if (cy < midY) { newIdx = parseInt(cards[i].getAttribute("data-idx")); break; } }
   if (newIdx !== dnd.dropIdx) { dnd.dropIdx = newIdx; showDropIndicator(newIdx); }
 }
 
 function showDropIndicator(idx) {
   var list = document.getElementById("exerciseList"); if (!list) return;
   list.querySelectorAll(".drop-indicator").forEach(function(el) { el.classList.remove("visible"); });
-  var target = document.getElementById("drop-" + idx);
-  if (target) target.classList.add("visible");
+  var target = document.getElementById("drop-" + idx); if (target) target.classList.add("visible");
 }
 
-function onDragEnd(e) {
-  document.removeEventListener("mousemove", onDragMove);
-  document.removeEventListener("mouseup", onDragEnd);
-  finishDrag();
-}
-function onDragEndTouch(e) {
-  document.removeEventListener("touchmove", onDragMoveTouch);
-  document.removeEventListener("touchend", onDragEndTouch);
-  document.removeEventListener("touchcancel", onDragEndTouch);
-  finishDrag();
-}
+function onDragEnd(e) { document.removeEventListener("mousemove", onDragMove); document.removeEventListener("mouseup", onDragEnd); finishDrag(); }
+function onDragEndTouch(e) { document.removeEventListener("touchmove", onDragMoveTouch); document.removeEventListener("touchend", onDragEndTouch); document.removeEventListener("touchcancel", onDragEndTouch); finishDrag(); }
 
 function finishDrag() {
-  if (!dnd.active) return;
-  dnd.active = false;
-
+  if (!dnd.active) return; dnd.active = false;
   if (dnd.ghostEl) { dnd.ghostEl.remove(); dnd.ghostEl = null; }
   if (dnd.draggingEl) { dnd.draggingEl.classList.remove("dragging"); dnd.draggingEl = null; }
-
-  var from = dnd.dragOrigIdx;
-  var to = dnd.dropIdx;
-  var day = dnd.dragDay;
-
+  var from = dnd.dragOrigIdx; var to = dnd.dropIdx; var day = dnd.dragDay;
   var effectiveTo = to > from ? to - 1 : to;
-
   if (effectiveTo !== from && effectiveTo >= 0 && effectiveTo < WORKOUT_DATA[day].exercises.length) {
-    var exs = WORKOUT_DATA[day].exercises;
-    var moved = exs.splice(from, 1)[0];
-    exs.splice(effectiveTo, 0, moved);
-
+    var exs = WORKOUT_DATA[day].exercises; var moved = exs.splice(from, 1)[0]; exs.splice(effectiveTo, 0, moved);
     clearTimeout(dnd.saveTimer);
-    dnd.saveTimer = setTimeout(function() {
-      sbSaveWorkoutConfig(currentUser.id, WORKOUT_DATA).catch(function(e) { console.error("Erro ao salvar ordem:", e); });
-    }, 800);
+    dnd.saveTimer = setTimeout(function() { sbSaveWorkoutConfig(currentUser.id, WORKOUT_DATA).catch(function(e) { console.error("Erro ao salvar ordem:", e); }); }, 800);
   }
-
   dnd.dragExId = null; dnd.dragDay = null; dnd.dragOrigIdx = null; dnd.dropIdx = null;
-
   renderWorkout(currentDay);
 }
 
-async function handleSave(exId,exName){
-  var inp=document.getElementById("inp-"+exId);var btn=document.getElementById("btn-"+exId);var meta=document.getElementById("meta-"+exId);
-  var kg=parseFloat(inp.value);if(!kg||isNaN(kg)||kg<=0){inp.focus();inp.style.borderColor="var(--danger)";setTimeout(function(){inp.style.borderColor="";},1000);return;}
-  btn.textContent="...";btn.disabled=true;
-  try{
-    await sbSaveLoad(currentUser.id,exId,exName,kg);addToCache(exId,exName,kg);
-    var hist=getHistory(exId);var maxKg=Math.max.apply(null,hist.map(function(h){return h.kg;}));var isPR=hist.length>1&&kg===maxKg;var prevKg=hist.length>1?hist[hist.length-2].kg:null;
-    meta.innerHTML=(prevKg!==null?"ant: "+prevKg+"kg":hist.length+"x reg.")+" "+(isPR?'<span class="pr-badge">\u2605 PR</span>':"");
-    var cp=document.getElementById("chart-"+exId);if(cp){cp.innerHTML=buildChartInner(hist);if(openCharts[exId])cp.classList.add("open");}
-    btn.textContent="\u2713 Salvo";btn.classList.add("saved");setTimeout(function(){btn.textContent="Salvar";btn.classList.remove("saved");btn.disabled=false;},2000);
-  }catch(e){btn.textContent="Erro";setTimeout(function(){btn.textContent="Salvar";btn.disabled=false;},2000);console.error(e);}
+async function handleSave(exId, exName) {
+  var inp = document.getElementById("inp-" + exId);
+  var btn = document.getElementById("btn-" + exId);
+  var meta = document.getElementById("meta-" + exId);
+  var kg = parseFloat(inp.value);
+  if (!kg || isNaN(kg) || kg <= 0) {
+    inp.focus(); inp.style.borderColor = "var(--danger)";
+    setTimeout(function() { inp.style.borderColor = ""; }, 1000); return;
+  }
+
+  /* captura o máximo ANTES de adicionar o novo registro */
+  var histBefore = getHistory(exId);
+  var prevMax = histBefore.length > 0 ? Math.max.apply(null, histBefore.map(function(h) { return h.kg; })) : null;
+
+  btn.textContent = "..."; btn.disabled = true;
+  try {
+    await sbSaveLoad(currentUser.id, exId, exName, kg);
+    addToCache(exId, exName, kg);
+
+    var hist = getHistory(exId);
+    var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
+    var isPR = hist.length > 1 && kg === maxKg;
+    var prevKg = hist.length > 1 ? hist[hist.length - 2].kg : null;
+    meta.innerHTML = (prevKg !== null ? "ant: " + prevKg + "kg" : hist.length + "x reg.") + " " + (isPR ? '<span class="pr-badge">\u2605 PR</span>' : "");
+
+    var cp = document.getElementById("chart-" + exId);
+    if (cp) { cp.innerHTML = buildChartInner(hist); if (openCharts[exId]) cp.classList.add("open"); }
+
+    /* ── dispara o toast de motivação ── */
+    triggerSaveToast(kg, prevMax, hist.length);
+
+    btn.textContent = "\u2713 Salvo"; btn.classList.add("saved");
+    setTimeout(function() { btn.textContent = "Salvar"; btn.classList.remove("saved"); btn.disabled = false; }, 2000);
+  } catch (e) {
+    btn.textContent = "Erro";
+    setTimeout(function() { btn.textContent = "Salvar"; btn.disabled = false; }, 2000);
+    console.error(e);
+  }
 }
 
 function setupHoldToReplace(card,ex,day,idx){
