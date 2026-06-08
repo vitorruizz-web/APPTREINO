@@ -306,11 +306,11 @@
   .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
   .history-table { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
 
-  /* ── HISTORY ROW: flex em vez de grid para não desconfigurar com nomes longos ── */
+  /* ── HISTORY ROW ─────────────────────────────────────────────────────────── */
   .history-row {
     display: flex;
-    align-items: center;
-    padding: 10px 1rem;
+    align-items: flex-start;   /* ← alinha pelo topo quando nome quebra linha */
+    padding: 11px 1rem;
     border-bottom: 0.5px solid var(--border);
     gap: 8px;
     min-width: 0;
@@ -320,21 +320,21 @@
     background: var(--surface2);
     font-size: 10px; font-weight: 700; color: var(--muted);
     letter-spacing: 1.5px; text-transform: uppercase;
+    align-items: center;        /* ← cabeçalho permanece centralizado */
   }
   .history-row:not(.hdr):hover { background: var(--surface2); }
 
-  /* Nome: ocupa o espaço restante, trunca com reticências */
+  /* Nome: ocupa o espaço restante, quebra linha quando necessário */
   .h-name {
     font-size: 13px;
     font-weight: 700;
     flex: 1 1 0;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;        /* ← permite quebra de linha */
+    word-break: break-word;     /* ← quebra palavras longas se necessário */
+    line-height: 1.4;
   }
-  /* Cabeçalho do nome não trunca */
-  .history-row.hdr .h-name { overflow: visible; white-space: nowrap; }
+  .history-row.hdr .h-name { white-space: nowrap; }
 
   /* Data: largura fixa, nunca encolhe */
   .h-date {
@@ -344,6 +344,7 @@
     flex-shrink: 0;
     white-space: nowrap;
     width: 82px;
+    padding-top: 1px;
   }
 
   /* Carga: largura fixa, nunca encolhe */
@@ -354,6 +355,7 @@
     flex-shrink: 0;
     white-space: nowrap;
     width: 58px;
+    padding-top: 0px;
   }
 
   /* Botões de ação: sempre visíveis, nunca encolhem */
@@ -1346,7 +1348,7 @@ async function renderHistory(){
       var pr=getHistory(r.exId).length>1&&r.kg===prMap[r.exId];
       var safeName=r.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
       return '<div class="history-row">'+
-        '<div class="h-name" title="'+r.name+'">'+r.name+'</div>'+
+        '<div class="h-name">'+r.name+'</div>'+
         '<div class="h-date">'+r.date+'</div>'+
         '<div class="h-load">'+r.kg+' kg'+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
         '<div class="h-actions">'+
