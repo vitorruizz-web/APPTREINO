@@ -390,52 +390,6 @@
   .empty-state p { font-size: 14px; line-height: 1.6; }
   .count-line { font-size: 11px; color: var(--muted); text-align: center; margin-top: 1rem; }
 
-  /* ── MULTI-SELECT ────────────────────────────────────────────────────────── */
-  .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .history-title { margin-bottom: 0 !important; }
-  .btn-select-mode {
-    padding: 5px 12px; border: 0.5px solid var(--border); border-radius: 16px;
-    background: var(--surface2); font-family: "Syne",sans-serif; font-size: 11px;
-    font-weight: 700; cursor: pointer; color: var(--muted); transition: all 0.15s; letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  .btn-select-mode:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
-  .btn-select-mode.active { background: var(--text); color: var(--surface); border-color: var(--text); }
-
-  .h-check { width: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-  .h-check input[type="checkbox"] {
-    width: 17px; height: 17px; accent-color: var(--accent);
-    cursor: pointer; border-radius: 4px; margin: 0;
-  }
-  .history-row.selected { background: var(--accent-light) !important; }
-  .history-row.selected .h-name { color: var(--accent2); }
-
-  .multiselect-bar {
-    position: sticky; bottom: 0; left: 0; right: 0;
-    background: var(--surface); border-top: 0.5px solid var(--border2);
-    padding: 0.875rem 1.25rem; display: none;
-    align-items: center; justify-content: space-between; gap: 10px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.10);
-    z-index: 50;
-  }
-  .multiselect-bar.visible { display: flex; }
-  .multiselect-count { font-size: 13px; font-weight: 700; color: var(--text); }
-  .multiselect-count span { color: var(--accent); }
-  .multiselect-actions { display: flex; gap: 8px; }
-  .btn-ms-cancel {
-    padding: 9px 16px; background: var(--surface2); color: var(--muted);
-    border: 0.5px solid var(--border); border-radius: var(--radius-md);
-    font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
-  }
-  .btn-ms-delete {
-    padding: 9px 16px; background: var(--danger); color: #fff; border: none;
-    border-radius: var(--radius-md); font-family: "Syne",sans-serif; font-size: 12px;
-    font-weight: 700; cursor: pointer; transition: background 0.15s;
-  }
-  .btn-ms-delete:hover { background: #c03a39; }
-  .btn-ms-delete:disabled { opacity: 0.5; cursor: not-allowed; }
-  /* ─────────────────────────────────────────────────────────────────────── */
-
   .settings-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
   .settings-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 360px; }
   .settings-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
@@ -545,6 +499,125 @@
     color: var(--text); margin-bottom: 0.5rem; outline: none;
   }
   .edit-date-input:focus { border-color: var(--accent); }
+
+  /* ── SAÚDE ──────────────────────────────────────────────────────────────── */
+  .saude-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .saude-form-card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+  .saude-form-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
+  .saude-form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;
+  }
+  .saude-form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 400px) {
+    .saude-form-grid { grid-template-columns: 1fr 1fr; }
+    .saude-form-grid.cols3 { grid-template-columns: 1fr 1fr; }
+  }
+  .saude-field { display: flex; flex-direction: column; gap: 4px; }
+  .saude-field label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+  .saude-field input {
+    padding: 9px 12px; font-size: 14px; font-family: "DM Mono", monospace;
+    background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    color: var(--text); outline: none; width: 100%;
+  }
+  .saude-field input:focus { border-color: var(--accent); }
+  .saude-field input::placeholder { font-family: "Syne",sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 0; }
+  .saude-field-full { grid-column: 1 / -1; }
+
+  .saude-section-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0.5rem 0 0.25rem;
+    grid-column: 1 / -1;
+  }
+
+  .saude-registros-card {
+    background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.5rem;
+  }
+  .saude-registros-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
+
+  .saude-registro {
+    background: var(--surface2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1rem 1.1rem; margin-bottom: 10px;
+    position: relative;
+  }
+  .saude-reg-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.6rem; gap: 8px;
+  }
+  .saude-reg-date {
+    font-family: "DM Mono", monospace; font-size: 11px; color: var(--muted);
+  }
+  .saude-reg-age {
+    font-size: 11px; color: var(--muted); background: var(--border);
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .saude-reg-delete {
+    background: none; border: none; cursor: pointer; font-size: 14px;
+    color: var(--muted); padding: 2px 4px; border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .saude-reg-delete:hover { color: var(--danger); }
+
+  .saude-stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 0.75rem;
+  }
+  @media (max-width: 380px) { .saude-stats-grid { grid-template-columns: 1fr 1fr; } }
+
+  .saude-stat-box {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 8px 10px; text-align: center;
+  }
+  .saude-stat-val {
+    font-family: "DM Mono", monospace; font-size: 15px; font-weight: 700;
+    color: var(--text); line-height: 1.2;
+  }
+  .saude-stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 1px; }
+
+  .saude-indicadores { display: flex; flex-direction: column; gap: 7px; }
+  .saude-ind {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius-md); padding: 8px 11px;
+  }
+  .saude-ind-emoji { font-size: 16px; flex-shrink: 0; line-height: 1; }
+  .saude-ind-content { flex: 1; min-width: 0; }
+  .saude-ind-name { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .saude-ind-val { font-family: "DM Mono", monospace; font-size: 14px; font-weight: 700; color: var(--text); }
+  .saude-ind-obs { font-size: 11px; color: var(--muted); line-height: 1.4; }
+  .saude-ind-badge {
+    flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 3px 9px;
+    border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .badge-ok   { background: var(--accent-light); color: var(--accent2); border: 0.5px solid var(--accent); }
+  .badge-warn { background: #FAEEDA; color: #7A5010; border: 0.5px solid #f0a500; }
+  .badge-bad  { background: #FCEBEB; color: var(--danger); border: 0.5px solid var(--danger); }
+  .badge-good { background: #E8F2FD; color: #185FA5; border: 0.5px solid #185FA5; }
+  @media (prefers-color-scheme: dark) {
+    .badge-warn { background: #412402; color: #FAC775; border-color: #BA7517; }
+    .badge-bad  { background: #501313; color: #F09595; border-color: #A32D2D; }
+    .badge-good { background: #0B2340; color: #82BFEF; border-color: #185FA5; }
+  }
+
+  .saude-medidas-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.5rem;
+  }
+  .saude-medida-chip {
+    font-family: "DM Mono", monospace; font-size: 11px; color: var(--accent2);
+    background: var(--accent-light); border: 0.5px solid var(--accent);
+    border-radius: 6px; padding: 2px 9px;
+  }
+
+  .saude-empty { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+  .saude-empty .icon { font-size: 36px; margin-bottom: 0.5rem; }
+  .saude-empty p { font-size: 13px; line-height: 1.6; }
+
+  .saude-btn-row { display: flex; gap: 8px; margin-top: 0.25rem; }
+  .saude-btn-row .btn-primary { margin-top: 0; }
+  /* ────────────────────────────────────────────────────────────────────────── */
 </style>
 </head>
 <body>
@@ -594,6 +667,7 @@
     <div class="header-right">
       <button class="btn-tab active" id="tabTreino">Treino</button>
       <button class="btn-tab" id="tabHistorico">Hist&oacute;rico</button>
+      <button class="btn-tab" id="tabSaude">Sa&uacute;de</button>
       <button class="btn-tab" id="tabConfig">&#9881;</button>
       <button class="btn-logout" id="logoutBtn"><span class="logout-label">Sair</span></button>
     </div>
@@ -606,19 +680,9 @@
   </div>
 
   <div class="history-view" id="historicoSection" style="display:none">
-    <div class="history-toolbar">
-      <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
-      <button class="btn-select-mode" id="btnSelectMode">Selecionar</button>
-    </div>
+    <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
     <div class="history-filter" id="historyFilter"></div>
     <div id="historyContent"></div>
-    <div class="multiselect-bar" id="multiselectBar">
-      <div class="multiselect-count">Selecionados: <span id="selectedCount">0</span></div>
-      <div class="multiselect-actions">
-        <button class="btn-ms-cancel" id="btnMsCancel">Cancelar</button>
-        <button class="btn-ms-delete" id="btnMsDelete" disabled>&#128465; Excluir</button>
-      </div>
-    </div>
   </div>
 
   <div class="settings-section" id="configSection" style="display:none">
@@ -641,6 +705,76 @@
       <h3>Dados</h3>
       <p class="settings-info">Hist&oacute;rico salvo no servidor e sincronizado entre dispositivos.</p>
       <button class="btn-danger" id="clearHistoryBtn">Apagar meu hist&oacute;rico</button>
+    </div>
+  </div>
+
+  <!-- SAÚDE -->
+  <div class="saude-section" id="saudeSection" style="display:none">
+    <div class="saude-form-card">
+      <h3>&#128139; Novo Registro</h3>
+      <div class="saude-form-grid">
+        <div class="saude-field">
+          <label>Data</label>
+          <input type="date" id="saudeData" />
+        </div>
+        <div class="saude-field">
+          <label>Idade (anos)</label>
+          <input type="number" id="saudeIdade" placeholder="Ex: 25" min="1" max="120" />
+        </div>
+        <div class="saude-field">
+          <label>Peso (kg)</label>
+          <input type="number" id="saudePeso" placeholder="Ex: 75.5" step="0.1" min="1" />
+        </div>
+        <div class="saude-field">
+          <label>Altura (cm)</label>
+          <input type="number" id="saudeAltura" placeholder="Ex: 175" min="50" max="280" />
+        </div>
+        <div class="saude-section-label">Medidas (opcional)</div>
+        <div class="saude-field">
+          <label>Cintura (cm)</label>
+          <input type="number" id="saudeCintura" placeholder="Ex: 80" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Quadril (cm)</label>
+          <input type="number" id="saudeQuadril" placeholder="Ex: 95" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Pescoço (cm)</label>
+          <input type="number" id="saudePescoco" placeholder="Ex: 38" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Peito (cm)</label>
+          <input type="number" id="saudePeito" placeholder="Ex: 100" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Bíceps (cm)</label>
+          <input type="number" id="saudeBiceps" placeholder="Ex: 35" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Coxa (cm)</label>
+          <input type="number" id="saudeCoxa" placeholder="Ex: 56" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Panturrilha (cm)</label>
+          <input type="number" id="saudePanturrilha" placeholder="Ex: 38" step="0.5" />
+        </div>
+        <div class="saude-field">
+          <label>Sexo (para %GC)</label>
+          <select id="saudeSexo" style="padding:9px 12px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;width:100%;">
+            <option value="">-- Selecione --</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+      </div>
+      <div class="saude-btn-row">
+        <button class="btn-primary" id="saudeSalvarBtn" style="font-size:13px;padding:11px;">Salvar Registro</button>
+      </div>
+    </div>
+
+    <div class="saude-registros-card">
+      <h3>&#128202; Histórico de Saúde</h3>
+      <div id="saudeRegistrosList"></div>
     </div>
   </div>
 </div>
@@ -1116,13 +1250,15 @@ window.addEventListener("DOMContentLoaded",async function(){
 
 function switchTab(tab){
   currentTab=tab;
-  var tabIds={treino:"tabTreino",historico:"tabHistorico",config:"tabConfig"};
+  var tabIds={treino:"tabTreino",historico:"tabHistorico",saude:"tabSaude",config:"tabConfig"};
   Object.keys(tabIds).forEach(function(t){var btn=document.getElementById(tabIds[t]);if(btn)btn.classList.toggle("active",t===tab);});
   document.getElementById("treinoSection").style.display=tab==="treino"?"block":"none";
   document.getElementById("historicoSection").style.display=tab==="historico"?"block":"none";
   document.getElementById("configSection").style.display=tab==="config"?"block":"none";
+  document.getElementById("saudeSection").style.display=tab==="saude"?"flex":"none";
   document.getElementById("holdHint").style.display=tab==="treino"?"block":"none";
   if(tab==="historico")renderHistory();if(tab==="config")buildAvatarGrid();
+  if(tab==="saude"){renderSaudeRegistros();setSaudeDefaultDate();}
 }
 
 function buildDaySelector(){
@@ -1490,60 +1626,11 @@ async function deleteLoad(loadId){
   }catch(e){alert("Erro ao excluir: "+e.message);}hideLoading();
 }
 
-var historySelectMode=false;
-var historySelectedIds=new Set();
-
-function updateMultiselectBar(){
-  var bar=document.getElementById("multiselectBar");
-  var countEl=document.getElementById("selectedCount");
-  var delBtn=document.getElementById("btnMsDelete");
-  var n=historySelectedIds.size;
-  countEl.textContent=n;
-  delBtn.disabled=(n===0);
-  bar.classList.toggle("visible",historySelectMode);
-}
-
-function enterSelectMode(){
-  historySelectMode=true;historySelectedIds=new Set();
-  document.getElementById("btnSelectMode").textContent="Cancelar";
-  document.getElementById("btnSelectMode").classList.add("active");
-  renderHistory();
-}
-
-function exitSelectMode(){
-  historySelectMode=false;historySelectedIds=new Set();
-  document.getElementById("btnSelectMode").textContent="Selecionar";
-  document.getElementById("btnSelectMode").classList.remove("active");
-  updateMultiselectBar();
-  renderHistory();
-}
-
-async function deleteSelectedLoads(){
-  var ids=Array.from(historySelectedIds);
-  if(!ids.length)return;
-  if(!confirm("Excluir "+ids.length+" registro"+(ids.length!==1?"s":"")+"?"))return;
-  showLoading("Excluindo...");
-  try{
-    var affectedExIds=new Set();
-    ids.forEach(function(lid){
-      Object.keys(userLoads).forEach(function(eid){
-        (userLoads[eid]||[]).forEach(function(entry){if(String(entry.id)===String(lid))affectedExIds.add(eid);});
-      });
-    });
-    for(var i=0;i<ids.length;i++){await sbDeleteLoad(ids[i]);}
-    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
-    affectedExIds.forEach(function(eid){if(currentDay)refreshCardUI(eid);});
-    exitSelectMode();
-  }catch(e){alert("Erro ao excluir: "+e.message);console.error(e);}
-  hideLoading();
-}
-
 async function renderHistory(){
   var content=document.getElementById("historyContent");content.innerHTML='<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
   var fDiv=document.getElementById("historyFilter");var fDays=["todos"].concat(DAYS.filter(function(d){return WORKOUT_DATA[d].exercises&&WORKOUT_DATA[d].exercises.length>0;}));
   fDiv.innerHTML=fDays.map(function(d){var label=d==="todos"?"Todos":DAY_LABELS[d];return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';}).join("");
   fDiv.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){historyFilter=btn.getAttribute("data-day");renderHistory();});});
-  updateMultiselectBar();
   try{
     var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
     var allEx=[];DAYS.forEach(function(d){if(WORKOUT_DATA[d].exercises)WORKOUT_DATA[d].exercises.forEach(function(e){allEx.push(e);});});
@@ -1553,76 +1640,28 @@ async function renderHistory(){
     if(historyFilter!=="todos"){var ids=(WORKOUT_DATA[historyFilter].exercises||[]).map(function(e){return e.id;});rows=rows.filter(function(r){return ids.indexOf(r.exId)>=0;});}
     rows.sort(function(a,b){return b.date.split("/").reverse().join("").localeCompare(a.date.split("/").reverse().join(""));});
     if(!rows.length){content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udcca</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>';return;}
-    var allIds=rows.map(function(r){return String(r.loadId);});
-    var allChecked=allIds.length>0&&allIds.every(function(id){return historySelectedIds.has(id);});
     var rowsHtml=rows.map(function(r){
       var pr=getHistory(r.exId).length>1&&r.kg===prMap[r.exId];
       var safeName=r.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-      var isSelected=historySelectedIds.has(String(r.loadId));
-      var checkHtml=historySelectMode?'<div class="h-check"><input type="checkbox" data-id="'+r.loadId+'"'+(isSelected?" checked":"")+' /></div>':'';
-      return '<div class="history-row'+(isSelected?" selected":"")+'" data-load-id="'+r.loadId+'">'+
-        checkHtml+
+      return '<div class="history-row">'+
         '<div class="h-name">'+r.name+'</div>'+
         '<div class="h-date">'+r.date+'</div>'+
         '<div class="h-load">'+r.kg+' kg'+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
-        (historySelectMode?'':
         '<div class="h-actions">'+
           '<button class="icon-btn" title="Editar data" onclick="openEditLoadModal(\''+r.loadId+'\',\''+safeName+'\',\''+r.date+'\')">&#9999;&#65039;</button>'+
           '<button class="icon-btn danger" title="Excluir" onclick="deleteLoad(\''+r.loadId+'\')">\ud83d\uddd1</button>'+
-        '</div>')+
+        '</div>'+
       '</div>';
     }).join("");
-    var hdrCheckHtml=historySelectMode?'<div class="h-check"><input type="checkbox" id="selectAllCheck"'+(allChecked?" checked":"")+' title="Selecionar todos"/></div>':'';
     content.innerHTML='<div class="history-table">'+
       '<div class="history-row hdr">'+
-        hdrCheckHtml+
         '<div class="h-name">Exerc\u00edcio</div>'+
         '<div class="h-date">Data</div>'+
         '<div class="h-load">Carga</div>'+
-        (historySelectMode?'':'<div class="h-actions"></div>')+
+        '<div class="h-actions"></div>'+
       '</div>'+
       rowsHtml+
     '</div><div class="count-line">'+rows.length+' registro'+(rows.length!==1?"s":"")+'</div>';
-
-    /* eventos dos checkboxes */
-    if(historySelectMode){
-      var selectAllCb=document.getElementById("selectAllCheck");
-      if(selectAllCb){
-        selectAllCb.addEventListener("change",function(){
-          if(this.checked){allIds.forEach(function(id){historySelectedIds.add(id);});}
-          else{allIds.forEach(function(id){historySelectedIds.delete(id);});}
-          renderHistory();
-        });
-      }
-      content.querySelectorAll(".history-row:not(.hdr)").forEach(function(row){
-        row.addEventListener("click",function(e){
-          if(e.target.tagName==="INPUT")return;
-          var lid=String(row.getAttribute("data-load-id"));
-          if(historySelectedIds.has(lid))historySelectedIds.delete(lid);
-          else historySelectedIds.add(lid);
-          var cb=row.querySelector("input[type=checkbox]");
-          if(cb)cb.checked=historySelectedIds.has(lid);
-          row.classList.toggle("selected",historySelectedIds.has(lid));
-          updateMultiselectBar();
-          /* atualiza o "selecionar tudo" */
-          var sac=document.getElementById("selectAllCheck");
-          if(sac)sac.checked=allIds.every(function(id){return historySelectedIds.has(id);});
-        });
-        var cb=row.querySelector("input[type=checkbox]");
-        if(cb){
-          cb.addEventListener("change",function(e){
-            e.stopPropagation();
-            var lid=String(row.getAttribute("data-load-id"));
-            if(this.checked)historySelectedIds.add(lid);
-            else historySelectedIds.delete(lid);
-            row.classList.toggle("selected",this.checked);
-            updateMultiselectBar();
-            var sac=document.getElementById("selectAllCheck");
-            if(sac)sac.checked=allIds.every(function(id){return historySelectedIds.has(id);});
-          });
-        }
-      });
-    }
   }catch(e){content.innerHTML='<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>Erro ao carregar hist\u00f3rico.</p></div>';console.error(e);}
 }
 
@@ -1650,14 +1689,10 @@ document.getElementById("toggleRegister").addEventListener("click",function(){se
 document.getElementById("logoutBtn").addEventListener("click",logout);
 document.getElementById("tabTreino").addEventListener("click",function(){switchTab("treino");});
 document.getElementById("tabHistorico").addEventListener("click",function(){switchTab("historico");});
+document.getElementById("tabSaude").addEventListener("click",function(){switchTab("saude");});
 document.getElementById("tabConfig").addEventListener("click",function(){switchTab("config");});
 document.getElementById("savePassBtn").addEventListener("click",changePassword);
 document.getElementById("clearHistoryBtn").addEventListener("click",clearHistory);
-document.getElementById("btnSelectMode").addEventListener("click",function(){
-  if(historySelectMode)exitSelectMode();else enterSelectMode();
-});
-document.getElementById("btnMsCancel").addEventListener("click",exitSelectMode);
-document.getElementById("btnMsDelete").addEventListener("click",deleteSelectedLoads);
 
 document.getElementById("addExCancelBtn").addEventListener("click",closeAddExModal);
 document.getElementById("addExConfirmBtn").addEventListener("click",confirmAddExercise);
@@ -1691,6 +1726,236 @@ document.getElementById("deleteModal").addEventListener("click",function(e){if(e
 document.getElementById("editLoadCancelBtn").addEventListener("click",closeEditLoadModal);
 document.getElementById("editLoadConfirmBtn").addEventListener("click",confirmEditLoad);
 document.getElementById("editLoadModal").addEventListener("click",function(e){if(e.target===this)closeEditLoadModal();});
+
+/* ── SAÚDE ──────────────────────────────────────────────────────────────── */
+function getSaudeKey(userId){return"gym_saude_"+userId;}
+function loadSaudeRegistros(){
+  if(!currentUser)return[];
+  try{return JSON.parse(localStorage.getItem(getSaudeKey(currentUser.id))||"[]");}catch(e){return[];}
+}
+function saveSaudeRegistros(arr){
+  if(!currentUser)return;
+  try{localStorage.setItem(getSaudeKey(currentUser.id),JSON.stringify(arr));}catch(e){}
+}
+
+function setSaudeDefaultDate(){
+  var el=document.getElementById("saudeData");
+  if(el&&!el.value){var now=new Date();el.value=now.toISOString().slice(0,10);}
+}
+
+/* ── Cálculos de indicadores ── */
+function calcIMC(peso,altCm){
+  var h=altCm/100;return peso/(h*h);
+}
+function imcInfo(imc){
+  if(imc<16)   return{label:"Magreza grave",badge:"bad",emoji:"⚠️",obs:"Risco à saúde muito elevado. Procure um médico."};
+  if(imc<17)   return{label:"Magreza moderada",badge:"bad",emoji:"⚠️",obs:"Peso muito abaixo do ideal."};
+  if(imc<18.5) return{label:"Magreza leve",badge:"warn",emoji:"🔻",obs:"Levemente abaixo do peso ideal."};
+  if(imc<25)   return{label:"Peso normal",badge:"ok",emoji:"✅",obs:"Parabéns! Seu peso está na faixa ideal."};
+  if(imc<30)   return{label:"Sobrepeso",badge:"warn",emoji:"⚡",obs:"Levemente acima do peso. Atenção à alimentação e exercícios."};
+  if(imc<35)   return{label:"Obesidade grau I",badge:"bad",emoji:"🔴",obs:"Obesidade moderada. Consulte um profissional de saúde."};
+  if(imc<40)   return{label:"Obesidade grau II",badge:"bad",emoji:"🔴",obs:"Obesidade severa. Acompanhamento médico é importante."};
+  return        {label:"Obesidade grau III",badge:"bad",emoji:"🆘",obs:"Obesidade mórbida. Procure orientação médica urgente."};
+}
+
+/* Relação Cintura-Quadril (RCQ) */
+function calcRCQ(cintura,quadril){return cintura/quadril;}
+function rcqInfo(rcq,sexo){
+  if(sexo==="M"){
+    if(rcq<0.90) return{label:"Baixo risco",badge:"ok",emoji:"✅",obs:"Distribuição de gordura saudável."};
+    if(rcq<0.95) return{label:"Risco moderado",badge:"warn",emoji:"⚡",obs:"Atenção à gordura abdominal."};
+    return        {label:"Alto risco",badge:"bad",emoji:"🔴",obs:"Risco cardiovascular elevado. Cuide da alimentação."};
+  }else{
+    if(rcq<0.80) return{label:"Baixo risco",badge:"ok",emoji:"✅",obs:"Distribuição de gordura saudável."};
+    if(rcq<0.85) return{label:"Risco moderado",badge:"warn",emoji:"⚡",obs:"Atenção à gordura abdominal."};
+    return        {label:"Alto risco",badge:"bad",emoji:"🔴",obs:"Risco cardiovascular elevado. Cuide da alimentação."};
+  }
+}
+
+/* Relação Cintura-Altura (RCA) */
+function calcRCA(cintura,altCm){return cintura/altCm;}
+function rcaInfo(rca){
+  if(rca<0.4)  return{label:"Abaixo do esperado",badge:"warn",emoji:"🔻",obs:"Cintura muito pequena para sua altura."};
+  if(rca<0.5)  return{label:"Saudável",badge:"ok",emoji:"✅",obs:"Excelente! Baixo risco metabólico."};
+  if(rca<0.6)  return{label:"Atenção",badge:"warn",emoji:"⚡",obs:"Risco moderado. Reduza gordura abdominal."};
+  return        {label:"Alto risco",badge:"bad",emoji:"🔴",obs:"Risco cardiometabólico elevado."};
+}
+
+/* % Gordura Corporal — Fórmula da Marinha dos EUA */
+function calcGorduraUS(sexo,altCm,cintura,pescoco,quadril){
+  if(!cintura||!pescoco) return null;
+  var h=altCm;
+  var gc;
+  if(sexo==="M"){
+    var diff=cintura-pescoco;
+    if(diff<=0)return null;
+    gc=86.010*Math.log10(diff)-70.041*Math.log10(h)+36.76;
+  }else{
+    if(!quadril)return null;
+    var diff2=cintura+quadril-pescoco;
+    if(diff2<=0)return null;
+    gc=163.205*Math.log10(diff2)-97.684*Math.log10(h)-78.387;
+  }
+  return gc;
+}
+function gcInfo(gc,sexo){
+  if(sexo==="M"){
+    if(gc<6)   return{label:"Essencial",badge:"warn",emoji:"🏋️",obs:"Gordura essencial. Muito baixa para sustentabilidade."};
+    if(gc<14)  return{label:"Atlético",badge:"good",emoji:"🏅",obs:"Perfil atlético. Excelente composição corporal."};
+    if(gc<18)  return{label:"Fitness",badge:"ok",emoji:"✅",obs:"Boa forma física. Composição corporal saudável."};
+    if(gc<25)  return{label:"Aceitável",badge:"warn",emoji:"⚡",obs:"Dentro do aceitável, mas há espaço para melhora."};
+    return      {label:"Obeso",badge:"bad",emoji:"🔴",obs:"% de gordura elevada. Foco em exercício e dieta."};
+  }else{
+    if(gc<14)  return{label:"Essencial",badge:"warn",emoji:"🏋️",obs:"Gordura essencial. Muito baixa para sustentabilidade."};
+    if(gc<21)  return{label:"Atlético",badge:"good",emoji:"🏅",obs:"Perfil atlético. Excelente composição corporal."};
+    if(gc<25)  return{label:"Fitness",badge:"ok",emoji:"✅",obs:"Boa forma física. Composição corporal saudável."};
+    if(gc<32)  return{label:"Aceitável",badge:"warn",emoji:"⚡",obs:"Dentro do aceitável, mas há espaço para melhora."};
+    return      {label:"Obeso",badge:"bad",emoji:"🔴",obs:"% de gordura elevada. Foco em exercício e dieta."};
+  }
+}
+
+/* Peso ideal — Fórmula de Devine */
+function calcPesoIdeal(sexo,altCm){
+  var pol=(altCm-152.4)/2.54;
+  if(sexo==="M") return 50+2.3*pol;
+  else           return 45.5+2.3*pol;
+}
+
+/* IMC de peso ideal */
+function calcIMCIdeal(pesoIdeal,altCm){return calcIMC(pesoIdeal,altCm);}
+
+function fmt1(n){return n.toFixed(1);}
+function fmt2(n){return n.toFixed(2);}
+
+function buildIndicadores(reg){
+  var peso=reg.peso,alt=reg.altura,cintura=reg.cintura,quadril=reg.quadril,
+      pescoco=reg.pescoco,sexo=reg.sexo,idade=reg.idade;
+  var cards=[];
+
+  /* IMC */
+  if(peso&&alt){
+    var imc=calcIMC(peso,alt);
+    var info=imcInfo(imc);
+    cards.push({name:"IMC",val:fmt2(imc)+" kg/m²",emoji:info.emoji,badge:info.label,badgeClass:info.badge,obs:info.obs});
+  }
+
+  /* RCQ */
+  if(cintura&&quadril){
+    var rcq=calcRCQ(cintura,quadril);
+    var info2=rcqInfo(rcq,sexo||"M");
+    cards.push({name:"Rel. Cintura-Quadril",val:fmt2(rcq),emoji:info2.emoji,badge:info2.label,badgeClass:info2.badge,obs:info2.obs});
+  }
+
+  /* RCA */
+  if(cintura&&alt){
+    var rca=calcRCA(cintura,alt);
+    var info3=rcaInfo(rca);
+    cards.push({name:"Rel. Cintura-Altura",val:fmt2(rca),emoji:info3.emoji,badge:info3.label,badgeClass:info3.badge,obs:info3.obs});
+  }
+
+  /* % Gordura */
+  if(sexo&&alt&&cintura&&pescoco){
+    var gc=calcGorduraUS(sexo,alt,cintura,pescoco,quadril||0);
+    if(gc!==null&&gc>0){
+      var info4=gcInfo(gc,sexo);
+      cards.push({name:"% Gordura Corporal",val:fmt1(gc)+"%",emoji:info4.emoji,badge:info4.label,badgeClass:info4.badge,obs:info4.obs});
+    }
+  }
+
+  /* Peso Ideal */
+  if(sexo&&alt){
+    var pi=calcPesoIdeal(sexo,alt);
+    if(pi>0){
+      var diff=peso?peso-pi:null;
+      var diffStr=diff!==null?(diff>0?" (+"+fmt1(diff)+"kg)":" ("+fmt1(diff)+"kg)"):"";
+      cards.push({name:"Peso Ideal (Devine)",val:fmt1(pi)+"kg"+diffStr,emoji:"⚖️",badge:null,badgeClass:null,obs:"Estimativa baseada na fórmula de Devine para altura "+alt+"cm."});
+    }
+  }
+
+  return cards;
+}
+
+function renderSaudeRegistros(){
+  var list=document.getElementById("saudeRegistrosList");
+  if(!list)return;
+  var regs=loadSaudeRegistros();
+  regs.sort(function(a,b){return(b.data||"").localeCompare(a.data||"");});
+  if(regs.length===0){
+    list.innerHTML='<div class="saude-empty"><div class="icon">📏</div><p>Nenhum registro ainda.<br>Preencha o formulário acima e salve!</p></div>';
+    return;
+  }
+  list.innerHTML=regs.map(function(reg,idx){
+    var dataBR=reg.data?reg.data.split("-").reverse().join("/"):"-";
+    var inds=buildIndicadores(reg);
+    var statsHTML="";
+    if(reg.peso) statsHTML+='<div class="saude-stat-box"><div class="saude-stat-val">'+reg.peso+'kg</div><div class="saude-stat-label">Peso</div></div>';
+    if(reg.altura) statsHTML+='<div class="saude-stat-box"><div class="saude-stat-val">'+reg.altura+'cm</div><div class="saude-stat-label">Altura</div></div>';
+    if(reg.cintura) statsHTML+='<div class="saude-stat-box"><div class="saude-stat-val">'+reg.cintura+'cm</div><div class="saude-stat-label">Cintura</div></div>';
+    var medidasChips=[];
+    if(reg.quadril)     medidasChips.push("Quadril: "+reg.quadril+"cm");
+    if(reg.pescoco)     medidasChips.push("Pescoço: "+reg.pescoco+"cm");
+    if(reg.peito)       medidasChips.push("Peito: "+reg.peito+"cm");
+    if(reg.biceps)      medidasChips.push("Bíceps: "+reg.biceps+"cm");
+    if(reg.coxa)        medidasChips.push("Coxa: "+reg.coxa+"cm");
+    if(reg.panturrilha) medidasChips.push("Panturrilha: "+reg.panturrilha+"cm");
+    var medidasHTML=medidasChips.length?'<div class="saude-medidas-row">'+medidasChips.map(function(m){return'<span class="saude-medida-chip">'+m+'</span>';}).join("")+'</div>':"";
+    var indsHTML=inds.map(function(c){
+      return'<div class="saude-ind">'+
+        '<span class="saude-ind-emoji">'+c.emoji+'</span>'+
+        '<div class="saude-ind-content">'+
+          '<div class="saude-ind-name">'+c.name+'</div>'+
+          '<div class="saude-ind-val">'+c.val+'</div>'+
+          '<div class="saude-ind-obs">'+c.obs+'</div>'+
+        '</div>'+
+        (c.badge?'<span class="saude-ind-badge badge-'+c.badgeClass+'">'+c.badge+'</span>':"")+'</div>';
+    }).join("");
+    return '<div class="saude-registro">'+
+      '<div class="saude-reg-header">'+
+        '<span class="saude-reg-date">'+dataBR+'</span>'+
+        (reg.idade?'<span class="saude-reg-age">'+reg.idade+' anos</span>':'')+
+        '<button class="saude-reg-delete" title="Excluir" onclick="deleteSaudeRegistro('+idx+')">🗑</button>'+
+      '</div>'+
+      '<div class="saude-stats-grid">'+statsHTML+'</div>'+
+      medidasHTML+
+      '<div class="saude-indicadores" style="margin-top:0.5rem">'+indsHTML+'</div>'+
+    '</div>';
+  }).join("");
+}
+
+function deleteSaudeRegistro(idx){
+  var regs=loadSaudeRegistros();
+  regs.sort(function(a,b){return(b.data||"").localeCompare(a.data||"");});
+  if(!confirm("Excluir este registro de saúde?"))return;
+  regs.splice(idx,1);
+  saveSaudeRegistros(regs);
+  renderSaudeRegistros();
+}
+
+document.getElementById("saudeSalvarBtn").addEventListener("click",function(){
+  var data=document.getElementById("saudeData").value;
+  var idade=parseFloat(document.getElementById("saudeIdade").value)||null;
+  var peso=parseFloat(document.getElementById("saudePeso").value)||null;
+  var altura=parseFloat(document.getElementById("saudeAltura").value)||null;
+  var cintura=parseFloat(document.getElementById("saudeCintura").value)||null;
+  var quadril=parseFloat(document.getElementById("saudeQuadril").value)||null;
+  var pescoco=parseFloat(document.getElementById("saudePescoco").value)||null;
+  var peito=parseFloat(document.getElementById("saudePeito").value)||null;
+  var biceps=parseFloat(document.getElementById("saudeBiceps").value)||null;
+  var coxa=parseFloat(document.getElementById("saudeCoxa").value)||null;
+  var panturrilha=parseFloat(document.getElementById("saudePanturrilha").value)||null;
+  var sexo=document.getElementById("saudeSexo").value||null;
+  if(!peso&&!altura){alert("Preencha ao menos o peso e a altura para calcular os indicadores.");return;}
+  var reg={data:data,idade:idade,peso:peso,altura:altura,cintura:cintura,quadril:quadril,pescoco:pescoco,peito:peito,biceps:biceps,coxa:coxa,panturrilha:panturrilha,sexo:sexo,ts:Date.now()};
+  var regs=loadSaudeRegistros();
+  regs.push(reg);
+  saveSaudeRegistros(regs);
+  /* limpar campos opcionais */
+  ["saudeIdade","saudePeso","saudeAltura","saudeCintura","saudeQuadril","saudePescoco","saudePeito","saudeBiceps","saudeCoxa","saudePanturrilha"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("saudeSexo").value="";
+  renderSaudeRegistros();
+  showToast("📏","Registro de saúde salvo!","first");
+});
+/* ────────────────────────────────────────────────────────────────────────── */
 </script>
 </body>
 </html>
