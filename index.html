@@ -390,6 +390,52 @@
   .empty-state p { font-size: 14px; line-height: 1.6; }
   .count-line { font-size: 11px; color: var(--muted); text-align: center; margin-top: 1rem; }
 
+  /* ── MULTI-SELECT ────────────────────────────────────────────────────────── */
+  .history-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .history-title { margin-bottom: 0 !important; }
+  .btn-select-mode {
+    padding: 5px 12px; border: 0.5px solid var(--border); border-radius: 16px;
+    background: var(--surface2); font-family: "Syne",sans-serif; font-size: 11px;
+    font-weight: 700; cursor: pointer; color: var(--muted); transition: all 0.15s; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .btn-select-mode:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .btn-select-mode.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+
+  .h-check { width: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .h-check input[type="checkbox"] {
+    width: 17px; height: 17px; accent-color: var(--accent);
+    cursor: pointer; border-radius: 4px; margin: 0;
+  }
+  .history-row.selected { background: var(--accent-light) !important; }
+  .history-row.selected .h-name { color: var(--accent2); }
+
+  .multiselect-bar {
+    position: sticky; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 0.5px solid var(--border2);
+    padding: 0.875rem 1.25rem; display: none;
+    align-items: center; justify-content: space-between; gap: 10px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.10);
+    z-index: 50;
+  }
+  .multiselect-bar.visible { display: flex; }
+  .multiselect-count { font-size: 13px; font-weight: 700; color: var(--text); }
+  .multiselect-count span { color: var(--accent); }
+  .multiselect-actions { display: flex; gap: 8px; }
+  .btn-ms-cancel {
+    padding: 9px 16px; background: var(--surface2); color: var(--muted);
+    border: 0.5px solid var(--border); border-radius: var(--radius-md);
+    font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-ms-delete {
+    padding: 9px 16px; background: var(--danger); color: #fff; border: none;
+    border-radius: var(--radius-md); font-family: "Syne",sans-serif; font-size: 12px;
+    font-weight: 700; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-ms-delete:hover { background: #c03a39; }
+  .btn-ms-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* ─────────────────────────────────────────────────────────────────────── */
+
   .settings-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
   .settings-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 360px; }
   .settings-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; }
@@ -560,9 +606,19 @@
   </div>
 
   <div class="history-view" id="historicoSection" style="display:none">
-    <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
+    <div class="history-toolbar">
+      <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
+      <button class="btn-select-mode" id="btnSelectMode">Selecionar</button>
+    </div>
     <div class="history-filter" id="historyFilter"></div>
     <div id="historyContent"></div>
+    <div class="multiselect-bar" id="multiselectBar">
+      <div class="multiselect-count">Selecionados: <span id="selectedCount">0</span></div>
+      <div class="multiselect-actions">
+        <button class="btn-ms-cancel" id="btnMsCancel">Cancelar</button>
+        <button class="btn-ms-delete" id="btnMsDelete" disabled>&#128465; Excluir</button>
+      </div>
+    </div>
   </div>
 
   <div class="settings-section" id="configSection" style="display:none">
@@ -1434,11 +1490,60 @@ async function deleteLoad(loadId){
   }catch(e){alert("Erro ao excluir: "+e.message);}hideLoading();
 }
 
+var historySelectMode=false;
+var historySelectedIds=new Set();
+
+function updateMultiselectBar(){
+  var bar=document.getElementById("multiselectBar");
+  var countEl=document.getElementById("selectedCount");
+  var delBtn=document.getElementById("btnMsDelete");
+  var n=historySelectedIds.size;
+  countEl.textContent=n;
+  delBtn.disabled=(n===0);
+  bar.classList.toggle("visible",historySelectMode);
+}
+
+function enterSelectMode(){
+  historySelectMode=true;historySelectedIds=new Set();
+  document.getElementById("btnSelectMode").textContent="Cancelar";
+  document.getElementById("btnSelectMode").classList.add("active");
+  renderHistory();
+}
+
+function exitSelectMode(){
+  historySelectMode=false;historySelectedIds=new Set();
+  document.getElementById("btnSelectMode").textContent="Selecionar";
+  document.getElementById("btnSelectMode").classList.remove("active");
+  updateMultiselectBar();
+  renderHistory();
+}
+
+async function deleteSelectedLoads(){
+  var ids=Array.from(historySelectedIds);
+  if(!ids.length)return;
+  if(!confirm("Excluir "+ids.length+" registro"+(ids.length!==1?"s":"")+"?"))return;
+  showLoading("Excluindo...");
+  try{
+    var affectedExIds=new Set();
+    ids.forEach(function(lid){
+      Object.keys(userLoads).forEach(function(eid){
+        (userLoads[eid]||[]).forEach(function(entry){if(String(entry.id)===String(lid))affectedExIds.add(eid);});
+      });
+    });
+    for(var i=0;i<ids.length;i++){await sbDeleteLoad(ids[i]);}
+    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
+    affectedExIds.forEach(function(eid){if(currentDay)refreshCardUI(eid);});
+    exitSelectMode();
+  }catch(e){alert("Erro ao excluir: "+e.message);console.error(e);}
+  hideLoading();
+}
+
 async function renderHistory(){
   var content=document.getElementById("historyContent");content.innerHTML='<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
   var fDiv=document.getElementById("historyFilter");var fDays=["todos"].concat(DAYS.filter(function(d){return WORKOUT_DATA[d].exercises&&WORKOUT_DATA[d].exercises.length>0;}));
   fDiv.innerHTML=fDays.map(function(d){var label=d==="todos"?"Todos":DAY_LABELS[d];return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';}).join("");
   fDiv.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){historyFilter=btn.getAttribute("data-day");renderHistory();});});
+  updateMultiselectBar();
   try{
     var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
     var allEx=[];DAYS.forEach(function(d){if(WORKOUT_DATA[d].exercises)WORKOUT_DATA[d].exercises.forEach(function(e){allEx.push(e);});});
@@ -1448,28 +1553,76 @@ async function renderHistory(){
     if(historyFilter!=="todos"){var ids=(WORKOUT_DATA[historyFilter].exercises||[]).map(function(e){return e.id;});rows=rows.filter(function(r){return ids.indexOf(r.exId)>=0;});}
     rows.sort(function(a,b){return b.date.split("/").reverse().join("").localeCompare(a.date.split("/").reverse().join(""));});
     if(!rows.length){content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udcca</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>';return;}
+    var allIds=rows.map(function(r){return String(r.loadId);});
+    var allChecked=allIds.length>0&&allIds.every(function(id){return historySelectedIds.has(id);});
     var rowsHtml=rows.map(function(r){
       var pr=getHistory(r.exId).length>1&&r.kg===prMap[r.exId];
       var safeName=r.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-      return '<div class="history-row">'+
+      var isSelected=historySelectedIds.has(String(r.loadId));
+      var checkHtml=historySelectMode?'<div class="h-check"><input type="checkbox" data-id="'+r.loadId+'"'+(isSelected?" checked":"")+' /></div>':'';
+      return '<div class="history-row'+(isSelected?" selected":"")+'" data-load-id="'+r.loadId+'">'+
+        checkHtml+
         '<div class="h-name">'+r.name+'</div>'+
         '<div class="h-date">'+r.date+'</div>'+
         '<div class="h-load">'+r.kg+' kg'+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
+        (historySelectMode?'':
         '<div class="h-actions">'+
           '<button class="icon-btn" title="Editar data" onclick="openEditLoadModal(\''+r.loadId+'\',\''+safeName+'\',\''+r.date+'\')">&#9999;&#65039;</button>'+
           '<button class="icon-btn danger" title="Excluir" onclick="deleteLoad(\''+r.loadId+'\')">\ud83d\uddd1</button>'+
-        '</div>'+
+        '</div>')+
       '</div>';
     }).join("");
+    var hdrCheckHtml=historySelectMode?'<div class="h-check"><input type="checkbox" id="selectAllCheck"'+(allChecked?" checked":"")+' title="Selecionar todos"/></div>':'';
     content.innerHTML='<div class="history-table">'+
       '<div class="history-row hdr">'+
+        hdrCheckHtml+
         '<div class="h-name">Exerc\u00edcio</div>'+
         '<div class="h-date">Data</div>'+
         '<div class="h-load">Carga</div>'+
-        '<div class="h-actions"></div>'+
+        (historySelectMode?'':'<div class="h-actions"></div>')+
       '</div>'+
       rowsHtml+
     '</div><div class="count-line">'+rows.length+' registro'+(rows.length!==1?"s":"")+'</div>';
+
+    /* eventos dos checkboxes */
+    if(historySelectMode){
+      var selectAllCb=document.getElementById("selectAllCheck");
+      if(selectAllCb){
+        selectAllCb.addEventListener("change",function(){
+          if(this.checked){allIds.forEach(function(id){historySelectedIds.add(id);});}
+          else{allIds.forEach(function(id){historySelectedIds.delete(id);});}
+          renderHistory();
+        });
+      }
+      content.querySelectorAll(".history-row:not(.hdr)").forEach(function(row){
+        row.addEventListener("click",function(e){
+          if(e.target.tagName==="INPUT")return;
+          var lid=String(row.getAttribute("data-load-id"));
+          if(historySelectedIds.has(lid))historySelectedIds.delete(lid);
+          else historySelectedIds.add(lid);
+          var cb=row.querySelector("input[type=checkbox]");
+          if(cb)cb.checked=historySelectedIds.has(lid);
+          row.classList.toggle("selected",historySelectedIds.has(lid));
+          updateMultiselectBar();
+          /* atualiza o "selecionar tudo" */
+          var sac=document.getElementById("selectAllCheck");
+          if(sac)sac.checked=allIds.every(function(id){return historySelectedIds.has(id);});
+        });
+        var cb=row.querySelector("input[type=checkbox]");
+        if(cb){
+          cb.addEventListener("change",function(e){
+            e.stopPropagation();
+            var lid=String(row.getAttribute("data-load-id"));
+            if(this.checked)historySelectedIds.add(lid);
+            else historySelectedIds.delete(lid);
+            row.classList.toggle("selected",this.checked);
+            updateMultiselectBar();
+            var sac=document.getElementById("selectAllCheck");
+            if(sac)sac.checked=allIds.every(function(id){return historySelectedIds.has(id);});
+          });
+        }
+      });
+    }
   }catch(e){content.innerHTML='<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>Erro ao carregar hist\u00f3rico.</p></div>';console.error(e);}
 }
 
@@ -1500,6 +1653,11 @@ document.getElementById("tabHistorico").addEventListener("click",function(){swit
 document.getElementById("tabConfig").addEventListener("click",function(){switchTab("config");});
 document.getElementById("savePassBtn").addEventListener("click",changePassword);
 document.getElementById("clearHistoryBtn").addEventListener("click",clearHistory);
+document.getElementById("btnSelectMode").addEventListener("click",function(){
+  if(historySelectMode)exitSelectMode();else enterSelectMode();
+});
+document.getElementById("btnMsCancel").addEventListener("click",exitSelectMode);
+document.getElementById("btnMsDelete").addEventListener("click",deleteSelectedLoads);
 
 document.getElementById("addExCancelBtn").addEventListener("click",closeAddExModal);
 document.getElementById("addExConfirmBtn").addEventListener("click",confirmAddExercise);
