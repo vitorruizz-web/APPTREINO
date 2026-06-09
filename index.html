@@ -213,7 +213,7 @@
   .history-row:not(.hdr):hover { background: var(--surface2); }
   .h-name { font-size: 12px; font-weight: 700; flex: 1 1 0; min-width: 0; white-space: normal; word-break: normal; overflow-wrap: break-word; line-height: 1.4; }
   .history-row.hdr .h-name { white-space: nowrap; }
-  .h-date { font-family: "DM Mono",monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; white-space: nowrap; width: 72px; padding-top: 1px; }
+  .h-date { font-family: "DM Mono",monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; white-space: nowrap; width: 40px; padding-top: 1px; }
   .h-load { font-family: "DM Mono",monospace; font-size: 12px; font-weight: 500; flex-shrink: 0; white-space: nowrap; width: 52px; padding-top: 0px; }
   .h-actions { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
   .h-pr { font-size: 11px; color: var(--accent); font-weight: 700; font-family: "Syne",sans-serif; }
@@ -1384,7 +1384,7 @@ async function renderHistory(){
       return '<div class="history-row" data-load-id="'+r.loadId+'">'+
         '<div class="h-check"><input type="checkbox" class="history-row-check" data-load-id="'+r.loadId+'" onchange="updateBulkBar()"></div>'+
         '<div class="h-name">'+r.name+'</div>'+
-        '<div class="h-date">'+r.date+'</div>'+
+        '<div class="h-date">'+r.date.substring(0,5)+'</div>'+
         '<div class="h-load">'+r.kg+' kg'+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
         '<div class="h-actions">'+
           '<button class="icon-btn" title="Editar data" onclick="openEditLoadModal(\''+r.loadId+'\',\''+safeName+'\',\''+r.date+'\')">&#9999;&#65039;</button>'+
