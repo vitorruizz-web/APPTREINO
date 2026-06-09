@@ -403,7 +403,11 @@
     <input type="text" id="usernameInput" placeholder="Usu&aacute;rio" autocomplete="username" />
     <input type="password" id="pinInput" class="mono" placeholder="Senha" autocomplete="current-password" />
     <div class="login-error" id="loginError">Usu&aacute;rio ou senha incorretos.</div>
-    <button class="btn-primary" id="loginBtn">Entrar</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
+  <input type="checkbox" id="saveCredentials" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
+  <label for="saveCredentials" style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none">Lembrar usuário e senha</label>
+</div>
+<button class="btn-primary" id="loginBtn">Entrar</button>
     <div class="login-toggle">N&atilde;o tem conta? <a id="toggleRegister">Criar conta</a></div>
   </div>
 </div>
@@ -933,14 +937,22 @@ async function tryLogin(){
       var user=await sbGetUser(username);if(!user||user.password!==password){errEl.textContent="Usu\u00e1rio ou senha incorretos.";errEl.style.display="block";hideLoading();document.getElementById("loginBtn").disabled=false;return;}
       currentUser={id:user.id,username:user.username};
     }
-    localStorage.setItem("gym_session",JSON.stringify(currentUser));await initApp();
+    if(document.getElementById("saveCredentials").checked){
+  localStorage.setItem("gym_saved_credentials",JSON.stringify({username:username,password:password}));
+}else{
+  localStorage.removeItem("gym_saved_credentials");
+}
+localStorage.setItem("gym_session",JSON.stringify(currentUser));await initApp();
   }catch(e){errEl.textContent="Erro de conex\u00e3o. Tente novamente.";errEl.style.display="block";console.error(e);hideLoading();document.getElementById("loginBtn").disabled=false;}
 }
 
 function logout(){
   localStorage.removeItem("gym_session");currentUser=null;userLoads={};WORKOUT_DATA=null;userVideoLinks={};
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
-  document.getElementById("usernameInput").value="";document.getElementById("pinInput").value="";
+  var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
+  document.getElementById("usernameInput").value=saved.username||"";
+  document.getElementById("pinInput").value=saved.password||"";
+  document.getElementById("saveCredentials").checked=!!(saved.username);
   document.getElementById("loginBtn").disabled=false;setLoginMode(false);
 }
 
@@ -972,6 +984,10 @@ async function initApp(){
 window.addEventListener("DOMContentLoaded",async function(){
   var session=localStorage.getItem("gym_session");
   if(session){try{currentUser=JSON.parse(session);await initApp();return;}catch(e){localStorage.removeItem("gym_session");}}
+  var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
+  document.getElementById("usernameInput").value=saved.username||"";
+  document.getElementById("pinInput").value=saved.password||"";
+  document.getElementById("saveCredentials").checked=!!(saved.username);
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
 });
 
