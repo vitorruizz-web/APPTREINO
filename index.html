@@ -218,6 +218,16 @@
   .empty-state .icon { font-size: 40px; margin-bottom: 0.75rem; }
   .empty-state p { font-size: 14px; line-height: 1.6; }
   .count-line { font-size: 11px; color: var(--muted); text-align: center; margin-top: 1rem; }
+  .history-bulk-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .history-bulk-bar.hidden { display: none; }
+  .btn-delete-selected { padding: 6px 14px; background: var(--danger); color: #fff; border: none; border-radius: var(--radius-md); font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .btn-delete-selected:hover { background: #b53a3a; }
+  .btn-cancel-select { padding: 6px 14px; background: transparent; color: var(--muted); border: 0.5px solid var(--border); border-radius: var(--radius-md); font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .h-check { width: 22px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .h-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .select-all-wrap { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-weight: 700; letter-spacing: 0.5px; cursor: pointer; user-select: none; }
+  .select-all-wrap input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+ 
 
   .settings-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
   .settings-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 360px; }
@@ -420,9 +430,13 @@
     <div class="hold-hint" id="holdHint">Arraste pelo &#9776; para reordenar &middot; Segure o card para substituir &middot; Clique no nome para o gr&aacute;fico</div>
   </div>
 
-  <div class="history-view" id="historicoSection" style="display:none">
+    <div class="history-view" id="historicoSection" style="display:none">
     <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
     <div class="history-filter" id="historyFilter"></div>
+    <div class="history-bulk-bar hidden" id="historyBulkBar">
+      <button class="btn-delete-selected" id="btnDeleteSelected">🗑 Apagar selecionados (<span id="selectedCount">0</span>)</button>
+      <button class="btn-cancel-select" id="btnCancelSelect">Cancelar</button>
+    </div>
     <div id="historyContent"></div>
   </div>
 
@@ -1343,11 +1357,13 @@ async function renderHistory(){
     var rows=loads.map(function(r){return{loadId:r.id,name:r.ex_name,date:r.date,kg:parseFloat(r.kg),exId:r.ex_id};});
     if(historyFilter!=="todos"){var ids=(WORKOUT_DATA[historyFilter].exercises||[]).map(function(e){return e.id;});rows=rows.filter(function(r){return ids.indexOf(r.exId)>=0;});}
     rows.sort(function(a,b){return b.date.split("/").reverse().join("").localeCompare(a.date.split("/").reverse().join(""));});
-    if(!rows.length){content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udcca</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>';return;}
+    if(!rows.length){content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udcca</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>';hideBulkBar();return;}
+
     var rowsHtml=rows.map(function(r){
       var pr=getHistory(r.exId).length>1&&r.kg===prMap[r.exId];
       var safeName=r.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-      return '<div class="history-row">'+
+      return '<div class="history-row" data-load-id="'+r.loadId+'">'+
+        '<div class="h-check"><input type="checkbox" class="history-row-check" data-load-id="'+r.loadId+'" onchange="updateBulkBar()"></div>'+
         '<div class="h-name">'+r.name+'</div>'+
         '<div class="h-date">'+r.date+'</div>'+
         '<div class="h-load">'+r.kg+' kg'+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
@@ -1357,8 +1373,10 @@ async function renderHistory(){
         '</div>'+
       '</div>';
     }).join("");
+
     content.innerHTML='<div class="history-table">'+
       '<div class="history-row hdr">'+
+        '<div class="h-check"><label class="select-all-wrap" title="Selecionar todos"><input type="checkbox" id="checkSelectAll" onchange="toggleSelectAll(this.checked)"></label></div>'+
         '<div class="h-name">Exerc\u00edcio</div>'+
         '<div class="h-date">Data</div>'+
         '<div class="h-load">Carga</div>'+
@@ -1366,7 +1384,43 @@ async function renderHistory(){
       '</div>'+
       rowsHtml+
     '</div><div class="count-line">'+rows.length+' registro'+(rows.length!==1?"s":"")+'</div>';
+
+    hideBulkBar();
   }catch(e){content.innerHTML='<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>Erro ao carregar hist\u00f3rico.</p></div>';console.error(e);}
+}
+
+function hideBulkBar(){
+  var bar=document.getElementById("historyBulkBar");if(bar)bar.classList.add("hidden");
+}
+
+function updateBulkBar(){
+  var checks=document.querySelectorAll(".history-row-check");
+  var selected=Array.from(checks).filter(function(c){return c.checked;});
+  var bar=document.getElementById("historyBulkBar");
+  var countEl=document.getElementById("selectedCount");
+  var selectAll=document.getElementById("checkSelectAll");
+  if(selected.length>0){bar.classList.remove("hidden");countEl.textContent=selected.length;}
+  else{bar.classList.add("hidden");}
+  if(selectAll){selectAll.checked=selected.length===checks.length&&checks.length>0;selectAll.indeterminate=selected.length>0&&selected.length<checks.length;}
+}
+
+function toggleSelectAll(checked){
+  document.querySelectorAll(".history-row-check").forEach(function(c){c.checked=checked;});
+  updateBulkBar();
+}
+
+async function deleteSelectedLoads(){
+  var checks=Array.from(document.querySelectorAll(".history-row-check:checked"));
+  if(!checks.length)return;
+  if(!confirm("Excluir "+checks.length+" registro"+(checks.length!==1?"s":"")+"?"))return;
+  showLoading("Excluindo...");
+  try{
+    for(var i=0;i<checks.length;i++){await sbDeleteLoad(checks[i].getAttribute("data-load-id"));}
+    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
+    if(currentDay){(WORKOUT_DATA[currentDay].exercises||[]).forEach(function(ex){refreshCardUI(ex.id);});}
+    renderHistory();
+  }catch(e){alert("Erro ao excluir: "+e.message);}
+  hideLoading();
 }
 
 async function changePassword(){
@@ -1430,6 +1484,13 @@ document.getElementById("deleteModal").addEventListener("click",function(e){if(e
 document.getElementById("editLoadCancelBtn").addEventListener("click",closeEditLoadModal);
 document.getElementById("editLoadConfirmBtn").addEventListener("click",confirmEditLoad);
 document.getElementById("editLoadModal").addEventListener("click",function(e){if(e.target===this)closeEditLoadModal();});
+ document.getElementById("btnDeleteSelected").addEventListener("click",deleteSelectedLoads);
+document.getElementById("btnCancelSelect").addEventListener("click",function(){
+  document.querySelectorAll(".history-row-check").forEach(function(c){c.checked=false;});
+  var sa=document.getElementById("checkSelectAll");if(sa){sa.checked=false;sa.indeterminate=false;}
+  hideBulkBar();
+});
+ 
 
 /* ══════════════════════════════════════════════════════════════════════════
    SAÚDE — Cálculos e renderização
