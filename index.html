@@ -438,8 +438,12 @@
   </div>
 
     <div class="history-view" id="historicoSection" style="display:none">
-    <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
-    <div class="history-filter" id="historyFilter"></div>
+      <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
+      <div class="history-filter" id="historyFilter"></div>
+      <div style="position:relative;margin-bottom:1rem">
+      <input type="text" id="historySearch" placeholder="🔍 Buscar exercício..." style="width:100%;padding:10px 14px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
+      <button id="historySearchClear" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);">✕</button>
+    </div>
     <div class="history-bulk-bar hidden" id="historyBulkBar">
       <button class="btn-delete-selected" id="btnDeleteSelected">🗑 Apagar selecionados (<span id="selectedCount">0</span>)</button>
       <button class="btn-cancel-select" id="btnCancelSelect">Cancelar</button>
@@ -1405,7 +1409,35 @@ async function renderHistory(){
     '</div><div class="count-line">'+rows.length+' registro'+(rows.length!==1?"s":"")+'</div>';
 
     hideBulkBar();
+setupHistorySearch(rows);
   }catch(e){content.innerHTML='<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>Erro ao carregar hist\u00f3rico.</p></div>';console.error(e);}
+}
+
+function setupHistorySearch(rows){
+  var input=document.getElementById("historySearch");
+  var clearBtn=document.getElementById("historySearchClear");
+  if(!input)return;
+
+  function applySearch(){
+    var q=input.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    clearBtn.style.display=q?"block":"none";
+    document.querySelectorAll(".history-row:not(.hdr)").forEach(function(row){
+      var name=row.querySelector(".h-name");
+      if(!name)return;
+      var txt=name.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      row.style.display=(!q||txt.indexOf(q)>=0)?"":"none";
+    });
+    var countEl=document.querySelector(".count-line");
+    if(countEl){
+      var visible=document.querySelectorAll(".history-row:not(.hdr):not([style*='display: none'])").length;
+      countEl.textContent=visible+" registro"+(visible!==1?"s":"")+(q?" encontrado"+(visible!==1?"s":""):"");
+    }
+  }
+
+  input.removeEventListener("input",input._searchHandler);
+  input._searchHandler=applySearch;
+  input.addEventListener("input",applySearch);
+  clearBtn.addEventListener("click",function(){input.value="";applySearch();input.focus();});
 }
 
 function hideBulkBar(){
