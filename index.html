@@ -911,12 +911,16 @@ function buildLoadsCache(rows){
 function getHistory(exId, exName) {
   var byId = userLoads[exId] || [];
   if (!exName) return byId;
-  // Agrega todos os registros com o mesmo nome (case-insensitive)
-  var nameLower = exName.trim().toLowerCase();
+  
+  function normalize(s) {
+    return s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  
+  var nameLower = normalize(exName);
   var merged = {};
   Object.keys(userLoads).forEach(function(id) {
     userLoads[id].forEach(function(entry) {
-      if (entry.name && entry.name.trim().toLowerCase() === nameLower) {
+      if (entry.name && normalize(entry.name) === nameLower) {
         merged[entry.id + "_" + id] = entry;
       }
     });
