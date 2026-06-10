@@ -1639,7 +1639,7 @@ function rcaInfo(rca) {
 }
 
 /* ── % Gordura Corporal — Fórmula da Marinha dos EUA ───────────────────── */
-function calcGorduraUS(sexo, altCm, cintura, pescoco, quadril) {
+function calcGorduraNavy(sexo, altCm, cintura, pescoco, quadril) {
   if (!cintura || !pescoco || !altCm) return null;
   if (cintura < 30 || cintura > 250) return null;
   if (pescoco < 20 || pescoco > 80)  return null;
@@ -1657,22 +1657,57 @@ function calcGorduraUS(sexo, altCm, cintura, pescoco, quadril) {
   if (gc < 2 || gc > 60) return null;
   return gc;
 }
+
+function calcGorduraIMC(sexo, imc, idade) {
+  if (!sexo || !imc || !idade) return null;
+  var gc = sexo === "M"
+    ? 1.20 * imc + 0.23 * idade - 16.2
+    : 1.20 * imc + 0.23 * idade - 5.4;
+  if (gc < 2 || gc > 60) return null;
+  return gc;
+}
+
+function calcGorduraCombinada(sexo, altCm, cintura, pescoco, quadril, imc, idade) {
+  var navy = calcGorduraNavy(sexo, altCm, cintura, pescoco, quadril);
+  var imcGC = calcGorduraIMC(sexo, imc, idade);
+  if (navy !== null && imcGC !== null) {
+    return { gc: navy * 0.7 + imcGC * 0.3, confianca: calcConfianca(navy, imcGC) };
+  }
+  if (navy !== null) return { gc: navy, confianca: "sem IMC/idade" };
+  if (imcGC !== null) return { gc: imcGC, confianca: "estimativa por IMC" };
+  return null;
+}
+
+function calcConfianca(gcNavy, gcIMC) {
+  var diff = Math.abs(gcNavy - gcIMC);
+  if (diff < 3) return "Alta confiança";
+  if (diff < 6) return "Média confiança";
+  return "Baixa confiança";
+}
+
 function gcInfo(gc, sexo, idade) {
   if (sexo === "M") {
-    var faixas = idade < 40 ? [6,14,18,25] : idade < 60 ? [6,15,21,25] : [6,16,24,28];
-    if (gc < faixas[0]) return { label: "Essencial",  badge: "warn", emoji: "🏋️", obs: "Gordura essencial. Muito baixa para sustentabilidade." };
-    if (gc < faixas[1]) return { label: "Atlético",   badge: "good", emoji: "🏅", obs: "Perfil atlético. Excelente composição corporal." };
-    if (gc < faixas[2]) return { label: "Fitness",    badge: "ok",   emoji: "✅", obs: "Boa forma física. Composição corporal saudável." };
-    if (gc < faixas[3]) return { label: "Aceitável",  badge: "warn", emoji: "⚡", obs: "Dentro do aceitável, mas há espaço para melhora." };
-    return                     { label: "Elevado",    badge: "bad",  emoji: "🔴", obs: "% de gordura elevada. Foco em exercício e dieta." };
+    var f = idade < 40 ? [6,14,18,25] : idade < 60 ? [6,15,21,25] : [6,16,24,28];
+    if (gc < f[0]) return { label: "Essencial", badge: "warn", emoji: "🏋️", obs: "Gordura essencial. Muito baixa para sustentabilidade." };
+    if (gc < f[1]) return { label: "Atlético",  badge: "good", emoji: "🏅", obs: "Perfil atlético. Excelente composição corporal." };
+    if (gc < f[2]) return { label: "Fitness",   badge: "ok",   emoji: "✅", obs: "Boa forma física. Composição corporal saudável." };
+    if (gc < f[3]) return { label: "Aceitável", badge: "warn", emoji: "⚡", obs: "Dentro do aceitável, mas há espaço para melhora." };
+    return               { label: "Elevado",   badge: "bad",  emoji: "🔴", obs: "% de gordura elevada. Foco em exercício e dieta." };
   } else {
-    var faixasF = idade < 40 ? [14,21,25,32] : idade < 60 ? [14,23,28,35] : [14,24,31,38];
-    if (gc < faixasF[0]) return { label: "Essencial",  badge: "warn", emoji: "🏋️", obs: "Gordura essencial. Muito baixa para sustentabilidade." };
-    if (gc < faixasF[1]) return { label: "Atlético",   badge: "good", emoji: "🏅", obs: "Perfil atlético. Excelente composição corporal." };
-    if (gc < faixasF[2]) return { label: "Fitness",    badge: "ok",   emoji: "✅", obs: "Boa forma física. Composição corporal saudável." };
-    if (gc < faixasF[3]) return { label: "Aceitável",  badge: "warn", emoji: "⚡", obs: "Dentro do aceitável, mas há espaço para melhora." };
-    return                      { label: "Elevado",    badge: "bad",  emoji: "🔴", obs: "% de gordura elevada. Foco em exercício e dieta." };
+    var fF = idade < 40 ? [14,21,25,32] : idade < 60 ? [14,23,28,35] : [14,24,31,38];
+    if (gc < fF[0]) return { label: "Essencial", badge: "warn", emoji: "🏋️", obs: "Gordura essencial. Muito baixa para sustentabilidade." };
+    if (gc < fF[1]) return { label: "Atlético",  badge: "good", emoji: "🏅", obs: "Perfil atlético. Excelente composição corporal." };
+    if (gc < fF[2]) return { label: "Fitness",   badge: "ok",   emoji: "✅", obs: "Boa forma física. Composição corporal saudável." };
+    if (gc < fF[3]) return { label: "Aceitável", badge: "warn", emoji: "⚡", obs: "Dentro do aceitável, mas há espaço para melhora." };
+    return                 { label: "Elevado",   badge: "bad",  emoji: "🔴", obs: "% de gordura elevada. Foco em exercício e dieta." };
   }
+}
+
+ function calcMassaMagraBoer(sexo, peso, altCm) {
+  if (!sexo || !peso || !altCm) return null;
+  return sexo === "M"
+    ? 0.407 * peso + 0.267 * altCm - 19.2
+    : 0.252 * peso + 0.473 * altCm - 48.3;
 }
 
 /* ── TMB — Mifflin-St Jeor ──────────────────────────────────────────────── */
@@ -1732,17 +1767,24 @@ function buildIndicadores(reg) {
     cards.push({ name: "Rel. Cintura-Altura", val: fmt2(rca), emoji: rai.emoji, badge: rai.label, badgeClass: rai.badge, obs: rai.obs });
   }
 
-  // % Gordura + Massa Magra + Massa Gorda
+  // % Gordura + Massa Magra (Boer) + Massa Gorda
+  var imcVal = (peso && alt) ? calcIMC(peso, alt) : null;
   if (sexo && alt && cintura && pescoco) {
-    var gc = calcGorduraUS(sexo, alt, cintura, pescoco, quadril || 0);
-    if (gc !== null) {
+    var result = calcGorduraCombinada(sexo, alt, cintura, pescoco, quadril || 0, imcVal, idade || 30);
+    if (result !== null) {
+      var gc = result.gc;
       var gi = gcInfo(gc, sexo, idade || 30);
-      cards.push({ name: "% Gordura Corporal", val: fmt1(gc) + "%", emoji: gi.emoji, badge: gi.label, badgeClass: gi.badge, obs: gi.obs });
-      if (peso) {
-        var massaGorda  = peso * (gc / 100);
-        var massaMagra  = peso - massaGorda;
-        cards.push({ name: "Massa Magra",  val: fmt1(massaMagra) + " kg", emoji: "💪", badge: null, badgeClass: null, obs: "Músculos, ossos e órgãos. Quanto maior, melhor." });
-        cards.push({ name: "Massa Gorda",  val: fmt1(massaGorda) + " kg", emoji: "🫙", badge: null, badgeClass: null, obs: "Total de gordura corporal em quilos." });
+      cards.push({
+        name: "% Gordura Corporal",
+        val: fmt1(gc) + "%",
+        emoji: gi.emoji, badge: gi.label, badgeClass: gi.badge,
+        obs: gi.obs + " (" + result.confianca + ")"
+      });
+      var lbm = calcMassaMagraBoer(sexo, peso, alt);
+      if (lbm !== null && peso) {
+        var massaGorda = peso - lbm;
+        cards.push({ name: "Massa Magra (Boer)",  val: fmt1(lbm) + " kg",        emoji: "💪", badge: null, badgeClass: null, obs: "Estimativa de músculo, ossos e órgãos (fórmula de Boer)." });
+        cards.push({ name: "Massa Gorda",         val: fmt1(massaGorda) + " kg",  emoji: "🫙", badge: null, badgeClass: null, obs: "Peso total = Massa magra + Massa gorda." });
       }
     }
   }
