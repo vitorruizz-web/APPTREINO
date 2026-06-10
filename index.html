@@ -304,7 +304,7 @@
   .edit-date-input { width: 100%; padding: 10px 14px; font-size: 15px; font-family: "Syne",sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); margin-bottom: 0.5rem; outline: none; }
   .edit-date-input:focus { border-color: var(--accent); }
 
-  /* ── SAÚDE ──────────────────────────────────────────────────────────────── */
+/* ── SAÚDE ──────────────────────────────────────────────────────────────── */
   .saude-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
 
   .saude-form-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
@@ -317,7 +317,8 @@
   }
   .saude-field { display: flex; flex-direction: column; gap: 4px; }
   .saude-field label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
-  .saude-field input { padding: 9px 12px; font-size: 14px; font-family: "DM Mono", monospace; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; width: 100%; }
+  .saude-field input { padding: 9px 12px; font-size: 13px; font-family: "DM Mono", monospace; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; width: 100%; min-width: 0; box-sizing: border-box; }
+  .saude-field input[type="date"] { font-size: 11px; padding: 9px 6px; }
   .saude-field input:focus { border-color: var(--accent); }
   .saude-field input::placeholder { font-family: "Syne",sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 0; }
   .saude-field-full { grid-column: 1 / -1; }
@@ -369,7 +370,6 @@
   .saude-btn-row { display: flex; gap: 8px; margin-top: 0.25rem; }
   .saude-btn-row .btn-primary { margin-top: 0; }
 
-  /* Nota de rodapé dos cálculos */
   .saude-formula-note { font-size: 10px; color: var(--muted); text-align: center; padding: 0.5rem 0 0; letter-spacing: 0.3px; }
   /* ────────────────────────────────────────────────────────────────────────── */
 </style>
