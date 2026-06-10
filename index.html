@@ -1023,7 +1023,14 @@ function selectDay(day){
 
 function buildSparklineSVG(history){
   if(!history||history.length===0)return null;
-  var vals=history.map(function(h){return h.kg;}),dates=history.map(function(h){return h.date;});
+
+  // Ordena por data (formato dd/mm/yyyy) crescente
+  var sorted = history.slice().sort(function(a,b){
+    var pa=a.date.split("/").reverse().join(""),pb=b.date.split("/").reverse().join("");
+    return pa.localeCompare(pb);
+  });
+
+  var vals=sorted.map(function(h){return h.kg;}),dates=sorted.map(function(h){return h.date;});
   var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals),range=maxV-minV||1;
   var W=320,H=80,pad=12,n=vals.length;
   function px(i){return pad+(i/Math.max(n-1,1))*(W-pad*2);}
@@ -1040,11 +1047,19 @@ function toggleChart(exId){var panel=document.getElementById("chart-"+exId);if(!
 
 function buildChartInner(hist){
   if(!hist||hist.length===0)return'<div class="chart-empty">Sem registros ainda. Salve sua primeira carga!</div>';
-  var svg=buildSparklineSVG(hist);var maxKg=Math.max.apply(null,hist.map(function(h){return h.kg;}));
-  var avg=(hist.reduce(function(a,b){return a+b.kg;},0)/hist.length).toFixed(1);
-  var diff=hist.length>1?hist[hist.length-1].kg-hist[hist.length-2].kg:null;
-  var diffStr=diff!==null?(diff>0?"+"+diff:diff)+" kg":"\u2014";var diffColor=diff!==null?(diff>0?"color:var(--accent)":(diff<0?"color:var(--danger)":"")):"";
-  return'<div class="chart-wrap">'+(svg||"")+'</div><div class="chart-stats"><div class="chart-stat"><div class="chart-stat-val">'+maxKg+' kg</div><div class="chart-stat-lbl">M\u00c1XIMO</div></div><div class="chart-stat"><div class="chart-stat-val">'+avg+' kg</div><div class="chart-stat-lbl">M\u00c9DIA</div></div><div class="chart-stat"><div class="chart-stat-val" style="'+diffColor+'">'+diffStr+'</div><div class="chart-stat-lbl">\u00daCT. VAR.</div></div><div class="chart-stat"><div class="chart-stat-val">'+hist.length+'x</div><div class="chart-stat-lbl">REGISTROS</div></div></div>';
+
+  // Ordena por data crescente para stats e gráfico
+  var sorted=hist.slice().sort(function(a,b){
+    var pa=a.date.split("/").reverse().join(""),pb=b.date.split("/").reverse().join("");
+    return pa.localeCompare(pb);
+  });
+
+  var svg=buildSparklineSVG(sorted);
+  var maxKg=Math.max.apply(null,sorted.map(function(h){return h.kg;}));
+  var avg=(sorted.reduce(function(a,b){return a+b.kg;},0)/sorted.length).toFixed(1);
+  var diff=sorted.length>1?sorted[sorted.length-1].kg-sorted[sorted.length-2].kg:null;
+  var diffStr=diff!==null?(diff>0?"+"+diff:diff)+" kg":"—";var diffColor=diff!==null?(diff>0?"color:var(--accent)":(diff<0?"color:var(--danger)":"")):"";
+  return'<div class="chart-wrap">'+(svg||"")+'</div><div class="chart-stats"><div class="chart-stat"><div class="chart-stat-val">'+maxKg+' kg</div><div class="chart-stat-lbl">MÁXIMO</div></div><div class="chart-stat"><div class="chart-stat-val">'+avg+' kg</div><div class="chart-stat-lbl">MÉDIA</div></div><div class="chart-stat"><div class="chart-stat-val" style="'+diffColor+'">'+diffStr+'</div><div class="chart-stat-lbl">ÚLT. VAR.</div></div><div class="chart-stat"><div class="chart-stat-val">'+sorted.length+'x</div><div class="chart-stat-lbl">REGISTROS</div></div></div>';
 }
 
 function getBadgeHtml(badge){
