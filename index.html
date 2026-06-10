@@ -318,7 +318,7 @@
   .saude-field { display: flex; flex-direction: column; gap: 4px; }
   .saude-field label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
   .saude-field input { padding: 9px 12px; font-size: 13px; font-family: "DM Mono", monospace; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; width: 100%; min-width: 0; box-sizing: border-box; }
-  .saude-field input[type="date"] { font-size: 11px; padding: 9px 6px; }
+  .saude-field input[type="date"] { font-size: 10px; padding: 9px 4px; letter-spacing: -0.3px; }
   .saude-field input:focus { border-color: var(--accent); }
   .saude-field input::placeholder { font-family: "Syne",sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 0; }
   .saude-field-full { grid-column: 1 / -1; }
@@ -478,15 +478,15 @@
   <div class="saude-section" id="saudeSection" style="display:none">
     <div class="saude-form-card">
       <h3>💪 Novo Registro</h3>
-      <div class="saude-form-grid">
-        <div class="saude-field">
-          <label>Data</label>
-          <input type="date" id="saudeData" />
-        </div>
-        <div class="saude-field">
-          <label>Idade (anos)</label>
-          <input type="number" id="saudeIdade" placeholder="Ex: 25" min="1" max="120" />
-        </div>
+<div class="saude-form-grid" style="grid-template-columns: 1fr;">
+  <div class="saude-field">
+    <label>Data</label>
+    <input type="date" id="saudeData" />
+  </div>
+  <div class="saude-field">
+    <label>Idade (anos)</label>
+    <input type="number" id="saudeIdade" placeholder="Ex: 25" min="1" max="120" />
+  </div>
         <div class="saude-field">
           <label>Peso (kg)</label>
           <input type="number" id="saudePeso" placeholder="Ex: 75.5" step="0.1" min="1" />
