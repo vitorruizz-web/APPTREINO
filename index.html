@@ -930,7 +930,7 @@ function getHistory(exId, exName) {
   var result = Object.values(merged);
   return result.length > 0 ? result : byId;
 }
-function addToCache(exId,exName,kg){if(!userLoads[exId])userLoads[exId]=[];userLoads[exId].push({date:new Date().toLocaleDateString("pt-BR"),kg:parseFloat(kg),name:exName});}
+function addToCache(exId,exName,kg,strategy,setsReps){if(!userLoads[exId])userLoads[exId]=[];userLoads[exId].push({date:new Date().toLocaleDateString("pt-BR"),kg:parseFloat(kg),name:exName,strategy:strategy||null,sets_reps:setsReps||null});}
 
 function refreshCardUI(exId){
   var exName=null;DAYS.forEach(function(d){(WORKOUT_DATA[d].exercises||[]).forEach(function(e){if(e.id===exId)exName=e.name;});});
@@ -1239,7 +1239,7 @@ async function handleSave(exId, exName) {
   try {
     var exObj=(WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises||[]).find(function(e){return e.id===exId;});
 await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
-    addToCache(exId, exName, kg);
+    addToCache(exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
     var hist = getHistory(exId, exName);
     var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
     var isPR = hist.length > 1 && kg === maxKg;
