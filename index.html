@@ -906,7 +906,7 @@ function loadVideoLinksLocal(userId){try{return JSON.parse(localStorage.getItem(
 function saveVideoLinksLocal(userId,data){try{localStorage.setItem(getVideoLinksKey(userId),JSON.stringify(data));}catch(e){}}
 
 function buildLoadsCache(rows){
-  userLoads={};rows.forEach(function(r){if(!userLoads[r.ex_id])userLoads[r.ex_id]=[];userLoads[r.ex_id].push({id:r.id,date:r.date,kg:parseFloat(r.kg),name:r.ex_name,strategy:r.strategy||null});
+  userLoads={};rows.forEach(function(r){if(!userLoads[r.ex_id])userLoads[r.ex_id]=[];userLoads[r.ex_id].push({id:r.id,date:r.date,kg:parseFloat(r.kg),name:r.ex_name,strategy:r.strategy||null});});
 }
 function getHistory(exId, exName) {
   var byId = userLoads[exId] || [];
