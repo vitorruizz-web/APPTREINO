@@ -372,7 +372,7 @@
 
   .saude-formula-note { font-size: 10px; color: var(--muted); text-align: center; padding: 0.5rem 0 0; letter-spacing: 0.3px; }
   /* ────────────────────────────────────────────────────────────────────────── */
- .chart-tip{position:fixed;background:var(--text);color:var(--surface);font-size:11px;font-family:"Syne",sans-serif;font-weight:700;padding:5px 10px;border-radius:8px;pointer-events:none;z-index:9000;white-space:nowrap;transform:translate(-50%,-130%);transition:opacity 0.15s;letter-spacing:0.5px;}
+ .chart-tip{position:fixed;background:var(--text);color:var(--surface);font-size:11px;font-family:"Syne",sans-serif;font-weight:700;padding:5px 10px;border-radius:8px;pointer-events:none;z-index:9000;white-space:nowrap;transition:opacity 0.15s;letter-spacing:0.5px;}
 </head>
 <body>
 </style>
@@ -1926,7 +1926,12 @@ function showChartTip(evt,msg){
   document.body.appendChild(tip);
   var x=(evt.clientX||evt.touches&&evt.touches[0].clientX)||0;
   var y=(evt.clientY||evt.touches&&evt.touches[0].clientY)||0;
-  tip.style.left=x+"px";tip.style.top=y+"px";tip.style.opacity="1";
+    document.body.appendChild(tip);
+  var tipW=tip.offsetWidth;
+  var maxX=window.innerWidth-tipW-8;
+  tip.style.left=Math.min(x-tipW/2,maxX)+"px";
+  tip.style.top=(y-44)+"px";
+  tip.style.opacity="1";
   chartTipTimer=setTimeout(function(){if(tip.parentNode)tip.remove();},2200);
   evt.stopPropagation();
 }
