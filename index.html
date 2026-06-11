@@ -893,8 +893,8 @@ async function sbCreateUser(username,password){var r=await sbFetch("users?select
 async function sbUpdatePassword(userId,newPassword){await sbFetch("users?id=eq."+userId,{method:"PATCH",prefer:"return=minimal",body:{password:newPassword}});}
 async function sbGetWorkoutConfig(userId){var r=await sbFetch("workout_config?user_id=eq."+userId+"&select=data");return r&&r.length>0?r[0].data:null;}
 async function sbSaveWorkoutConfig(userId,data){await sbFetch("workout_config",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{user_id:userId,data:data,updated_at:new Date().toISOString()}});}
-async function sbGetUserLoads(userId){var r=await sbFetch("workout_loads?user_id=eq."+userId+"&order=created_at.asc&select=id,ex_id,ex_name,kg,date");return r||[];}
-async function sbSaveLoad(userId,exId,exName,kg){await sbFetch("workout_loads",{method:"POST",prefer:"return=minimal",body:{user_id:userId,ex_id:exId,ex_name:exName,kg:parseFloat(kg),date:new Date().toLocaleDateString("pt-BR"),created_at:new Date().toISOString()}});}
+async function sbGetUserLoads(userId){var r=await sbFetch("workout_loads?user_id=eq."+userId+"&order=created_at.asc&select=id,ex_id,ex_name,kg,date,strategy");return r||[];}
+async function sbSaveLoad(userId,exId,exName,kg,strategy){await sbFetch("workout_loads",{method:"POST",prefer:"return=minimal",body:{user_id:userId,ex_id:exId,ex_name:exName,kg:parseFloat(kg),strategy:strategy||null,date:new Date().toLocaleDateString("pt-BR"),created_at:new Date().toISOString()}});}
 async function sbClearUserLoads(userId){await sbFetch("workout_loads?user_id=eq."+userId,{method:"DELETE",prefer:"return=minimal"});}
 async function sbDeleteLoad(loadId){await sbFetch("workout_loads?id=eq."+loadId,{method:"DELETE",prefer:"return=minimal"});}
 async function sbUpdateLoadDate(loadId,newDate){await sbFetch("workout_loads?id=eq."+loadId,{method:"PATCH",prefer:"return=minimal",body:{date:newDate}});}
@@ -906,7 +906,7 @@ function loadVideoLinksLocal(userId){try{return JSON.parse(localStorage.getItem(
 function saveVideoLinksLocal(userId,data){try{localStorage.setItem(getVideoLinksKey(userId),JSON.stringify(data));}catch(e){}}
 
 function buildLoadsCache(rows){
-  userLoads={};rows.forEach(function(r){if(!userLoads[r.ex_id])userLoads[r.ex_id]=[];userLoads[r.ex_id].push({id:r.id,date:r.date,kg:parseFloat(r.kg),name:r.ex_name});});
+  userLoads={};rows.forEach(function(r){if(!userLoads[r.ex_id])userLoads[r.ex_id]=[];userLoads[r.ex_id].push({id:r.id,date:r.date,kg:parseFloat(r.kg),name:r.ex_name,strategy:r.strategy||null});
 }
 function getHistory(exId, exName) {
   var byId = userLoads[exId] || [];
@@ -1056,7 +1056,7 @@ function buildSparklineSVG(history){
   function py(v){return H-pad-((v-minV)/range)*(H-pad*2);}
   var points=vals.map(function(v,i){return px(i)+","+py(v);}).join(" ");
   var areaPath="M "+px(0)+","+H+" L "+px(0)+","+py(vals[0])+" "+vals.map(function(v,i){return"L "+px(i)+","+py(v);}).join(" ")+" L "+px(n-1)+","+H+" Z";
-  var dots=vals.map(function(v,i){var isPR=v===maxV;return'<circle cx="'+px(i)+'" cy="'+py(v)+'" r="'+(isPR?4:3)+'" fill="'+(isPR?"#1D9E75":"#fff")+'" stroke="#1D9E75" stroke-width="1.5"><title>'+dates[i]+': '+v+'kg'+(isPR?' PR':'')+'</title></circle>';}).join("");
+  var dots=vals.map(function(v,i){var isPR=v===maxV;return'<circle cx="'+px(i)+'" cy="'+py(v)+'" r="'+(isPR?4:3)+'" fill="'+(isPR?"#1D9E75":"#fff")+'" stroke="#1D9E75" stroke-width="1.5"><title>'+dates[i]+': '+v+'kg'+(isPR?' ⭐PR':'')+(sorted[i].strategy?' · '+sorted[i].strategy:'')+'</title></circle>';}).join("");
   var labelIdx=[0];if(n>2)labelIdx.push(Math.floor(n/2));if(n>1)labelIdx.push(n-1);labelIdx=labelIdx.filter(function(v,i,a){return a.indexOf(v)===i;});
   var xlabels=labelIdx.map(function(i){return'<text x="'+px(i)+'" y="'+(H+2)+'" text-anchor="middle" font-size="8" fill="#888780">'+dates[i].substring(0,5)+'</text>';}).join("");
   return'<svg class="chart-svg" viewBox="0 0 '+W+" "+(H+14)+'" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1D9E75" stop-opacity="0.18"/><stop offset="100%" stop-color="#1D9E75" stop-opacity="0.01"/></linearGradient></defs><path d="'+areaPath+'" fill="url(#ag)"/><polyline points="'+points+'" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+xlabels+'</svg>';
@@ -1234,7 +1234,8 @@ async function handleSave(exId, exName) {
   var prevMax = histBefore.length > 0 ? Math.max.apply(null, histBefore.map(function(h) { return h.kg; })) : null;
   btn.textContent = "..."; btn.disabled = true;
   try {
-    await sbSaveLoad(currentUser.id, exId, exName, kg);
+    var exObj=(WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises||[]).find(function(e){return e.id===exId;});
+    await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null);
     addToCache(exId, exName, kg);
     var hist = getHistory(exId);
     var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
