@@ -933,9 +933,10 @@ function getHistory(exId, exName) {
 function addToCache(exId,exName,kg){if(!userLoads[exId])userLoads[exId]=[];userLoads[exId].push({date:new Date().toLocaleDateString("pt-BR"),kg:parseFloat(kg),name:exName});}
 
 function refreshCardUI(exId){
-  var hist=getHistory(exId);var meta=document.getElementById("meta-"+exId);var inp=document.getElementById("inp-"+exId);var cp=document.getElementById("chart-"+exId);
+  var exName=null;DAYS.forEach(function(d){(WORKOUT_DATA[d].exercises||[]).forEach(function(e){if(e.id===exId)exName=e.name;});});
+  var hist=getHistory(exId,exName);var meta=document.getElementById("meta-"+exId);var inp=document.getElementById("inp-"+exId);var cp=document.getElementById("chart-"+exId);
   if(!meta)return;
-  if(hist.length===0){if(inp)inp.value="";meta.innerHTML="";}
+   if(hist.length===0){if(inp)inp.value="";meta.innerHTML="";if(cp)cp.innerHTML=buildChartInner([]);}
   else{var lastKg=hist[hist.length-1].kg;var maxKg=Math.max.apply(null,hist.map(function(h){return h.kg;}));var isPR=hist.length>1&&lastKg===maxKg;var prevKg=hist.length>1?hist[hist.length-2].kg:null;var histTxt=prevKg!==null?"ant: "+prevKg+"kg":(hist.length===1?"1x reg.":"");meta.innerHTML=histTxt+" "+(isPR?'<span class="pr-badge">\u2605 PR</span>':"");if(inp)inp.value=lastKg;}
   if(cp){cp.innerHTML=buildChartInner(hist);if(openCharts[exId])cp.classList.add("open");}
 }
