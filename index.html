@@ -1245,8 +1245,8 @@ await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj
     var isPR = hist.length > 1 && kg === maxKg;
     var prevKg = hist.length > 1 ? hist[hist.length - 2].kg : null;
     meta.innerHTML = (prevKg !== null ? "ant: " + prevKg + "kg" : hist.length + "x reg.") + " " + (isPR ? '<span class="pr-badge">\u2605 PR</span>' : "");
-    var cp = document.getElementById("chart-" + exId);
-    if (cp) { var freshHist = getHistory(exId, exName); cp.innerHTML = buildChartInner(freshHist); if (openCharts[exId]) cp.classList.add("open"); }
+    if(openCharts[exId]&&currentDay){renderWorkout(currentDay);}
+    else{var cp=document.getElementById("chart-"+exId);if(cp){var freshHist=getHistory(exId,exName);cp.innerHTML=buildChartInner(freshHist);if(openCharts[exId])cp.classList.add("open");}}
     triggerSaveToast(kg, prevMax, hist.length);
     btn.textContent = "\u2713 Salvo"; btn.classList.add("saved");
     setTimeout(function() { btn.textContent = "Salvar"; btn.classList.remove("saved"); btn.disabled = false; }, 2000);
