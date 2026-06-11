@@ -1237,15 +1237,15 @@ async function handleSave(exId, exName) {
   btn.textContent = "..."; btn.disabled = true;
   try {
     var exObj=(WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises||[]).find(function(e){return e.id===exId;});
-    await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
+await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
     addToCache(exId, exName, kg);
-    var hist = getHistory(exId);
+    var hist = getHistory(exId, exName);
     var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
     var isPR = hist.length > 1 && kg === maxKg;
     var prevKg = hist.length > 1 ? hist[hist.length - 2].kg : null;
     meta.innerHTML = (prevKg !== null ? "ant: " + prevKg + "kg" : hist.length + "x reg.") + " " + (isPR ? '<span class="pr-badge">\u2605 PR</span>' : "");
     var cp = document.getElementById("chart-" + exId);
-    if (cp) { cp.innerHTML = buildChartInner(hist); if (openCharts[exId]) cp.classList.add("open"); }
+    if (cp) { var freshHist = getHistory(exId, exName); cp.innerHTML = buildChartInner(freshHist); if (openCharts[exId]) cp.classList.add("open"); }
     triggerSaveToast(kg, prevMax, hist.length);
     btn.textContent = "\u2713 Salvo"; btn.classList.add("saved");
     setTimeout(function() { btn.textContent = "Salvar"; btn.classList.remove("saved"); btn.disabled = false; }, 2000);
