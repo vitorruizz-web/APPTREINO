@@ -1401,7 +1401,10 @@ async function deleteLoad(loadId){
   if(!confirm("Excluir este registro?"))return;showLoading("Excluindo...");
   try{
     var exIdToRefresh=null;Object.keys(userLoads).forEach(function(eid){(userLoads[eid]||[]).forEach(function(entry){if(String(entry.id)===String(loadId))exIdToRefresh=eid;});});
-    await sbDeleteLoad(loadId);var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);if(exIdToRefresh)refreshCardUI(exIdToRefresh);renderHistory();
+    await sbDeleteLoad(loadId);var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
+    if(exIdToRefresh&&openCharts[exIdToRefresh]&&currentDay){renderWorkout(currentDay);}
+    else if(exIdToRefresh){refreshCardUI(exIdToRefresh);}
+    renderHistory();
   }catch(e){alert("Erro ao excluir: "+e.message);}hideLoading();
 }
 
