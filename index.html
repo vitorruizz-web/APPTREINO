@@ -1221,6 +1221,8 @@ function finishDrag() {
   if (effectiveTo !== from && effectiveTo >= 0 && effectiveTo < WORKOUT_DATA[day].exercises.length) {
     var exs = WORKOUT_DATA[day].exercises; var moved = exs.splice(from, 1)[0]; exs.splice(effectiveTo, 0, moved);
     clearTimeout(dnd.saveTimer);
+    dnd.saveTimer = setTimeout(function() { sbSaveWorkoutConfig(currentUser.id, WORKOUT_DATA).catch(function(e) { console.error("Erro ao salvar ordem:", e); alert("Erro ao salvar a nova ordem dos exerc\u00edcios. Recarregue a p\u00e1gina antes de continuar."); }); }, 800);
+  }
   dnd.dragExId = null; dnd.dragDay = null; dnd.dragOrigIdx = null; dnd.dropIdx = null;
   renderWorkout(currentDay);
 }
