@@ -447,9 +447,12 @@
     <div class="history-view" id="historicoSection" style="display:none">
       <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
       <div class="history-filter" id="historyFilter"></div>
+      
       <div style="position:relative;margin-bottom:1rem">
-      <input type="text" id="historySearch" placeholder="🔍 Buscar exercício..." style="width:100%;padding:10px 14px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+  <input type="text" id="historySearch" placeholder="🔍 Buscar exercício..." style="width:100%;padding:10px 14px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
+  <button id="historySearchClear" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);">✕</button>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
   <div style="flex:1;min-width:120px">
     <input type="date" id="historyDateFrom" style="width:100%;padding:9px 10px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
   </div>
@@ -458,8 +461,6 @@
   </div>
   <button id="historyDateClear" style="display:none;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-md);font-size:11px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted);cursor:pointer;">✕ Limpar</button>
 </div>
-      <button id="historySearchClear" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);">✕</button>
-    </div>
     <div class="history-bulk-bar hidden" id="historyBulkBar">
       <button class="btn-delete-selected" id="btnDeleteSelected">🗑 Apagar selecionados (<span id="selectedCount">0</span>)</button>
       <button class="btn-cancel-select" id="btnCancelSelect">Cancelar</button>
