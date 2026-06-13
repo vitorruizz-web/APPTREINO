@@ -449,6 +449,15 @@
       <div class="history-filter" id="historyFilter"></div>
       <div style="position:relative;margin-bottom:1rem">
       <input type="text" id="historySearch" placeholder="🔍 Buscar exercício..." style="width:100%;padding:10px 14px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+  <div style="flex:1;min-width:120px">
+    <input type="date" id="historyDateFrom" style="width:100%;padding:9px 10px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
+  </div>
+  <div style="flex:1;min-width:120px">
+    <input type="date" id="historyDateTo" style="width:100%;padding:9px 10px;font-size:12px;font-family:'DM Mono',monospace;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
+  </div>
+  <button id="historyDateClear" style="display:none;padding:9px 12px;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-md);font-size:11px;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted);cursor:pointer;">✕ Limpar</button>
+</div>
       <button id="historySearchClear" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted);">✕</button>
     </div>
     <div class="history-bulk-bar hidden" id="historyBulkBar">
@@ -1477,30 +1486,66 @@ setupHistorySearch(rows);
 function setupHistorySearch(rows){
   var input=document.getElementById("historySearch");
   var clearBtn=document.getElementById("historySearchClear");
+  var dateFrom=document.getElementById("historyDateFrom");
+  var dateTo=document.getElementById("historyDateTo");
+  var dateClear=document.getElementById("historyDateClear");
   if(!input)return;
 
-  function applySearch(){
+  function rowDateToISO(dateStr){
+    // dateStr no formato dd/mm/yyyy
+    var p=dateStr.split("/");
+    return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:"";
+  }
+
+  function applyFilters(){
     var q=input.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    var from=dateFrom.value;
+    var to=dateTo.value;
     clearBtn.style.display=q?"block":"none";
+    dateClear.style.display=(from||to)?"block":"none";
+
     document.querySelectorAll(".history-row:not(.hdr)").forEach(function(row){
       var name=row.querySelector(".h-name");
-      if(!name)return;
+      var dateEl=row.querySelector(".h-date");
+      if(!name||!dateEl)return;
       var txt=name.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-      row.style.display=(!q||txt.indexOf(q)>=0)?"":"none";
+      var matchName=(!q||txt.indexOf(q)>=0);
+
+      var loadId=row.getAttribute("data-load-id");
+      var rowData=rows.find(function(r){return String(r.loadId)===String(loadId);});
+      var iso=rowData?rowDateToISO(rowData.date):"";
+      var matchDate=true;
+      if(from&&iso<from)matchDate=false;
+      if(to&&iso>to)matchDate=false;
+
+      row.style.display=(matchName&&matchDate)?"":"none";
     });
+
     var countEl=document.querySelector(".count-line");
     if(countEl){
       var visible=document.querySelectorAll(".history-row:not(.hdr):not([style*='display: none'])").length;
-      countEl.textContent=visible+" registro"+(visible!==1?"s":"")+(q?" encontrado"+(visible!==1?"s":""):"");
+      var filtering=q||from||to;
+      countEl.textContent=visible+" registro"+(visible!==1?"s":"")+(filtering?" encontrado"+(visible!==1?"s":""):"");
     }
   }
 
   input.removeEventListener("input",input._searchHandler);
-  input._searchHandler=applySearch;
-  input.addEventListener("input",applySearch);
-  clearBtn.addEventListener("click",function(){input.value="";applySearch();input.focus();});
-}
+  input._searchHandler=applyFilters;
+  input.addEventListener("input",applyFilters);
+  clearBtn.addEventListener("click",function(){input.value="";applyFilters();input.focus();});
 
+  dateFrom.removeEventListener("change",dateFrom._handler);
+  dateTo.removeEventListener("change",dateTo._handler);
+  dateFrom._handler=applyFilters;
+  dateTo._handler=applyFilters;
+  dateFrom.addEventListener("change",applyFilters);
+  dateTo.addEventListener("change",applyFilters);
+
+  dateClear.addEventListener("click",function(){
+    dateFrom.value="";dateTo.value="";applyFilters();
+  });
+}
+ 
 function hideBulkBar(){
   var bar=document.getElementById("historyBulkBar");if(bar)bar.classList.add("hidden");
 }
