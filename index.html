@@ -126,6 +126,11 @@
   .workout-view { padding: 1.25rem; }
   .workout-header { margin-bottom: 1.25rem; }
   .workout-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+ .workout-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }.dia-recomendado-select {
+  font-family: "Syne", sans-serif; font-size: 11px; font-weight: 700;
+  padding: 4px 8px; border-radius: 14px; border: 0.5px solid var(--accent);
+  background: var(--accent-light); color: var(--accent2); cursor: pointer; outline: none;
+}
   .workout-subtitle { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 1.5px; text-transform: uppercase; }
 
   .exercise-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s; user-select: none; -webkit-user-select: none; position: relative; }
@@ -828,7 +833,8 @@ function formatSetsRepsTag(key){
 var DAYS=["treino_a","treino_b","treino_c","treino_d","treino_e","treino_f","treino_g"];
 var DAY_LABELS={treino_a:"Treino A",treino_b:"Treino B",treino_c:"Treino C",treino_d:"Treino D",treino_e:"Treino E",treino_f:"Treino F",treino_g:"Treino G"};
 var DEFAULT_WORKOUT={};
-DAYS.forEach(function(d){DEFAULT_WORKOUT[d]={label:DAY_LABELS[d],exercises:[],rest:true};});
+var WEEKDAYS = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+DAYS.forEach(function(d){DEFAULT_WORKOUT[d]={label:DAY_LABELS[d],exercises:[],rest:true,diaRecomendado:null};});
 
 var currentDay=null,currentTab="treino",historyFilter="todos";
 var WORKOUT_DATA=null,currentUser=null,userLoads={},userVideoLinks={};
@@ -1037,7 +1043,9 @@ function buildDaySelector(){
   var sel=document.getElementById("daySelector");sel.innerHTML="";
   DAYS.forEach(function(day){
     var d=WORKOUT_DATA[day];var btn=document.createElement("div");var hasEx=d.exercises&&d.exercises.length>0;
-    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"");btn.id="daybtn-"+day;btn.innerHTML=DAY_LABELS[day];
+    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"");btn.id="daybtn-"+day;
+    var diaTxt=(d.diaRecomendado!==null&&d.diaRecomendado!==undefined)?'<br><small style="font-size:9px;opacity:0.8">'+WEEKDAYS[d.diaRecomendado]+'</small>':"";
+    btn.innerHTML=DAY_LABELS[day]+diaTxt;
     btn.addEventListener("click",(function(k){return function(){selectDay(k);};})(day));sel.appendChild(btn);
   });
 }
@@ -1102,7 +1110,11 @@ function renderWorkout(day){
     document.getElementById("addExRestBtn").addEventListener("click",function(){openAddExerciseModal(day);});return;
   }
   var titulo=DAY_LABELS[day];
-  wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
+  wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+
+  '<select class="dia-recomendado-select" id="diaRecSelect" onchange="setDiaRecomendado(\''+day+'\',this.value)">'+
+  '<option value="">+ Dia</option>'+
+  WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?' selected':'')+'>'+w+'</option>';}).join("")+
+  '</select></div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
   var list=document.getElementById("exerciseList");
 
   d.exercises.forEach(function(ex,idx){
@@ -1356,6 +1368,11 @@ async function confirmStrategy(){
   try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);renderWorkout(day);}catch(e){alert("Erro ao salvar: "+e.message);}hideLoading();
 }
 
+async function setDiaRecomendado(day, val){
+  WORKOUT_DATA[day].diaRecomendado = val===""?null:parseInt(val);
+  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);buildDaySelector();}catch(e){alert("Erro ao salvar: "+e.message);}
+}
+ 
 function openSetsRepsModal(exId,exName,currentSR,day,idx){
   modalTargetDay=day;modalTargetIdx=idx;modalTargetSetsReps=currentSR||null;
   document.getElementById("setsRepsSubtitle").textContent=exName;
