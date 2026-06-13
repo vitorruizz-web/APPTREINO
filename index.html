@@ -997,7 +997,7 @@ async function initApp(){
     WORKOUT_DATA=remoteConfig||JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
     DAYS.forEach(function(d){if(!WORKOUT_DATA[d])WORKOUT_DATA[d]={label:DAY_LABELS[d],exercises:[],rest:true};else WORKOUT_DATA[d].label=DAY_LABELS[d];});
     if(!remoteConfig&&!fetchFailed){try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);}catch(e){}}
-    else if(fetchFailed){alert("N\u00e3o foi poss\u00edvel carregar seus treinos do servidor. Verifique sua conex\u00e3o. Nada ser\u00e1 salvo at\u00e9 recarregar a p\u00e1gina com sucesso.");}
+    else if(fetchFailed){console.warn("Falha ao carregar config do servidor - autosave desabilitado nesta sess\u00e3o.");}
     var loads=[],loadsFailed=false;try{loads=await sbGetUserLoads(currentUser.id);}catch(e){console.warn(e);loadsFailed=true;}
     buildLoadsCache(loads);userVideoLinks=loadVideoLinksLocal(currentUser.id);
     if(loadsFailed)alert("N\u00e3o foi poss\u00edvel carregar seu hist\u00f3rico de cargas. Os gr\u00e1ficos podem aparecer vazios temporariamente.");
