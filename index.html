@@ -1182,7 +1182,7 @@ function buildSparklineSVG(history){
   function py(v){return H-pad-((v-minV)/range)*(H-pad*2);}
   var points=vals.map(function(v,i){return px(i)+","+py(v);}).join(" ");
   var areaPath="M "+px(0)+","+H+" L "+px(0)+","+py(vals[0])+" "+vals.map(function(v,i){return"L "+px(i)+","+py(v);}).join(" ")+" L "+px(n-1)+","+H+" Z";
-  var dots=vals.map(function(v,i){var isPR=v===maxV;var strat=sorted[i].strategy?sorted[i].strategy:'Normal';var sr=sorted[i].sets_reps?(' · '+sorted[i].sets_reps):'';var tip=strat+sr+(isPR?' ⭐PR':'');return'<circle cx="'+px(i)+'" cy="'+py(v)+'" r="'+(isPR?5:3.5)+'" fill="'+(isPR?"#1D9E75":"#fff")+'" stroke="#1D9E75" stroke-width="1.5" style="cursor:pointer" onclick="showChartTip(event,\''+tip+'\')" ontouchstart="showChartTip(event,\''+tip+'\')" />';}).join("");
+  var dots=vals.map(function(v,i){var isPR=v===maxV;var stratKey=sorted[i].strategy;var strat=stratKey?(BADGE_LABELS[stratKey]||stratKey):'Normal';var sr=sorted[i].sets_reps?(' · '+sorted[i].sets_reps):'';var tip=v+'kg · '+strat+sr+(isPR?' ⭐PR':'');return'<circle cx="'+px(i)+'" cy="'+py(v)+'" r="'+(isPR?5:3.5)+'" fill="'+(isPR?"#1D9E75":"#fff")+'" stroke="#1D9E75" stroke-width="1.5" style="cursor:pointer" onclick="showChartTip(event,\''+tip+'\')" ontouchstart="showChartTip(event,\''+tip+'\')" />';}).join("");
   var labelIdx=[0];if(n>2)labelIdx.push(Math.floor(n/2));if(n>1)labelIdx.push(n-1);labelIdx=labelIdx.filter(function(v,i,a){return a.indexOf(v)===i;});
   var xlabels=labelIdx.map(function(i){return'<text x="'+px(i)+'" y="'+(H+2)+'" text-anchor="middle" font-size="8" fill="#888780">'+dates[i].substring(0,5)+'</text>';}).join("");
   return'<svg class="chart-svg" viewBox="0 0 '+W+" "+(H+14)+'" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1D9E75" stop-opacity="0.18"/><stop offset="100%" stop-color="#1D9E75" stop-opacity="0.01"/></linearGradient></defs><path d="'+areaPath+'" fill="url(#ag)"/><polyline points="'+points+'" fill="none" stroke="#1D9E75" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+dots+xlabels+'</svg>';
@@ -2117,10 +2117,9 @@ function showChartTip(evt,msg){
   document.body.appendChild(tip);
   var x=(evt.clientX||evt.touches&&evt.touches[0].clientX)||0;
   var y=(evt.clientY||evt.touches&&evt.touches[0].clientY)||0;
-    document.body.appendChild(tip);
   var tipW=tip.offsetWidth;
   var maxX=window.innerWidth-tipW-8;
-  tip.style.left=Math.min(x-tipW/2,maxX)+"px";
+  tip.style.left=Math.max(8,Math.min(x-tipW/2,maxX))+"px";
   tip.style.top=(y-44)+"px";
   tip.style.opacity="1";
   chartTipTimer=setTimeout(function(){if(tip.parentNode)tip.remove();},2200);
