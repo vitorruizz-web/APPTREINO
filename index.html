@@ -864,6 +864,100 @@ var dnd = {
   indicators: [], saveTimer: null
 };
 
+ var dayDnd = {
+  active: false, ghostEl: null, dragDay: null, dragOrigIdx: null, dropIdx: null,
+  offsetX: 0, offsetY: 0, holdTimer: null, suppressClick: false
+};
+
+function getDayOrder(){
+  var ord = WORKOUT_DATA._order;
+  if(!ord || !Array.isArray(ord)) return DAYS.slice();
+  var valid = ord.filter(function(d){ return DAYS.indexOf(d) >= 0; });
+  DAYS.forEach(function(d){ if(valid.indexOf(d) < 0) valid.push(d); });
+  return valid;
+}
+
+function dayBtnPointerDown(e, day, idx, isTouch){
+  var startX = e.clientX, startY = e.clientY;
+  function onMove(ev){
+    var cx = ev.clientX || (ev.touches && ev.touches[0] && ev.touches[0].clientX);
+    var cy = ev.clientY || (ev.touches && ev.touches[0] && ev.touches[0].clientY);
+    if(Math.abs(cx-startX)>10 || Math.abs(cy-startY)>10){ cleanup(); }
+  }
+  function onRelease(){ cleanup(); }
+  function cleanup(){
+    clearTimeout(dayDnd.holdTimer);
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("mouseup", onRelease);
+    document.removeEventListener("touchend", onRelease);
+  }
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("touchmove", onMove);
+  document.addEventListener("mouseup", onRelease);
+  document.addEventListener("touchend", onRelease);
+  dayDnd.holdTimer = setTimeout(function(){
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("mouseup", onRelease);
+    document.removeEventListener("touchend", onRelease);
+    beginDayDrag(e, day, idx, isTouch);
+  }, 350);
+}
+
+function beginDayDrag(e, day, idx, isTouch){
+  dayDnd.active = true; dayDnd.dragDay = day; dayDnd.dragOrigIdx = idx; dayDnd.dropIdx = idx; dayDnd.suppressClick = true;
+  var btn = document.getElementById("daybtn-"+day);
+  var rect = btn.getBoundingClientRect();
+  var cx = e.clientX || e.pageX, cy = e.clientY || e.pageY;
+  dayDnd.offsetX = cx - rect.left; dayDnd.offsetY = cy - rect.top;
+  var ghost = document.createElement("div");
+  ghost.className = "day-btn active";
+  ghost.style.position = "fixed"; ghost.style.zIndex = "1000"; ghost.style.pointerEvents = "none";
+  ghost.style.width = rect.width+"px"; ghost.style.left = (cx-dayDnd.offsetX)+"px"; ghost.style.top = (cy-dayDnd.offsetY)+"px";
+  ghost.style.boxShadow = "0 8px 24px rgba(0,0,0,0.3)"; ghost.style.opacity = "0.95";
+  ghost.innerHTML = btn.innerHTML;
+  document.body.appendChild(ghost); dayDnd.ghostEl = ghost;
+  btn.style.opacity = "0.25";
+  if(!isTouch){ document.addEventListener("mousemove", onDayDragMove); document.addEventListener("mouseup", onDayDragEnd); }
+  else { document.addEventListener("touchmove", onDayDragMoveTouch, {passive:false}); document.addEventListener("touchend", onDayDragEndTouch); document.addEventListener("touchcancel", onDayDragEndTouch); }
+}
+
+function onDayDragMove(e){ moveDayDrag(e.clientX, e.clientY); }
+function onDayDragMoveTouch(e){ e.preventDefault(); if(e.touches[0]) moveDayDrag(e.touches[0].clientX, e.touches[0].clientY); }
+
+function moveDayDrag(cx, cy){
+  if(!dayDnd.active || !dayDnd.ghostEl) return;
+  dayDnd.ghostEl.style.left = (cx-dayDnd.offsetX)+"px"; dayDnd.ghostEl.style.top = (cy-dayDnd.offsetY)+"px";
+  var sel = document.getElementById("daySelector"); if(!sel) return;
+  var btns = sel.querySelectorAll(".day-btn"); var newIdx = btns.length;
+  for(var i=0;i<btns.length;i++){
+    var r = btns[i].getBoundingClientRect();
+    if(cx < r.left + r.width/2){ newIdx = i; break; }
+  }
+  dayDnd.dropIdx = newIdx;
+}
+
+function onDayDragEnd(){ document.removeEventListener("mousemove", onDayDragMove); document.removeEventListener("mouseup", onDayDragEnd); finishDayDrag(); }
+function onDayDragEndTouch(){ document.removeEventListener("touchmove", onDayDragMoveTouch); document.removeEventListener("touchend", onDayDragEndTouch); document.removeEventListener("touchcancel", onDayDragEndTouch); finishDayDrag(); }
+
+async function finishDayDrag(){
+  if(!dayDnd.active) return; dayDnd.active = false;
+  if(dayDnd.ghostEl){ dayDnd.ghostEl.remove(); dayDnd.ghostEl = null; }
+  var btn = document.getElementById("daybtn-"+dayDnd.dragDay); if(btn) btn.style.opacity = "";
+  setTimeout(function(){ dayDnd.suppressClick = false; }, 300);
+  var order = getDayOrder();
+  var from = dayDnd.dragOrigIdx, to = dayDnd.dropIdx;
+  var effectiveTo = to > from ? to - 1 : to;
+  dayDnd.dragDay = null; dayDnd.dragOrigIdx = null; dayDnd.dropIdx = null;
+  if(effectiveTo !== from && effectiveTo >= 0 && effectiveTo < order.length){
+    var moved = order.splice(from,1)[0]; order.splice(effectiveTo,0,moved);
+    WORKOUT_DATA._order = order;
+    buildDaySelector();
+    try{ await sbSaveWorkoutConfig(currentUser.id, WORKOUT_DATA); }catch(e){ alert("Erro ao salvar a nova ordem dos dias: "+e.message); }
+  }
+}
+
 var AVATAR_PRESETS=[
   {label:"Verde",color:"#1D9E75"},{label:"Azul",color:"#185FA5"},
   {label:"Vermelho",color:"#E24B4A"},{label:"Roxo",color:"#534AB7"},
@@ -1055,12 +1149,16 @@ function switchTab(tab){
 
 function buildDaySelector(){
   var sel=document.getElementById("daySelector");sel.innerHTML="";
-  DAYS.forEach(function(day){
+  var order=getDayOrder();
+  order.forEach(function(day,idx){
     var d=WORKOUT_DATA[day];var btn=document.createElement("div");var hasEx=d.exercises&&d.exercises.length>0;
-    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"");btn.id="daybtn-"+day;
+    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"")+(day===currentDay?" active":"");btn.id="daybtn-"+day;
     var diaTxt=(d.diaRecomendado!==null&&d.diaRecomendado!==undefined)?'<br><small style="font-size:9px;opacity:0.8">'+WEEKDAYS[d.diaRecomendado]+'</small>':"";
     btn.innerHTML=DAY_LABELS[day]+diaTxt;
-    btn.addEventListener("click",(function(k){return function(){selectDay(k);};})(day));sel.appendChild(btn);
+    btn.addEventListener("click",(function(k){return function(){ if(dayDnd.suppressClick) return; selectDay(k); };})(day));
+    btn.addEventListener("mousedown",(function(k,i){return function(e){ dayBtnPointerDown(e,k,i,false); };})(day,idx));
+    btn.addEventListener("touchstart",(function(k,i){return function(e){ dayBtnPointerDown(e.touches[0],k,i,true); };})(day,idx),{passive:true});
+    sel.appendChild(btn);
   });
 }
 
@@ -1115,6 +1213,23 @@ function getBadgeHtml(badge){
   return'<span class="exercise-badge '+cls+'">'+(BADGE_LABELS[badge]||badge)+'</span>';
 }
 
+function updateBadgeUI(exId,badge){
+  var nameEl=document.getElementById("exname-"+exId);
+  if(!nameEl)return;
+  var badgeEl=nameEl.nextElementSibling;
+  if(badgeEl)badgeEl.outerHTML=getBadgeHtml(badge);
+}
+
+function updateSetsRepsUI(exId,setsReps){
+  var tag=document.getElementById("srtag-"+exId);
+  if(tag){
+    if(setsReps){tag.classList.remove("empty");tag.innerHTML=formatSetsRepsTag(setsReps);}
+    else{tag.classList.add("empty");tag.innerHTML="";}
+  }
+  var btn=document.getElementById("srbtn-"+exId);
+  if(btn)btn.classList.toggle("has-link",!!setsReps);
+}
+ 
 var HANDLE_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="4" r="1.5" fill="currentColor"/><circle cx="11" cy="4" r="1.5" fill="currentColor"/><circle cx="5" cy="8" r="1.5" fill="currentColor"/><circle cx="11" cy="8" r="1.5" fill="currentColor"/><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/></svg>';
 
 function renderWorkout(day){
@@ -1378,8 +1493,11 @@ function openStrategyModal(exId,exName,currentBadge,day,idx){
 }
 function closeStrategyModal(){document.getElementById("strategyModal").classList.remove("open");modalTargetDay=null;modalTargetIdx=null;modalTargetStrategy=null;}
 async function confirmStrategy(){
-  WORKOUT_DATA[modalTargetDay].exercises[modalTargetIdx].badge=modalTargetStrategy;var day=modalTargetDay;closeStrategyModal();showLoading("Salvando...");
-  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);renderWorkout(day);}catch(e){alert("Erro ao salvar: "+e.message);}hideLoading();
+  var day=modalTargetDay,idx=modalTargetIdx,badge=modalTargetStrategy;
+  var exId=WORKOUT_DATA[day].exercises[idx].id;
+  WORKOUT_DATA[day].exercises[idx].badge=badge;
+  closeStrategyModal();showLoading("Salvando...");
+  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);updateBadgeUI(exId,badge);}catch(e){alert("Erro ao salvar: "+e.message);}hideLoading();
 }
 
 async function setDiaRecomendado(day, val){
@@ -1401,8 +1519,11 @@ function openSetsRepsModal(exId,exName,currentSR,day,idx){
 }
 function closeSetsRepsModal(){document.getElementById("setsRepsModal").classList.remove("open");modalTargetDay=null;modalTargetIdx=null;modalTargetSetsReps=null;}
 async function confirmSetsReps(){
-  WORKOUT_DATA[modalTargetDay].exercises[modalTargetIdx].setsReps=modalTargetSetsReps;var day=modalTargetDay;closeSetsRepsModal();showLoading("Salvando...");
-  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);renderWorkout(day);}catch(e){alert("Erro ao salvar: "+e.message);}hideLoading();
+  var day=modalTargetDay,idx=modalTargetIdx,sr=modalTargetSetsReps;
+  var exId=WORKOUT_DATA[day].exercises[idx].id;
+  WORKOUT_DATA[day].exercises[idx].setsReps=sr;
+  closeSetsRepsModal();showLoading("Salvando...");
+  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);updateSetsRepsUI(exId,sr);}catch(e){alert("Erro ao salvar: "+e.message);}hideLoading();
 }
 
 function openVideoModal(exId,exName){
