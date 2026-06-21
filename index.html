@@ -308,6 +308,25 @@
 
   .edit-date-input { width: 100%; padding: 10px 14px; font-size: 15px; font-family: "Syne",sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); margin-bottom: 0.5rem; outline: none; }
   .edit-date-input:focus { border-color: var(--accent); }
+  .exercise-note { margin-top: 8px; padding: 8px 10px; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); font-size: 12px; color: var(--text); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .exercise-note-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 3px; display: block; }
+  .notes-textarea { width: 100%; min-height: 120px; padding: 12px 14px; font-size: 14px; font-family: "Syne",sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 0.5rem; resize: vertical; }
+  .notes-textarea:focus { border-color: var(--accent); }
+  .freq-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.25rem; }
+.freq-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 0.25rem; }
+.freq-sub { font-size: 11px; color: var(--muted); margin-bottom: 1rem; letter-spacing: 0.3px; }
+.freq-stats { display: flex; gap: 0; margin-top: 12px; border-top: 0.5px solid var(--border); padding-top: 10px; }
+.freq-stat { flex: 1; text-align: center; border-right: 0.5px solid var(--border); }
+.freq-stat:last-child { border-right: none; }
+.freq-stat-val { font-size: 16px; font-weight: 800; color: var(--text); font-family: "Syne",sans-serif; }
+.freq-stat-lbl { font-size: 9px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+.freq-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 90px; padding-top: 6px; }
+.freq-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.freq-bar { width: 100%; max-width: 26px; background: var(--accent-light); border: 0.5px solid var(--accent); border-radius: 4px 4px 2px 2px; }
+.freq-bar.zero { background: var(--surface2); border-color: var(--border); }
+.freq-bar-count { font-size: 10px; font-weight: 700; color: var(--accent2); }
+.freq-bar-count.zero-count { color: var(--muted); }
+.freq-bar-lbl { font-size: 9px; color: var(--muted); white-space: nowrap; }
 
 /* ── SAÚDE ──────────────────────────────────────────────────────────────── */
   .saude-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
@@ -446,7 +465,11 @@
 
     <div class="history-view" id="historicoSection" style="display:none">
       <div class="history-title">Evolu&ccedil;&atilde;o de Cargas</div>
+      <div class="freq-card" id="freqCard"></div>
       <div class="history-filter" id="historyFilter"></div>
+     <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
+  <button id="exportHistoryBtn" class="btn-secondary" style="width:auto;padding:8px 16px;font-size:11px;">⬇ Exportar histórico (CSV)</button>
+</div>
       
       <div style="position:relative;margin-bottom:1rem">
   <input type="text" id="historySearch" placeholder="🔍 Buscar exercício..." style="width:100%;padding:10px 14px;font-size:13px;font-family:'Syne',sans-serif;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;box-sizing:border-box;" />
@@ -666,6 +689,37 @@
   </div>
 </div>
 
+ <div class="modal-overlay" id="duplicateModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Duplicar treino</div>
+    <div class="modal-subtitle" id="duplicateSubtitle"></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Escolha o dia de destino. Os exerc&iacute;cios ser&atilde;o copiados para l&aacute;.</p>
+    <select class="dia-recomendado-select" id="duplicateTargetSelect" style="width:100%;padding:10px;font-size:13px;margin-bottom:0.75rem;"></select>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:0.5rem;cursor:pointer;">
+      <input type="checkbox" id="duplicateReplaceCheck" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">
+      Substituir exerc&iacute;cios existentes no dia de destino
+    </label>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="duplicateCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="duplicateConfirmBtn">Duplicar</button>
+    </div>
+  </div>
+</div>
+
+ <div class="modal-overlay" id="notesModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Anota&ccedil;&atilde;o do exerc&iacute;cio</div>
+    <div class="modal-subtitle" id="notesSubtitle"></div>
+    <textarea class="notes-textarea" id="notesInput" maxlength="500" placeholder="Ex: Pegada mais fechada, sentir no tr&iacute;ceps..."></textarea>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="notesCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="notesConfirmBtn">Salvar anota&ccedil;&atilde;o</button>
+    </div>
+  </div>
+</div>
+ 
 <script>
 /* ── TOAST ─────────────────────────────────────────────────────────────────── */
 var toastTimer = null;
@@ -748,6 +802,7 @@ var TOASTS = {
 };
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function escapeHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 function triggerSaveToast(newKg, previousMax, histLen) {
   var t;
@@ -1240,18 +1295,21 @@ function renderWorkout(day){
   }
   var titulo=DAY_LABELS[day];
   wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+
-  '<select class="dia-recomendado-select" id="diaRecSelect" onchange="setDiaRecomendado(\''+day+'\',this.value)">'+
-  '<option value="">+ Dia</option>'+
-  WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?' selected':'')+'>'+w+'</option>';}).join("")+
-  '</select></div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
-  var list=document.getElementById("exerciseList");
+'<select class="dia-recomendado-select" id="diaRecSelect" onchange="setDiaRecomendado(\''+day+'\',this.value)">'+
+'<option value="">+ Dia</option>'+
+WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?' selected':'')+'>'+w+'</option>';}).join("")+
+'</select>'+
+'<button class="icon-btn" id="dupDayBtn" title="Duplicar treino para outro dia" style="margin-left:auto">\ud83d\udccb</button>'+
+'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
+document.getElementById("dupDayBtn").addEventListener("click",function(){openDuplicateModal(day);});
+var list=document.getElementById("exerciseList");
 
   d.exercises.forEach(function(ex,idx){
     var hist=getHistory(ex.id, ex.name);var lastKg=hist.length>0?hist[hist.length-1].kg:"";
     var maxKg=hist.length>0?Math.max.apply(null,hist.map(function(h){return h.kg;})):null;
     var isPR=hist.length>1&&parseFloat(lastKg)===maxKg;var prevKg=hist.length>1?hist[hist.length-2].kg:null;
     var histTxt=prevKg!==null?"ant: "+prevKg+"kg":(hist.length===1?"1x reg.":"");var prTxt=isPR?'<span class="pr-badge">\u2605 PR</span>':"";
-    var hasVideo=!!userVideoLinks[ex.id];var chartOpen=!!openCharts[ex.id];var hasSR=!!(ex.setsReps);
+    var hasVideo=!!userVideoLinks[ex.id];var chartOpen=!!openCharts[ex.id];var hasSR=!!(ex.setsReps);var hasNote=!!(ex.notes&&ex.notes.trim());
 
     var indicator=document.createElement("div");indicator.className="drop-indicator";indicator.id="drop-"+idx;list.appendChild(indicator);
 
@@ -1271,6 +1329,7 @@ function renderWorkout(day){
         '<div class="exercise-actions">'+
           '<button class="icon-btn '+(hasVideo?"has-link":"")+'" id="videobtn-'+ex.id+'" title="Link do v\u00eddeo">\u25b6</button>'+
           '<button class="icon-btn '+(hasSR?"has-link":"")+'" id="srbtn-'+ex.id+'" title="S\u00e9ries e repeti\u00e7\u00f5es">\ud83d\udd22</button>'+
+          '<button class="icon-btn '+(hasNote?"has-link":"")+'" id="notebtn-'+ex.id+'" title="Anota\u00e7\u00e3o">\ud83d\udcdd</button>'+
           '<button class="icon-btn" id="stratbtn-'+ex.id+'" title="Mudar estrat\u00e9gia">\u26a1</button>'+
           '<button class="icon-btn danger" id="delbtn-'+ex.id+'" title="Excluir">\ud83d\uddd1</button>'+
         '</div>'+
@@ -1282,6 +1341,7 @@ function renderWorkout(day){
         '<button class="save-btn" id="btn-'+ex.id+'">Salvar</button>'+
         '<span class="load-meta" id="meta-'+ex.id+'">'+histTxt+" "+prTxt+'</span>'+
       '</div>'+
+      (hasNote?'<div class="exercise-note" id="noteview-'+ex.id+'"><span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(ex.notes)+'</div>':'<div class="exercise-note" id="noteview-'+ex.id+'" style="display:none"></div>')+
       '<div class="chart-panel'+(chartOpen?" open":"")+'" id="chart-'+ex.id+'">'+buildChartInner(hist)+'</div>';
 
     list.appendChild(card);
@@ -1291,13 +1351,14 @@ function renderWorkout(day){
       document.getElementById("inp-"+id).addEventListener("keydown",function(e){if(e.key==="Enter")handleSave(id,nm);});
     })(ex.id,ex.name);
 
-    (function(eI,eN,eB,eSR,dk,di){
+(function(eI,eN,eB,eSR,eNT,dk,di){
       document.getElementById("stratbtn-"+eI).addEventListener("click",function(e){e.stopPropagation();openStrategyModal(eI,eN,eB,dk,di);});
       document.getElementById("srbtn-"+eI).addEventListener("click",function(e){e.stopPropagation();openSetsRepsModal(eI,eN,eSR,dk,di);});
       document.getElementById("videobtn-"+eI).addEventListener("click",function(e){e.stopPropagation();openVideoModal(eI,eN);});
+      document.getElementById("notebtn-"+eI).addEventListener("click",function(e){e.stopPropagation();openNotesModal(eI,eN,eNT,dk,di);});
       document.getElementById("delbtn-"+eI).addEventListener("click",function(e){e.stopPropagation();openDeleteModal(eI,eN,dk,di);});
       document.getElementById("exname-"+eI).addEventListener("click",function(e){e.stopPropagation();toggleChart(eI);});
-    })(ex.id,ex.name,ex.badge,ex.setsReps||null,day,idx);
+    })(ex.id,ex.name,ex.badge,ex.setsReps||null,ex.notes||null,day,idx);
 
     (function(eI,di){
       var handle=document.getElementById("handle-"+eI);
@@ -1480,6 +1541,56 @@ async function confirmDelete(){
   hideLoading();
 }
 
+var duplicateSourceDay=null;
+
+function openDuplicateModal(day){
+  duplicateSourceDay=day;
+  document.getElementById("duplicateSubtitle").textContent="Copiar exerc\u00edcios de: "+DAY_LABELS[day];
+  var sel=document.getElementById("duplicateTargetSelect");
+  sel.innerHTML=getDayOrder().filter(function(d){return d!==day;}).map(function(d){
+    return '<option value="'+d+'">'+DAY_LABELS[d]+'</option>';
+  }).join("");
+  document.getElementById("duplicateReplaceCheck").checked=false;
+  document.getElementById("duplicateModal").classList.add("open");
+}
+
+function closeDuplicateModal(){
+  document.getElementById("duplicateModal").classList.remove("open");
+  duplicateSourceDay=null;
+}
+
+async function confirmDuplicate(){
+  var fromDay=duplicateSourceDay;
+  var toDay=document.getElementById("duplicateTargetSelect").value;
+  var replace=document.getElementById("duplicateReplaceCheck").checked;
+  if(!fromDay||!toDay)return;
+
+  var sourceExs=WORKOUT_DATA[fromDay].exercises||[];
+  var copied=sourceExs.map(function(ex,i){
+    return {
+      id:"ex_"+Date.now()+"_"+i,
+      name:ex.name,
+      badge:ex.badge||null,
+      setsReps:ex.setsReps||null,
+      notes:ex.notes||null
+    };
+  });
+
+  if(!WORKOUT_DATA[toDay].exercises)WORKOUT_DATA[toDay].exercises=[];
+  WORKOUT_DATA[toDay].exercises = replace ? copied : WORKOUT_DATA[toDay].exercises.concat(copied);
+  WORKOUT_DATA[toDay].rest=false;
+
+  closeDuplicateModal();
+  showLoading("Duplicando...");
+  try{
+    await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);
+    buildDaySelector();
+    if(currentDay===toDay)renderWorkout(toDay);
+    showToast("\ud83d\udccb","Treino duplicado para "+DAY_LABELS[toDay]+"!","first");
+  }catch(e){alert("Erro ao duplicar: "+e.message);}
+  hideLoading();
+}
+ 
 function openStrategyModal(exId,exName,currentBadge,day,idx){
   modalTargetDay=day;modalTargetIdx=idx;modalTargetStrategy=currentBadge;
   document.getElementById("strategySubtitle").textContent=exName;
@@ -1537,7 +1648,50 @@ async function confirmVideoLink(){
   if(url){userVideoLinks[exId]=url;}else{delete userVideoLinks[exId];}
   closeVideoModal();var vb=document.getElementById("videobtn-"+exId);if(vb)vb.classList.toggle("has-link",!!url);saveVideoLinksLocal(currentUser.id,userVideoLinks);
 }
+var notesTargetDay=null, notesTargetIdx=null;
 
+function openNotesModal(exId,exName,currentNote,day,idx){
+  notesTargetDay=day;notesTargetIdx=idx;
+  document.getElementById("notesSubtitle").textContent=exName;
+  document.getElementById("notesInput").value=currentNote||"";
+  document.getElementById("notesModal").classList.add("open");
+  setTimeout(function(){document.getElementById("notesInput").focus();},250);
+}
+
+function closeNotesModal(){
+  document.getElementById("notesModal").classList.remove("open");
+  notesTargetDay=null;notesTargetIdx=null;
+}
+
+async function confirmNotes(){
+  var day=notesTargetDay,idx=notesTargetIdx;
+  if(day===null||idx===null)return;
+  var note=document.getElementById("notesInput").value.trim();
+  var exId=WORKOUT_DATA[day].exercises[idx].id;
+  WORKOUT_DATA[day].exercises[idx].notes=note||null;
+  closeNotesModal();
+  showLoading("Salvando...");
+  try{
+    await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);
+    updateNoteUI(exId,note);
+  }catch(e){alert("Erro ao salvar: "+e.message);}
+  hideLoading();
+}
+
+function updateNoteUI(exId,note){
+  var btn=document.getElementById("notebtn-"+exId);
+  if(btn)btn.classList.toggle("has-link",!!note);
+  var view=document.getElementById("noteview-"+exId);
+  if(view){
+    if(note){
+      view.style.display="";
+      view.innerHTML='<span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(note);
+    }else{
+      view.style.display="none";view.innerHTML="";
+    }
+  }
+}
+ 
 function openEditLoadModal(loadId,exName,currentDate){
   editLoadTarget=loadId;document.getElementById("editLoadSubtitle").textContent=exName;
   var parts=currentDate.split("/");var isoDate=parts.length===3?parts[2]+"-"+parts[1]+"-"+parts[0]:"";
@@ -1563,13 +1717,129 @@ async function deleteLoad(loadId){
   }catch(e){alert("Erro ao excluir: "+e.message);}hideLoading();
 }
 
+function csvEscape(val){
+  var s=String(val===null||val===undefined?"":val);
+  if(/[",;\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+
+async function exportHistoryToCSV(){
+  var btn=document.getElementById("exportHistoryBtn");
+  var original=btn.textContent;btn.textContent="Gerando...";btn.disabled=true;
+  try{
+    var loads=await sbGetUserLoads(currentUser.id);
+    if(!loads.length){alert("Nenhum registro para exportar ainda.");btn.textContent=original;btn.disabled=false;return;}
+    var header=["Exercicio","Data","Carga (kg)","Estrategia","Series x Reps"];
+    var lines=[header.join(";")];
+    loads.forEach(function(r){
+      lines.push([
+        csvEscape(r.ex_name),
+        csvEscape(r.date),
+        csvEscape(r.kg),
+        csvEscape(r.strategy?(BADGE_LABELS[r.strategy]||r.strategy):""),
+        csvEscape(r.sets_reps||"")
+      ].join(";"));
+    });
+    var csvContent="\uFEFF"+lines.join("\r\n");
+    var blob=new Blob([csvContent],{type:"text/csv;charset=utf-8;"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    var dateTag=new Date().toISOString().slice(0,10);
+    a.href=url;a.download="historico_treino_"+currentUser.username+"_"+dateTag+".csv";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+  }catch(e){alert("Erro ao exportar: "+e.message);}
+  btn.textContent=original;btn.disabled=false;
+}
+
+function buildFrequencyPanel(loads){
+  var card=document.getElementById("freqCard");if(!card)return;
+  if(!loads.length){
+    card.innerHTML='<h3>\ud83d\udcc5 Frequ\u00eancia</h3><div class="freq-sub">Sem registros ainda para calcular frequ\u00eancia.</div>';
+    return;
+  }
+
+  function toISO(br){var p=br.split("/");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:null;}
+
+  var seen={},uniqueDates=[];
+  loads.forEach(function(r){var iso=toISO(r.date);if(iso&&!seen[iso]){seen[iso]=true;uniqueDates.push(iso);}});
+  uniqueDates.sort();
+
+  function startOfWeek(iso){
+    var dt=new Date(iso+"T00:00:00");var day=dt.getDay();var diff=(day===0?-6:1)-day;
+    dt.setDate(dt.getDate()+diff);return dt;
+  }
+  function pad(n){return String(n).padStart(2,"0");}
+  function fmtDM(dt){return pad(dt.getDate())+"/"+pad(dt.getMonth()+1);}
+
+  var today=new Date();today.setHours(0,0,0,0);
+  var weeks=[];
+  for(var i=7;i>=0;i--){
+    var ref=new Date(today);ref.setDate(ref.getDate()-i*7);
+    var ws=startOfWeek(ref.toISOString().slice(0,10));
+    var wsISO=ws.toISOString().slice(0,10);
+    var we=new Date(ws);we.setDate(we.getDate()+6);
+    var weISO=we.toISOString().slice(0,10);
+    var count=uniqueDates.filter(function(d){return d>=wsISO&&d<=weISO;}).length;
+    weeks.push({label:fmtDM(ws),count:count});
+  }
+
+  var maxCount=Math.max.apply(null,weeks.map(function(w){return w.count;}).concat([1]));
+  var barsHtml=weeks.map(function(w){
+    var h=Math.round((w.count/maxCount)*100);
+    return '<div class="freq-bar-col">'+
+      '<span class="freq-bar-count'+(w.count===0?" zero-count":"")+'">'+w.count+'</span>'+
+      '<div class="freq-bar'+(w.count===0?" zero":"")+'" style="height:'+(w.count===0?4:Math.max(h,8))+'%"></div>'+
+      '<span class="freq-bar-lbl">'+w.label+'</span>'+
+    '</div>';
+  }).join("");
+
+  var weekdayCounts=[0,0,0,0,0,0,0];
+  uniqueDates.forEach(function(d){var dt=new Date(d+"T00:00:00");weekdayCounts[dt.getDay()]++;});
+  var maxWd=Math.max.apply(null,weekdayCounts.concat([1]));
+  var wdHtml=WEEKDAYS.map(function(w,idx){
+    var h=Math.round((weekdayCounts[idx]/maxWd)*100);
+    return '<div class="freq-bar-col">'+
+      '<span class="freq-bar-count'+(weekdayCounts[idx]===0?" zero-count":"")+'">'+weekdayCounts[idx]+'</span>'+
+      '<div class="freq-bar'+(weekdayCounts[idx]===0?" zero":"")+'" style="height:'+(weekdayCounts[idx]===0?4:Math.max(h,8))+'%"></div>'+
+      '<span class="freq-bar-lbl">'+w+'</span>'+
+    '</div>';
+  }).join("");
+
+  var streak=0;var cursor=new Date(today);
+  var todayISO=today.toISOString().slice(0,10);
+  if(uniqueDates.indexOf(todayISO)<0)cursor.setDate(cursor.getDate()-1);
+  while(true){
+    var iso=cursor.toISOString().slice(0,10);
+    if(uniqueDates.indexOf(iso)>=0){streak++;cursor.setDate(cursor.getDate()-1);}
+    else break;
+  }
+
+  var last30=uniqueDates.filter(function(d){
+    var dt=new Date(d+"T00:00:00");var diffDays=(today-dt)/86400000;
+    return diffDays>=0&&diffDays<30;
+  }).length;
+
+  card.innerHTML=
+    '<h3>\ud83d\udcc5 Frequ\u00eancia</h3>'+
+    '<div class="freq-sub">Dias com treino registrado, por semana (\u00faltimas 8 semanas)</div>'+
+    '<div class="freq-bar-wrap">'+barsHtml+'</div>'+
+    '<div class="freq-stats">'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+uniqueDates.length+'</div><div class="freq-stat-lbl">TOTAL DIAS</div></div>'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+last30+'</div><div class="freq-stat-lbl">\u00daLT. 30 DIAS</div></div>'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+streak+'</div><div class="freq-stat-lbl">SEQU\u00caNCIA</div></div>'+
+    '</div>'+
+    '<div class="freq-sub" style="margin-top:1rem;border-top:0.5px solid var(--border);padding-top:0.75rem;">Por dia da semana (hist\u00f3rico completo)</div>'+
+    '<div class="freq-bar-wrap">'+wdHtml+'</div>';
+}
+ 
 async function renderHistory(){
   var content=document.getElementById("historyContent");content.innerHTML='<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
   var fDiv=document.getElementById("historyFilter");var fDays=["todos"].concat(DAYS.filter(function(d){return WORKOUT_DATA[d].exercises&&WORKOUT_DATA[d].exercises.length>0;}));
   fDiv.innerHTML=fDays.map(function(d){var label=d==="todos"?"Todos":DAY_LABELS[d];return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';}).join("");
   fDiv.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){historyFilter=btn.getAttribute("data-day");renderHistory();});});
   try{
-    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
+    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);buildFrequencyPanel(loads);
     var allEx=[];DAYS.forEach(function(d){if(WORKOUT_DATA[d].exercises)WORKOUT_DATA[d].exercises.forEach(function(e){allEx.push(e);});});
     var archived=await sbGetArchived();archived.forEach(function(e){allEx.push(e);});
     var prMap={};allEx.forEach(function(ex){var h=getHistory(ex.id, ex.name);if(h.length>0)prMap[ex.id]=Math.max.apply(null,h.map(function(x){return x.kg;}));});
@@ -1734,6 +2004,7 @@ document.getElementById("tabSaude").addEventListener("click",function(){switchTa
 document.getElementById("tabConfig").addEventListener("click",function(){switchTab("config");});
 document.getElementById("savePassBtn").addEventListener("click",changePassword);
 document.getElementById("clearHistoryBtn").addEventListener("click",clearHistory);
+document.getElementById("exportHistoryBtn").addEventListener("click",exportHistoryToCSV);
 
 document.getElementById("addExCancelBtn").addEventListener("click",closeAddExModal);
 document.getElementById("addExConfirmBtn").addEventListener("click",confirmAddExercise);
@@ -1759,6 +2030,9 @@ document.getElementById("videoInput").addEventListener("input",function(){docume
 document.getElementById("videoOpenBtn").addEventListener("click",function(){var u=document.getElementById("videoInput").value.trim();if(u)window.open(u,"_blank");});
 document.getElementById("videoInput").addEventListener("keydown",function(e){if(e.key==="Enter")confirmVideoLink();});
 document.getElementById("videoModal").addEventListener("click",function(e){if(e.target===this)closeVideoModal();});
+document.getElementById("notesCancelBtn").addEventListener("click",closeNotesModal);
+document.getElementById("notesConfirmBtn").addEventListener("click",confirmNotes);
+document.getElementById("notesModal").addEventListener("click",function(e){if(e.target===this)closeNotesModal();});
 
 document.getElementById("deleteCancelBtn").addEventListener("click",closeDeleteModal);
 document.getElementById("deleteConfirmBtn").addEventListener("click",confirmDelete);
@@ -1767,7 +2041,10 @@ document.getElementById("deleteModal").addEventListener("click",function(e){if(e
 document.getElementById("editLoadCancelBtn").addEventListener("click",closeEditLoadModal);
 document.getElementById("editLoadConfirmBtn").addEventListener("click",confirmEditLoad);
 document.getElementById("editLoadModal").addEventListener("click",function(e){if(e.target===this)closeEditLoadModal();});
- document.getElementById("btnDeleteSelected").addEventListener("click",deleteSelectedLoads);
+document.getElementById("duplicateCancelBtn").addEventListener("click",closeDuplicateModal);
+document.getElementById("duplicateConfirmBtn").addEventListener("click",confirmDuplicate);
+document.getElementById("duplicateModal").addEventListener("click",function(e){if(e.target===this)closeDuplicateModal();});
+document.getElementById("btnDeleteSelected").addEventListener("click",deleteSelectedLoads);
 document.getElementById("btnCancelSelect").addEventListener("click",function(){
   document.querySelectorAll(".history-row-check").forEach(function(c){c.checked=false;});
   var sa=document.getElementById("checkSelectAll");if(sa){sa.checked=false;sa.indeterminate=false;}
