@@ -1856,9 +1856,12 @@ var CELL=15; // largura célula + gap (12px + 3px)
   });
   daysHTML+='</div>';
 
-  var colsHTML='<div class="hmap-cols">';
-  weeks.forEach(function(week){
-    colsHTML+='<div class="hmap-col">';
+var colsHTML='<div class="hmap-cols">';
+  weeks.forEach(function(week,colIdx){
+    // verifica se esta coluna inicia um novo mês (e não é a primeira coluna)
+    var isMonthStart=colIdx>0&&monthLabels.some(function(m){return m.col===colIdx;});
+    var colStyle=isMonthStart?'style="margin-left:6px;border-left:1.5px solid var(--border2);padding-left:5px;"':'';
+    colsHTML+='<div class="hmap-col" '+colStyle+'>';
     week.forEach(function(cell){
       var cls="hmap-cell";
       if(cell.future)cls+=" future";
