@@ -1755,9 +1755,144 @@ async function exportHistoryToCSV(){
 function buildFrequencyPanel(loads){
   var card=document.getElementById("freqCard");if(!card)return;
   if(!loads.length){
-    card.innerHTML='<h3>\ud83d\udcc5 Frequ\u00eancia</h3><div class="freq-sub">Sem registros ainda para calcular frequ\u00eancia.</div>';
+    card.innerHTML='<h3>📅 Frequência</h3><div class="freq-sub">Sem registros ainda para calcular frequência.</div>';
     return;
   }
+
+  function toISO(br){var p=br.split("/");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:null;}
+
+  var seen={};
+  loads.forEach(function(r){var iso=toISO(r.date);if(iso)seen[iso]=true;});
+  var uniqueDates=Object.keys(seen).sort();
+
+  // ── Stats gerais ──────────────────────────────────────────────
+  var today=new Date();today.setHours(0,0,0,0);
+  var todayISO=today.toISOString().slice(0,10);
+
+  var streak=0;var cursor=new Date(today);
+  if(!seen[todayISO])cursor.setDate(cursor.getDate()-1);
+  while(true){var iso=cursor.toISOString().slice(0,10);if(seen[iso]){streak++;cursor.setDate(cursor.getDate()-1);}else break;}
+
+  var last30=uniqueDates.filter(function(d){
+    var dt=new Date(d+"T00:00:00");return(today-dt)/86400000>=0&&(today-dt)/86400000<30;
+  }).length;
+
+  var last7=uniqueDates.filter(function(d){
+    var dt=new Date(d+"T00:00:00");return(today-dt)/86400000>=0&&(today-dt)/86400000<7;
+  }).length;
+
+  // ── Heat map: últimas 26 semanas ──────────────────────────────
+  // Começa no domingo da semana 26 semanas atrás
+  var startDate=new Date(today);
+  startDate.setDate(startDate.getDate()-startDate.getDay()); // vai para o domingo desta semana
+  startDate.setDate(startDate.getDate()-25*7); // recua 25 semanas
+
+  var numWeeks=26;
+  var WEEKDAYS_SHORT=["D","S","T","Q","Q","S","S"];
+  var MONTHS_SHORT=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+  // Monta células e cabeçalhos de mês
+  var weeks=[]; // weeks[col] = array de 7 cells
+  var monthLabels=[]; // {col, label}
+
+  for(var col=0;col<numWeeks;col++){
+    var week=[];
+    for(var row=0;row<7;row++){
+      var dt=new Date(startDate);
+      dt.setDate(dt.getDate()+col*7+row);
+      var iso=dt.toISOString().slice(0,10);
+      var future=dt>today;
+      week.push({iso:iso,active:!future&&!!seen[iso],future:future,day:dt.getDate(),month:dt.getMonth()});
+    }
+    // cabeçalho de mês: quando o dia 1 aparecer nessa coluna
+    week.forEach(function(cell){
+      if(cell.day<=7&&!cell.future){
+        // verifica se já adicionamos esse mês
+        var alreadyAdded=monthLabels.some(function(m){return m.label===MONTHS_SHORT[cell.month];});
+        if(!alreadyAdded)monthLabels.push({col:col,label:MONTHS_SHORT[cell.month]});
+      }
+    });
+    weeks.push(week);
+  }
+
+  // ── CSS inline (evita poluir o arquivo) ──────────────────────
+  var heatCss=`
+    .hmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+    .hmap-grid{display:inline-flex;flex-direction:column;gap:0;min-width:max-content;}
+    .hmap-months{display:flex;margin-left:20px;margin-bottom:3px;height:14px;}
+    .hmap-month-lbl{font-size:10px;color:var(--muted);letter-spacing:0.5px;font-family:"DM Mono",monospace;position:absolute;}
+    .hmap-rows{display:flex;gap:3px;}
+    .hmap-days{display:flex;flex-direction:column;gap:3px;margin-right:4px;justify-content:space-between;padding-top:1px;}
+    .hmap-day-lbl{font-size:9px;color:var(--muted);height:12px;line-height:12px;width:10px;text-align:right;font-family:"DM Mono",monospace;}
+    .hmap-cols{display:flex;gap:3px;}
+    .hmap-col{display:flex;flex-direction:column;gap:3px;}
+    .hmap-cell{width:12px;height:12px;border-radius:2px;cursor:default;transition:opacity 0.1s;}
+    .hmap-cell:hover{opacity:0.75;outline:1.5px solid var(--accent);}
+    .hmap-cell.future{background:transparent;cursor:default;opacity:1;}
+    .hmap-cell.future:hover{outline:none;}
+    .hmap-cell.empty{background:var(--surface2);border:0.5px solid var(--border);}
+    .hmap-cell.active{background:var(--accent);}
+    .hmap-legend{display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end;}
+    .hmap-legend-lbl{font-size:10px;color:var(--muted);}
+    .hmap-legend-cell{width:11px;height:11px;border-radius:2px;}
+  `;
+
+  // Monta HTML da grade
+  var monthsHTML='<div style="position:relative;height:16px;margin-left:20px;margin-bottom:2px;">';
+  monthLabels.forEach(function(m){
+    monthsHTML+='<span class="hmap-month-lbl" style="left:'+(m.col*15)+'px">'+m.label+'</span>';
+  });
+  monthsHTML+='</div>';
+
+  var daysHTML='<div class="hmap-days">';
+  [0,1,2,3,4,5,6].forEach(function(i){
+    // mostra só D,T,Q,S (pares) pra não poluir
+    daysHTML+='<div class="hmap-day-lbl">'+(i%2===0?WEEKDAYS_SHORT[i]:"")+'</div>';
+  });
+  daysHTML+='</div>';
+
+  var colsHTML='<div class="hmap-cols">';
+  weeks.forEach(function(week){
+    colsHTML+='<div class="hmap-col">';
+    week.forEach(function(cell){
+      var cls="hmap-cell";
+      if(cell.future)cls+=" future";
+      else if(cell.active)cls+=" active";
+      else cls+=" empty";
+      var title=cell.future?"":(cell.active?"✅ "+cell.iso:""+cell.iso);
+      colsHTML+='<div class="'+cls+'" title="'+title+'"></div>';
+    });
+    colsHTML+='</div>';
+  });
+  colsHTML+='</div>';
+
+  var legendHTML='<div class="hmap-legend">'+
+    '<span class="hmap-legend-lbl">Menos</span>'+
+    '<div class="hmap-legend-cell" style="background:var(--surface2);border:0.5px solid var(--border)"></div>'+
+    '<div class="hmap-legend-cell" style="background:var(--accent);opacity:0.35"></div>'+
+    '<div class="hmap-legend-cell" style="background:var(--accent);opacity:0.65"></div>'+
+    '<div class="hmap-legend-cell" style="background:var(--accent)"></div>'+
+    '<span class="hmap-legend-lbl">Mais</span>'+
+  '</div>';
+
+  card.innerHTML=
+    '<style>'+heatCss+'</style>'+
+    '<h3>📅 Frequência de Treinos</h3>'+
+    '<div class="freq-sub">Últimas 26 semanas · cada célula = 1 dia</div>'+
+    '<div style="display:flex;gap:0;margin:12px 0 4px;border-top:0.5px solid var(--border);padding-top:12px;">'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+uniqueDates.length+'</div><div class="freq-stat-lbl">TOTAL DIAS</div></div>'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+last30+'</div><div class="freq-stat-lbl">ÚLT. 30 DIAS</div></div>'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+last7+'</div><div class="freq-stat-lbl">ESTA SEMANA</div></div>'+
+      '<div class="freq-stat"><div class="freq-stat-val">'+streak+'</div><div class="freq-stat-lbl">SEQUÊNCIA</div></div>'+
+    '</div>'+
+    '<div class="hmap-wrap">'+
+      '<div class="hmap-grid">'+
+        monthsHTML+
+        '<div class="hmap-rows">'+daysHTML+colsHTML+'</div>'+
+      '</div>'+
+    '</div>'+
+    legendHTML;
+}
 
   function toISO(br){var p=br.split("/");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:null;}
 
