@@ -377,6 +377,51 @@
 
   .saude-formula-note { font-size: 10px; color: var(--muted); text-align: center; padding: 0.5rem 0 0; letter-spacing: 0.3px; }
   /* ────────────────────────────────────────────────────────────────────────── */
+
+/* ── RESUMO ─────────────────────────────────────────────────────────────── */
+  .resumo-section { padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+  .resumo-period-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; }
+  .resumo-period-label { font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 0.75rem; }
+  .resumo-week-days { display: flex; gap: 6px; }
+  .resumo-day-chip { flex: 1; text-align: center; padding: 8px 4px; border-radius: var(--radius-md); background: var(--surface2); border: 0.5px solid var(--border); font-size: 11px; font-weight: 700; color: var(--muted); }
+  .resumo-day-chip.trained { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .resumo-day-chip.today { box-shadow: 0 0 0 2px var(--accent-light); }
+  .resumo-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 460px) { .resumo-stats-grid { grid-template-columns: repeat(4, 1fr); } }
+  .resumo-stat-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 10px; text-align: center; }
+  .resumo-stat-val { font-family: "DM Mono", monospace; font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .resumo-stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .resumo-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+  .resumo-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 1rem; }
+  .resumo-muscle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .resumo-muscle-name { font-size: 12px; font-weight: 700; width: 84px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .resumo-muscle-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .resumo-muscle-bar { height: 100%; background: var(--accent); border-radius: 4px; }
+  .resumo-muscle-count { font-family: "DM Mono", monospace; font-size: 11px; color: var(--muted); width: 28px; text-align: right; flex-shrink: 0; }
+  .resumo-empty { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+/* ── ANOTAÇÕES / DUPLICAR TREINO / EXPORTAR ────────────────────────────── */
+  .notes-textarea { width: 100%; padding: 12px 14px; font-size: 14px; font-family: "Syne",sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 0.5rem; resize: vertical; min-height: 90px; line-height: 1.5; }
+  .notes-textarea:focus { border-color: var(--accent); }
+  .exercise-notes-preview { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); font-size: 12px; color: var(--muted); line-height: 1.4; cursor: pointer; }
+  .exercise-notes-preview .note-text { word-break: break-word; }
+  .exercise-notes-preview:hover { color: var(--text); }
+
+  .duplicate-day-select { width: 100%; padding: 12px 14px; font-size: 14px; font-family: "Syne",sans-serif; background: var(--surface2); border: 0.5px solid var(--border); border-radius: var(--radius-md); color: var(--text); outline: none; margin-bottom: 0.75rem; }
+  .duplicate-day-select:focus { border-color: var(--accent); }
+  .duplicate-mode-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 0.5rem; }
+  .duplicate-mode-option { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; background: var(--surface2); }
+  .duplicate-mode-option.selected { border-color: var(--accent); background: var(--accent-light); }
+  .duplicate-mode-option input { margin-top: 2px; accent-color: var(--accent); }
+  .duplicate-mode-text strong { display: block; font-size: 12px; font-weight: 700; margin-bottom: 1px; }
+  .duplicate-mode-text span { font-size: 11px; color: var(--muted); line-height: 1.35; }
+
+  .btn-icon-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-export { flex: 1; min-width: 140px; padding: 11px; background: transparent; color: var(--accent2); border: 1.5px solid var(--accent); border-radius: var(--radius-md); font-size: 12px; font-family: "Syne",sans-serif; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .btn-export:hover { background: var(--accent); color: #fff; }
+
+  .btn-duplicate-day { padding: 5px 12px; background: var(--surface2); color: var(--muted); border: 0.5px solid var(--border); border-radius: 20px; font-size: 11px; font-family: "Syne",sans-serif; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; transition: all 0.15s; }
+  .btn-duplicate-day:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent2); }
  .chart-tip{position:fixed;background:var(--text);color:var(--surface);font-size:11px;font-family:"Syne",sans-serif;font-weight:700;padding:5px 10px;border-radius:8px;pointer-events:none;z-index:9000;white-space:nowrap;transition:opacity 0.15s;letter-spacing:0.5px;}
 </head>
 <body>
@@ -432,6 +477,7 @@
     <div class="header-right">
       <button class="btn-tab active" id="tabTreino">Treino</button>
       <button class="btn-tab" id="tabHistorico">Hist&oacute;rico</button>
+      <button class="btn-tab" id="tabResumo">📊 Resumo</button>
       <button class="btn-tab" id="tabSaude">💪 Sa&uacute;de</button>
       <button class="btn-tab" id="tabConfig">&#9881;</button>
       <button class="btn-logout" id="logoutBtn"><span class="logout-label">Sair</span></button>
