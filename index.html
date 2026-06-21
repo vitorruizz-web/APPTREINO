@@ -1838,16 +1838,21 @@ function buildFrequencyPanel(loads){
   `;
 
   // Monta HTML da grade
+var CELL=15; // largura célula + gap (12px + 3px)
   var monthsHTML='<div style="position:relative;height:16px;margin-left:20px;margin-bottom:2px;">';
-  monthLabels.forEach(function(m){
-    monthsHTML+='<span class="hmap-month-lbl" style="left:'+(m.col*15)+'px">'+m.label+'</span>';
-  });
+  for(var mi=0;mi<monthLabels.length;mi++){
+    var m=monthLabels[mi];
+    var nextCol=(mi+1<monthLabels.length)?monthLabels[mi+1].col:numWeeks;
+    var spanCols=nextCol-m.col;
+    monthsHTML+='<span style="position:absolute;left:'+(m.col*CELL)+'px;width:'+(spanCols*CELL)+'px;'+
+      'font-size:10px;color:var(--muted);font-family:\'DM Mono\',monospace;letter-spacing:0.5px;'+
+      'text-align:center;overflow:hidden;white-space:nowrap;">'+m.label+'</span>';
+  }
   monthsHTML+='</div>';
 
-  var daysHTML='<div class="hmap-days">';
+ var daysHTML='<div class="hmap-days">';
   [0,1,2,3,4,5,6].forEach(function(i){
-    // mostra só D,T,Q,S (pares) pra não poluir
-    daysHTML+='<div class="hmap-day-lbl">'+(i%2===0?WEEKDAYS_SHORT[i]:"")+'</div>';
+    daysHTML+='<div class="hmap-day-lbl">'+WEEKDAYS_SHORT[i]+'</div>';
   });
   daysHTML+='</div>';
 
