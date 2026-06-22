@@ -1361,8 +1361,8 @@ var list=document.getElementById("exerciseList");
         '<button class="save-btn" id="btn-'+ex.id+'">Salvar</button>'+
         '<span class="load-meta" id="meta-'+ex.id+'">'+histTxt+" "+prTxt+'</span>'+
       '</div>'+
-      (hasNote?'<div class="exercise-note" id="noteview-'+ex.id+'"><span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(ex.notes)+'</div>':'<div class="exercise-note" id="noteview-'+ex.id+'" style="display:none"></div>')+
-     +buildMetaBar(ex.id, ex.goal||null, hist)+ 
+    (hasNote?'<div class="exercise-note" id="noteview-'+ex.id+'"><span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(ex.notes)+'</div>':'<div class="exercise-note" id="noteview-'+ex.id+'" style="display:none"></div>')+
+     buildMetaBar(ex.id, ex.goal||null, hist)+
      '<div class="chart-panel'+(chartOpen?" open":"")+'" id="chart-'+ex.id+'">'+buildChartInner(hist)+'</div>';
 
     list.appendChild(card);
