@@ -461,6 +461,10 @@
     <div class="day-selector" id="daySelector"></div>
     <div class="workout-view" id="workoutView"></div>
     <div class="hold-hint" id="holdHint">Arraste pelo &#9776; para reordenar &middot; Segure o card para substituir &middot; Clique no nome para o gr&aacute;fico</div>
+    <div id="sessionBar" style="display:none;background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;padding:7px 1rem;letter-spacing:1px;position:sticky;top:52px;z-index:9;">
+  🏋️ TREINO ATIVO — <span id="sessionTimer">00:00</span> &nbsp;·&nbsp; <span id="sessionExCount">0</span> exerc. salvos &nbsp;
+  <button onclick="endSession()" style="background:rgba(0,0,0,0.25);border:none;color:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;margin-left:6px;">Encerrar</button>
+</div>  
   </div>
 
     <div class="history-view" id="historicoSection" style="display:none">
@@ -1287,6 +1291,22 @@ function updateSetsRepsUI(exId,setsReps){
  
 var HANDLE_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="4" r="1.5" fill="currentColor"/><circle cx="11" cy="4" r="1.5" fill="currentColor"/><circle cx="5" cy="8" r="1.5" fill="currentColor"/><circle cx="11" cy="8" r="1.5" fill="currentColor"/><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/></svg>';
 
+function buildMetaBar(exId, goal, hist){
+  var maxKg=hist.length>0?Math.max.apply(null,hist.map(function(h){return h.kg;})):0;
+  var pct=goal?Math.min(100,Math.round((maxKg/goal)*100)):0;
+  var metaHtml=goal
+    ? '<div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+        '<span style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;white-space:nowrap;">META</span>'+
+        '<div style="flex:1;height:6px;background:var(--surface2);border-radius:3px;min-width:60px;overflow:hidden;">'+
+          '<div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:3px;transition:width 0.4s"></div>'+
+        '</div>'+
+        '<span style="font-size:11px;font-family:\'DM Mono\',monospace;color:var(--accent2);white-space:nowrap;">'+maxKg+'/'+goal+' kg ('+pct+'%)</span>'+
+        '<button class="icon-btn" onclick="openGoalModal(\''+exId+'\')" title="Editar meta" style="width:22px;height:22px;font-size:10px;">🎯</button>'+
+      '</div>'
+    : '<div style="margin-top:8px;"><button class="icon-btn" onclick="openGoalModal(\''+exId+'\')" title="Definir meta de carga" style="width:auto;padding:3px 10px;border-radius:20px;font-size:10px;font-family:\'Syne\',sans-serif;font-weight:700;letter-spacing:0.5px;">🎯 Definir meta</button></div>';
+  return metaHtml;
+}
+ 
 function renderWorkout(day){
   var wv=document.getElementById("workoutView");var d=WORKOUT_DATA[day];var hasEx=d.exercises&&d.exercises.length>0;
   if(d.rest&&!hasEx){
@@ -1342,7 +1362,8 @@ var list=document.getElementById("exerciseList");
         '<span class="load-meta" id="meta-'+ex.id+'">'+histTxt+" "+prTxt+'</span>'+
       '</div>'+
       (hasNote?'<div class="exercise-note" id="noteview-'+ex.id+'"><span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(ex.notes)+'</div>':'<div class="exercise-note" id="noteview-'+ex.id+'" style="display:none"></div>')+
-      '<div class="chart-panel'+(chartOpen?" open":"")+'" id="chart-'+ex.id+'">'+buildChartInner(hist)+'</div>';
+     +buildMetaBar(ex.id, ex.goal||null, hist)+ 
+     '<div class="chart-panel'+(chartOpen?" open":"")+'" id="chart-'+ex.id+'">'+buildChartInner(hist)+'</div>';
 
     list.appendChild(card);
 
@@ -1445,6 +1466,7 @@ async function handleSave(exId, exName) {
     var exObj=(WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises||[]).find(function(e){return e.id===exId;});
 await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
     addToCache(exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
+    sessionSaved++; startSession();
     var hist = getHistory(exId, exName);
     var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
     var isPR = hist.length > 1 && kg === maxKg;
@@ -1783,11 +1805,12 @@ function buildFrequencyPanel(loads){
 
   // ── Heat map: últimas 26 semanas ──────────────────────────────
   // Começa no domingo da semana 26 semanas atrás
+ var numWeeks=18;
   var startDate=new Date(today);
-  startDate.setDate(startDate.getDate()-startDate.getDay()); // vai para o domingo desta semana
-  startDate.setDate(startDate.getDate()-25*7); // recua 25 semanas
+  startDate.setDate(startDate.getDate()-startDate.getDay());
+  startDate.setDate(startDate.getDate()-(numWeeks-1)*7);
 
-  var numWeeks=26;
+ 
   var WEEKDAYS_SHORT=["D","S","T","Q","Q","S","S"];
   var MONTHS_SHORT=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
@@ -1889,7 +1912,7 @@ var colsHTML='<div class="hmap-cols">';
   card.innerHTML=
     '<style>'+heatCss+'</style>'+
     '<h3>📅 Frequência de Treinos</h3>'+
-    '<div class="freq-sub">Últimas 26 semanas · cada célula = 1 dia</div>'+
+    '<div class="freq-sub">Últimos 4 meses · cada célula = 1 dia</div>'+
     '<div style="display:flex;gap:0;margin:12px 0 4px;border-top:0.5px solid var(--border);padding-top:12px;">'+
       '<div class="freq-stat"><div class="freq-stat-val">'+uniqueDates.length+'</div><div class="freq-stat-lbl">TOTAL DIAS</div></div>'+
       '<div class="freq-stat"><div class="freq-stat-val">'+last30+'</div><div class="freq-stat-lbl">ÚLT. 30 DIAS</div></div>'+
@@ -2475,6 +2498,70 @@ function showChartTip(evt,msg){
   evt.stopPropagation();
 }
 document.addEventListener("click",function(){var t=document.getElementById("chartTipEl");if(t)t.remove();});
+var sessionStart=null, sessionInterval=null, sessionSaved=0;
+
+function startSession(){
+  if(sessionStart) return;
+  sessionStart=Date.now(); sessionSaved=0;
+  document.getElementById("sessionBar").style.display="block";
+  sessionInterval=setInterval(function(){
+    var elapsed=Math.floor((Date.now()-sessionStart)/1000);
+    var m=Math.floor(elapsed/60), s=elapsed%60;
+    document.getElementById("sessionTimer").textContent=(m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
+  },1000);
+}
+
+function endSession(){
+  if(!sessionStart) return;
+  clearInterval(sessionInterval);
+  var elapsed=Math.floor((Date.now()-sessionStart)/1000);
+  var m=Math.floor(elapsed/60), s=elapsed%60;
+  sessionStart=null; sessionInterval=null;
+  document.getElementById("sessionBar").style.display="none";
+  showToast("🏁","Treino encerrado! "+m+"min "+s+"s · "+sessionSaved+" salvo"+(sessionSaved!==1?"s":""),"first");
+}
+
+var goalTargetExId=null, goalTargetDay=null, goalTargetIdx=null;
+
+function openGoalModal(exId){
+  goalTargetExId=exId;
+  DAYS.forEach(function(d){ (WORKOUT_DATA[d].exercises||[]).forEach(function(e,i){ if(e.id===exId){goalTargetDay=d;goalTargetIdx=i;} }); });
+  var ex=goalTargetDay?WORKOUT_DATA[goalTargetDay].exercises[goalTargetIdx]:null;
+  document.getElementById("goalSubtitle").textContent=ex?ex.name:"";
+  document.getElementById("goalInput").value=ex&&ex.goal?ex.goal:"";
+  document.getElementById("goalModal").classList.add("open");
+  setTimeout(function(){document.getElementById("goalInput").focus();},250);
+}
+function closeGoalModal(){ document.getElementById("goalModal").classList.remove("open"); goalTargetExId=null; goalTargetDay=null; goalTargetIdx=null; }
+async function confirmGoal(){
+  var val=parseFloat(document.getElementById("goalInput").value)||null;
+  if(goalTargetDay!==null&&goalTargetIdx!==null) WORKOUT_DATA[goalTargetDay].exercises[goalTargetIdx].goal=val;
+  closeGoalModal();
+  showLoading("Salvando...");
+  try{ await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA); renderWorkout(currentDay); }catch(e){ alert("Erro ao salvar: "+e.message); }
+  hideLoading();
+}
+
+document.getElementById("goalCancelBtn").addEventListener("click",closeGoalModal);
+document.getElementById("goalConfirmBtn").addEventListener("click",confirmGoal);
+document.getElementById("goalModal").addEventListener("click",function(e){if(e.target===this)closeGoalModal();});
+document.getElementById("goalInput").addEventListener("keydown",function(e){if(e.key==="Enter")confirmGoal();});
+
 </script>
+
+<div class="modal-overlay" id="goalModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Meta de carga</div>
+    <div class="modal-subtitle" id="goalSubtitle"></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Digite a carga alvo em kg. Deixe vazio para remover a meta.</p>
+    <input class="replace-input" type="number" id="goalInput" placeholder="Ex: 100" min="0" step="0.5" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="goalCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="goalConfirmBtn">Salvar meta</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
