@@ -723,6 +723,20 @@
     </div>
   </div>
 </div>
+
+ <div class="modal-overlay" id="goalModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Meta de carga</div>
+    <div class="modal-subtitle" id="goalSubtitle"></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Digite a carga alvo em kg. Deixe vazio para remover a meta.</p>
+    <input class="replace-input" type="number" id="goalInput" placeholder="Ex: 100" min="0" step="0.5" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="goalCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="goalConfirmBtn">Salvar meta</button>
+    </div>
+  </div>
+</div>
  
 <script>
 /* ── TOAST ─────────────────────────────────────────────────────────────────── */
@@ -2549,19 +2563,7 @@ document.getElementById("goalInput").addEventListener("keydown",function(e){if(e
 
 </script>
 
-<div class="modal-overlay" id="goalModal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Meta de carga</div>
-    <div class="modal-subtitle" id="goalSubtitle"></div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Digite a carga alvo em kg. Deixe vazio para remover a meta.</p>
-    <input class="replace-input" type="number" id="goalInput" placeholder="Ex: 100" min="0" step="0.5" />
-    <div class="modal-actions">
-      <button class="btn-modal-cancel" id="goalCancelBtn">Cancelar</button>
-      <button class="btn-modal-confirm" id="goalConfirmBtn">Salvar meta</button>
-    </div>
-  </div>
-</div>
+
 
 </body>
 </html>
