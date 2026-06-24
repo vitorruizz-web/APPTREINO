@@ -2900,15 +2900,32 @@ function buildShareText(kind){
     "🏅 "+unlocked+"/"+ACHIEVEMENTS.length+" conquistas\n"+
     "Bora treinar! 💪 #GYM";
 }
+var shareCurrentText="";
 function shareResult(kind){
-  var text=buildShareText(kind);
-  if(navigator.share){
-    navigator.share({title:"Treino GYM",text:text}).catch(function(){});
-  }else{
-    try{if(navigator.clipboard)navigator.clipboard.writeText(text);}catch(e){}
-    window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank");
-    showToast("📋","Texto copiado — abrindo WhatsApp!","first");
+  shareCurrentText=buildShareText(kind);
+  var ta=document.getElementById("sharePreview");if(ta)ta.value=shareCurrentText;
+  var nb=document.getElementById("shareNativeBtn");if(nb)nb.style.display=navigator.share?"flex":"none";
+  document.getElementById("shareModal").classList.add("open");
+}
+function closeShareModal(){document.getElementById("shareModal").classList.remove("open");}
+function shareVia(target){
+  var t=shareCurrentText,enc=encodeURIComponent(t);
+  if(target==="copy"){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}
+      else{var ta=document.getElementById("sharePreview");ta.focus();ta.select();document.execCommand("copy");}
+    }catch(e){}
+    showToast("📋","Texto copiado!","first");return;
   }
+  if(target==="native"){if(navigator.share)navigator.share({title:"Treino GYM",text:t}).catch(function(){});return;}
+  var appUrl="https://vitorruizz-web.github.io/APPTREINO/";
+  var urls={
+    whatsapp:"https://wa.me/?text="+enc,
+    telegram:"https://t.me/share/url?url="+encodeURIComponent(appUrl)+"&text="+enc,
+    twitter:"https://twitter.com/intent/tweet?text="+enc,
+    email:"mailto:?subject="+encodeURIComponent("Meu treino no GYM")+"&body="+enc
+  };
+  if(urls[target])window.open(urls[target],"_blank");
 }
 
 /* ── Injeção da UI (timer + modal de anilhas) ───────────────────────────── */
@@ -2980,6 +2997,36 @@ function shareResult(kind){
   pm.querySelectorAll(".plate-bar-chip").forEach(function(c){c.addEventListener("click",function(){setPlateBar(parseFloat(c.getAttribute("data-bar")));});});
   document.getElementById("plateCloseBtn").addEventListener("click",closePlateModal);
   pm.addEventListener("click",function(e){if(e.target===this)closePlateModal();});
+
+  var shareTargets=[
+    {t:"whatsapp",label:"WhatsApp",icon:"🟢"},
+    {t:"telegram",label:"Telegram",icon:"✈️"},
+    {t:"twitter",label:"X / Twitter",icon:"𝕏"},
+    {t:"email",label:"E-mail",icon:"✉️"},
+    {t:"copy",label:"Copiar texto",icon:"📋"},
+    {t:"native",label:"Mais opções…",icon:"📲"}
+  ];
+  var sm=document.createElement("div");sm.className="modal-overlay";sm.id="shareModal";
+  sm.innerHTML=
+    '<div class="modal-sheet">'+
+      '<div class="modal-handle"></div>'+
+      '<div class="modal-title">📤 Compartilhar</div>'+
+      '<textarea id="sharePreview" readonly style="width:100%;min-height:96px;padding:12px 14px;font-size:13px;font-family:\'Syne\',sans-serif;background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius-md);color:var(--text);outline:none;resize:vertical;margin-bottom:1rem;line-height:1.5;"></textarea>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+        shareTargets.map(function(s){
+          return '<button class="share-opt" data-target="'+s.t+'" '+(s.t==="native"?'id="shareNativeBtn"':'')+' style="display:flex;align-items:center;gap:9px;padding:12px 14px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--text);cursor:pointer;text-align:left;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span>'+s.label+'</button>';
+        }).join("")+
+      '</div>'+
+      '<div class="modal-actions"><button class="btn-modal-cancel" id="shareCloseBtn" style="flex:1;">Fechar</button></div>'+
+    '</div>';
+  document.body.appendChild(sm);
+  sm.querySelectorAll(".share-opt").forEach(function(b){
+    b.addEventListener("click",function(){shareVia(b.getAttribute("data-target"));if(b.getAttribute("data-target")!=="native")closeShareModal();});
+    b.addEventListener("mouseenter",function(){b.style.borderColor="var(--accent)";b.style.background="var(--accent-light)";});
+    b.addEventListener("mouseleave",function(){b.style.borderColor="var(--border)";b.style.background="var(--surface2)";});
+  });
+  document.getElementById("shareCloseBtn").addEventListener("click",closeShareModal);
+  sm.addEventListener("click",function(e){if(e.target===this)closeShareModal();});
 })();
 
 </script>
