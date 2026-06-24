@@ -2836,10 +2836,10 @@ function buildAchievementsPanel(loads){
   var unlocked=ACHIEVEMENTS.filter(function(a){return a.val(stats)>=a.goal;}).length;
   var items=ACHIEVEMENTS.map(function(a){
     var v=a.val(stats),done=v>=a.goal,pct=Math.min(100,Math.round(v/a.goal*100));
-    return '<div style="text-align:center;padding:10px 6px;border:0.5px solid '+(done?"var(--accent)":"var(--border)")+';border-radius:10px;background:'+(done?"var(--accent-light)":"var(--surface2)")+';opacity:'+(done?"1":"0.7")+';">'+
+    return '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 6px;border:0.5px solid '+(done?"var(--accent)":"var(--border)")+';border-radius:10px;background:'+(done?"var(--accent-light)":"var(--surface2)")+';opacity:'+(done?"1":"0.7")+';min-width:0;">'+
       '<div style="font-size:26px;line-height:1;margin-bottom:4px;filter:'+(done?"none":"grayscale(1)")+';">'+a.icon+'</div>'+
-      '<div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.2;">'+a.title+'</div>'+
-      '<div style="font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3;">'+a.desc+'</div>'+
+      '<div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.2;width:100%;overflow-wrap:break-word;word-break:break-word;hyphens:auto;">'+a.title+'</div>'+
+      '<div style="font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3;width:100%;overflow-wrap:break-word;word-break:break-word;">'+a.desc+'</div>'+
       (done
         ? '<div style="font-size:10px;font-weight:700;color:var(--accent2);margin-top:5px;">✓ Desbloqueada</div>'
         : '<div style="height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:var(--accent);"></div></div><div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:\'DM Mono\',monospace;">'+Math.min(v,a.goal)+'/'+a.goal+'</div>')+
@@ -2874,30 +2874,39 @@ function buildShareText(kind){
     if(!d||!d.exercises||!d.exercises.length){
       return "💪 "+titulo+" no GYM!\nBora treinar! 🏋️ #GYM";
     }
+    var dayVol=0;
     var lines=d.exercises.map(function(ex){
       var hist=getHistory(ex.id,ex.name);
-      var last=hist.length?(" · "+hist[hist.length-1].kg+"kg"):"";
+      var lastKg=hist.length?hist[hist.length-1].kg:null;
+      if(lastKg)dayVol+=setVolume(lastKg,ex.setsReps);
+      var last=lastKg?(" · "+lastKg+"kg"):"";
       var sr=ex.setsReps?(" — "+ex.setsReps.replace(/x/i,"×").replace("F","falha")):"";
-      return "• "+ex.name+sr+last;
+      return "🔹 "+ex.name+sr+last;
     });
-    return "💪 "+titulo+" de hoje no GYM:\n"+lines.join("\n")+"\nBora treinar! 🏋️ #GYM";
+    return "🏋️‍♂️ "+titulo+" — meu treino de hoje no GYM 💪\n\n"+
+      lines.join("\n")+"\n\n"+
+      "📊 "+d.exercises.length+" exercício"+(d.exercises.length!==1?"s":"")+
+      (dayVol>0?"  ·  🔩 "+Math.round(dayVol).toLocaleString("pt-BR")+" kg levantados":"")+"\n"+
+      "🔥 Bora treinar! #GYM";
   }
   if(kind==="session"){
     var elapsed=sessionStart?Math.floor((Date.now()-sessionStart)/1000):0;
     var m=Math.floor(elapsed/60),s=elapsed%60;
-    return "💪 Treino em andamento no GYM!\n"+
-      "⏱️ "+m+"min"+(s?" "+s+"s":"")+" · "+sessionSaved+" exercício"+(sessionSaved!==1?"s":"")+
-      " · "+Math.round(sessionVolume).toLocaleString("pt-BR")+" kg movidos\n"+
-      "Bora treinar! 🏋️ #GYM";
+    var tempo=(m>0?m+"min":"")+(s?(m>0?" ":"")+s+"s":"")||"0s";
+    return "🔥 Treino em andamento no GYM! 💪\n\n"+
+      "⏱️ Tempo: "+tempo+"\n"+
+      "🏋️ Exercícios: "+sessionSaved+"\n"+
+      "🔩 Carga total: "+Math.round(sessionVolume).toLocaleString("pt-BR")+" kg\n\n"+
+      "Bora pra cima! #GYM";
   }
   var st=computeAchvStats(loadsFromCache());
   var unlocked=ACHIEVEMENTS.filter(function(a){return a.val(st)>=a.goal;}).length;
-  return "🏆 Meu progresso no GYM"+(nm?" ("+nm+")":"")+":\n"+
-    "📅 "+st.uniqueDays+" dias treinados\n"+
+  return "🏆 Meu progresso no GYM"+(nm?" ("+nm+")":"")+" 💪\n\n"+
+    "📅 "+st.uniqueDays+" dia"+(st.uniqueDays!==1?"s":"")+" treinado"+(st.uniqueDays!==1?"s":"")+"\n"+
     "🔥 Sequência atual: "+st.streak+" dia"+(st.streak!==1?"s":"")+"\n"+
     "⭐ "+st.prCount+" recorde"+(st.prCount!==1?"s":"")+" pessoa"+(st.prCount!==1?"is":"l")+"\n"+
-    "🏋️ "+Math.round(st.totalVolume).toLocaleString("pt-BR")+" kg movidos no total\n"+
-    "🏅 "+unlocked+"/"+ACHIEVEMENTS.length+" conquistas\n"+
+    "🔩 Carga total levantada: "+Math.round(st.totalVolume).toLocaleString("pt-BR")+" kg\n"+
+    "🏅 "+unlocked+"/"+ACHIEVEMENTS.length+" conquistas desbloqueadas\n\n"+
     "Bora treinar! 💪 #GYM";
 }
 var shareCurrentText="";
