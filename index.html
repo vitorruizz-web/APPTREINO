@@ -1351,9 +1351,11 @@ function renderWorkout(day){
 '<option value="">+ Dia</option>'+
 WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?' selected':'')+'>'+w+'</option>';}).join("")+
 '</select>'+
-'<button class="icon-btn" id="dupDayBtn" title="Duplicar treino para outro dia" style="margin-left:auto">\ud83d\udccb</button>'+
+'<button class="icon-btn" id="shareDayBtn" title="Compartilhar este treino" style="margin-left:auto">\ud83d\udce4</button>'+
+'<button class="icon-btn" id="dupDayBtn" title="Duplicar treino para outro dia">\ud83d\udccb</button>'+
 '</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
 document.getElementById("dupDayBtn").addEventListener("click",function(){openDuplicateModal(day);});
+document.getElementById("shareDayBtn").addEventListener("click",function(){shareResult("day");});
 var list=document.getElementById("exerciseList");
 
   d.exercises.forEach(function(ex,idx){
@@ -2141,6 +2143,7 @@ document.getElementById("logoutBtn").addEventListener("click",logout);
 document.getElementById("tabTreino").addEventListener("click",function(){switchTab("treino");});
 document.getElementById("tabHistorico").addEventListener("click",function(){switchTab("historico");});
 document.getElementById("tabSaude").addEventListener("click",function(){switchTab("saude");});
+document.getElementById("tabConquistas").addEventListener("click",function(){switchTab("conquistas");});
 document.getElementById("tabConfig").addEventListener("click",function(){switchTab("config");});
 document.getElementById("savePassBtn").addEventListener("click",changePassword);
 document.getElementById("clearHistoryBtn").addEventListener("click",clearHistory);
@@ -2865,6 +2868,20 @@ async function renderConquistas(){
 /* ── Compartilhar resultados (Web Share API + fallback WhatsApp) ─────────── */
 function buildShareText(kind){
   var nm=currentUser&&currentUser.username?currentUser.username:"";
+  if(kind==="day"){
+    var d=WORKOUT_DATA&&currentDay?WORKOUT_DATA[currentDay]:null;
+    var titulo=currentDay?DAY_LABELS[currentDay]:"Treino";
+    if(!d||!d.exercises||!d.exercises.length){
+      return "💪 "+titulo+" no GYM!\nBora treinar! 🏋️ #GYM";
+    }
+    var lines=d.exercises.map(function(ex){
+      var hist=getHistory(ex.id,ex.name);
+      var last=hist.length?(" · "+hist[hist.length-1].kg+"kg"):"";
+      var sr=ex.setsReps?(" — "+ex.setsReps.replace(/x/i,"×").replace("F","falha")):"";
+      return "• "+ex.name+sr+last;
+    });
+    return "💪 "+titulo+" de hoje no GYM:\n"+lines.join("\n")+"\nBora treinar! 🏋️ #GYM";
+  }
   if(kind==="session"){
     var elapsed=sessionStart?Math.floor((Date.now()-sessionStart)/1000):0;
     var m=Math.floor(elapsed/60),s=elapsed%60;
