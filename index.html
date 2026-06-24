@@ -2680,39 +2680,54 @@ var REST_DONE=[
   {icon:"🏟️",msg:"A torcida pede mais uma série. SIUUUU!"}
 ];
 /* Comemoração de fim: apito + torcida de estádio + voz "SIUUUU" (sem áudio protegido) */
+function pickSiuVoice(){
+  try{
+    var vs=window.speechSynthesis.getVoices()||[];
+    var prefer=["daniel","felipe","ricardo","jorge","male","masc","homem"];
+    var pt=vs.filter(function(v){return /pt/i.test(v.lang);});
+    var pool=pt.length?pt:vs;
+    for(var i=0;i<prefer.length;i++){
+      for(var j=0;j<pool.length;j++){ if(pool[j].name.toLowerCase().indexOf(prefer[i])>=0) return pool[j]; }
+    }
+    return pt[0]||null;
+  }catch(e){ return null; }
+}
 function restSiu(){
   try{
     var ctx=getAudioCtx();
     if(ctx){
       if(ctx.state==="suspended"){try{ctx.resume();}catch(e){}}
       var now=ctx.currentTime;
-      // "SIUUUU" sintetizado: tom que sobe (toca mesmo sem voz, em qualquer aparelho)
+      // "SIUUUU" sintetizado e prolongado: tom grave que sobe devagar (toca em qualquer aparelho)
       var o=ctx.createOscillator(),g=ctx.createGain();
       o.type="sawtooth";
-      o.frequency.setValueAtTime(360,now);
-      o.frequency.exponentialRampToValueAtTime(1300,now+0.55);
+      o.frequency.setValueAtTime(280,now);
+      o.frequency.exponentialRampToValueAtTime(820,now+0.55);
+      o.frequency.exponentialRampToValueAtTime(1150,now+1.35);
       g.gain.setValueAtTime(0.0001,now);
-      g.gain.exponentialRampToValueAtTime(0.35,now+0.06);
-      g.gain.exponentialRampToValueAtTime(0.0001,now+0.78);
+      g.gain.exponentialRampToValueAtTime(0.34,now+0.08);
+      g.gain.setValueAtTime(0.34,now+1.15);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+1.6);
       o.connect(g);g.connect(ctx.destination);
-      o.start(now);o.stop(now+0.8);
+      o.start(now);o.stop(now+1.65);
       // torcida de estádio (ruído filtrado que sobe e desce)
-      var dur=1.3;
+      var dur=1.8;
       var buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
       var data=buffer.getChannelData(0);
       for(var i=0;i<data.length;i++){data[i]=(Math.random()*2-1)*Math.sin(Math.PI*(i/data.length));}
       var src=ctx.createBufferSource();src.buffer=buffer;
-      var bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1100;bp.Q.value=0.6;
-      var cg=ctx.createGain();cg.gain.value=0.25;
+      var bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1000;bp.Q.value=0.6;
+      var cg=ctx.createGain();cg.gain.value=0.22;
       src.connect(bp);bp.connect(cg);cg.connect(ctx.destination);
-      src.start(now+0.3);
+      src.start(now+0.4);
     }
   }catch(e){}
-  try{                                          // voz sintetizada gritando "SIUUUU" (quando o aparelho suporta)
+  try{                                          // voz grave/masculina gritando "SIUUUUUUU" (quando o aparelho suporta)
     if(window.speechSynthesis){
       window.speechSynthesis.cancel();
-      var uu=new SpeechSynthesisUtterance("Siuuuu!");
-      uu.lang="pt-BR";uu.rate=0.8;uu.pitch=1.6;uu.volume=1;
+      var uu=new SpeechSynthesisUtterance("Siuuuuuuuu!");
+      var voz=pickSiuVoice(); if(voz) uu.voice=voz;
+      uu.lang="pt-BR";uu.rate=0.65;uu.pitch=0.35;uu.volume=1;
       window.speechSynthesis.speak(uu);
     }
   }catch(e){}
