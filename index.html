@@ -111,7 +111,10 @@
   .btn-tab { padding: 4px 6px; font-size: 9px; }
   .header-user { max-width: 44px; }
   .header { padding: 0.5rem 0.6rem; gap: 4px; }
-  .header-right { gap: 3px; }
+  .header-left { flex-shrink: 0; }
+  .header-right { gap: 3px; flex-shrink: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .header-right::-webkit-scrollbar { display: none; }
+  .tab-text-saude { display: none; }
   .header-logo { font-size: 17px; }
 }
 
@@ -451,7 +454,7 @@
     <div class="header-right">
       <button class="btn-tab active" id="tabTreino">Treino</button>
       <button class="btn-tab" id="tabHistorico">Hist&oacute;rico</button>
-      <button class="btn-tab" id="tabSaude">💪 Sa&uacute;de</button>
+      <button class="btn-tab" id="tabSaude" title="Sa&uacute;de">💪<span class="tab-text-saude"> Sa&uacute;de</span></button>
       <button class="btn-tab" id="tabConquistas" title="Conquistas">🏅</button>
       <button class="btn-tab" id="tabConfig">&#9881;</button>
       <button class="btn-logout" id="logoutBtn"><span class="logout-label">Sair</span></button>
@@ -2639,6 +2642,22 @@ function migrateLocalToConfig(){
 var restTimer={remaining:0,total:0,interval:null};
 var restSuggestTimer=null;
 
+/* Áudio compartilhado — destravado no toque do usuário (celular bloqueia áudio sem gesto) */
+var _audioCtx=null;
+function getAudioCtx(){
+  if(!_audioCtx){var C=window.AudioContext||window.webkitAudioContext;if(C){try{_audioCtx=new C();}catch(e){}}}
+  return _audioCtx;
+}
+function unlockAudio(){
+  var ctx=getAudioCtx();
+  if(ctx){
+    if(ctx.state==="suspended"){try{ctx.resume();}catch(e){}}
+    try{var o=ctx.createOscillator(),g=ctx.createGain();g.gain.value=0;o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.01);}catch(e){}
+  }
+  // "aquece" o sintetizador de voz dentro do gesto (necessário no iOS)
+  try{if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(" ");u.volume=0;window.speechSynthesis.speak(u);}}catch(e){}
+}
+
 function restBeep(){
   try{
     var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
@@ -2663,35 +2682,38 @@ var REST_DONE=[
 /* Comemoração de fim: apito + torcida de estádio + voz "SIUUUU" (sem áudio protegido) */
 function restSiu(){
   try{
-    var Ctx=window.AudioContext||window.webkitAudioContext;
-    if(Ctx){
-      var ctx=new Ctx();var now=ctx.currentTime;
-      [0,0.15].forEach(function(t){            // apito de árbitro (chama atenção)
-        var o=ctx.createOscillator(),g=ctx.createGain();
-        o.type="square";o.frequency.value=1850;o.connect(g);g.connect(ctx.destination);
-        g.gain.setValueAtTime(0.0001,now+t);
-        g.gain.exponentialRampToValueAtTime(0.22,now+t+0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001,now+t+0.12);
-        o.start(now+t);o.stop(now+t+0.13);
-      });
-      var dur=1.4;                              // torcida = ruído filtrado que sobe e desce
+    var ctx=getAudioCtx();
+    if(ctx){
+      if(ctx.state==="suspended"){try{ctx.resume();}catch(e){}}
+      var now=ctx.currentTime;
+      // "SIUUUU" sintetizado: tom que sobe (toca mesmo sem voz, em qualquer aparelho)
+      var o=ctx.createOscillator(),g=ctx.createGain();
+      o.type="sawtooth";
+      o.frequency.setValueAtTime(360,now);
+      o.frequency.exponentialRampToValueAtTime(1300,now+0.55);
+      g.gain.setValueAtTime(0.0001,now);
+      g.gain.exponentialRampToValueAtTime(0.35,now+0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+0.78);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(now);o.stop(now+0.8);
+      // torcida de estádio (ruído filtrado que sobe e desce)
+      var dur=1.3;
       var buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
       var data=buffer.getChannelData(0);
       for(var i=0;i<data.length;i++){data[i]=(Math.random()*2-1)*Math.sin(Math.PI*(i/data.length));}
       var src=ctx.createBufferSource();src.buffer=buffer;
       var bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1100;bp.Q.value=0.6;
-      var cg=ctx.createGain();cg.gain.value=0.3;
+      var cg=ctx.createGain();cg.gain.value=0.25;
       src.connect(bp);bp.connect(cg);cg.connect(ctx.destination);
-      src.start(now+0.28);
-      setTimeout(function(){try{ctx.close();}catch(e){}},2200);
+      src.start(now+0.3);
     }
   }catch(e){}
-  try{                                          // voz sintetizada gritando "SIUUUU"
+  try{                                          // voz sintetizada gritando "SIUUUU" (quando o aparelho suporta)
     if(window.speechSynthesis){
       window.speechSynthesis.cancel();
-      var u=new SpeechSynthesisUtterance("Siuuuu!");
-      u.lang="pt-BR";u.rate=0.8;u.pitch=1.6;u.volume=1;
-      setTimeout(function(){try{window.speechSynthesis.speak(u);}catch(e){}},280);
+      var uu=new SpeechSynthesisUtterance("Siuuuu!");
+      uu.lang="pt-BR";uu.rate=0.8;uu.pitch=1.6;uu.volume=1;
+      window.speechSynthesis.speak(uu);
     }
   }catch(e){}
 }
@@ -2714,6 +2736,7 @@ function renderRest(){
   }
 }
 function startRest(sec){
+  unlockAudio();
   clearInterval(restTimer.interval);
   restTimer.total=sec;restTimer.remaining=sec;
   var rp=document.getElementById("restPanel");if(rp)rp.classList.remove("open");
