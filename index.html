@@ -2872,7 +2872,7 @@ function buildShareText(kind){
     var d=WORKOUT_DATA&&currentDay?WORKOUT_DATA[currentDay]:null;
     var titulo=currentDay?DAY_LABELS[currentDay]:"Treino";
     if(!d||!d.exercises||!d.exercises.length){
-      return "💪 "+titulo+" no GYM!\nBora treinar! 🏋️ #GYM";
+      return "💪 "+titulo+" no GYM!\nBora treinar!";
     }
     var dayVol=0;
     var lines=d.exercises.map(function(ex){
@@ -2883,31 +2883,31 @@ function buildShareText(kind){
       var sr=ex.setsReps?(" — "+ex.setsReps.replace(/x/i,"×").replace("F","falha")):"";
       return "🔹 "+ex.name+sr+last;
     });
-    return "🏋️‍♂️ "+titulo+" — meu treino de hoje no GYM 💪\n\n"+
+    return "💪 "+titulo+" — meu treino de hoje no GYM\n\n"+
       lines.join("\n")+"\n\n"+
       "📊 "+d.exercises.length+" exercício"+(d.exercises.length!==1?"s":"")+
-      (dayVol>0?"  ·  🔩 "+Math.round(dayVol).toLocaleString("pt-BR")+" kg levantados":"")+"\n"+
-      "🔥 Bora treinar! #GYM";
+      (dayVol>0?"  ·  🔥 "+Math.round(dayVol).toLocaleString("pt-BR")+" kg levantados":"")+"\n"+
+      "Bora treinar!";
   }
   if(kind==="session"){
     var elapsed=sessionStart?Math.floor((Date.now()-sessionStart)/1000):0;
     var m=Math.floor(elapsed/60),s=elapsed%60;
     var tempo=(m>0?m+"min":"")+(s?(m>0?" ":"")+s+"s":"")||"0s";
-    return "🔥 Treino em andamento no GYM! 💪\n\n"+
-      "⏱️ Tempo: "+tempo+"\n"+
-      "🏋️ Exercícios: "+sessionSaved+"\n"+
-      "🔩 Carga total: "+Math.round(sessionVolume).toLocaleString("pt-BR")+" kg\n\n"+
-      "Bora pra cima! #GYM";
+    return "🔥 Treino em andamento no GYM!\n\n"+
+      "🕒 Tempo: "+tempo+"\n"+
+      "💪 Exercícios: "+sessionSaved+"\n"+
+      "📊 Carga total: "+Math.round(sessionVolume).toLocaleString("pt-BR")+" kg\n\n"+
+      "Bora pra cima!";
   }
   var st=computeAchvStats(loadsFromCache());
   var unlocked=ACHIEVEMENTS.filter(function(a){return a.val(st)>=a.goal;}).length;
-  return "🏆 Meu progresso no GYM"+(nm?" ("+nm+")":"")+" 💪\n\n"+
+  return "🏆 Meu progresso no GYM"+(nm?" ("+nm+")":"")+"\n\n"+
     "📅 "+st.uniqueDays+" dia"+(st.uniqueDays!==1?"s":"")+" treinado"+(st.uniqueDays!==1?"s":"")+"\n"+
     "🔥 Sequência atual: "+st.streak+" dia"+(st.streak!==1?"s":"")+"\n"+
     "⭐ "+st.prCount+" recorde"+(st.prCount!==1?"s":"")+" pessoa"+(st.prCount!==1?"is":"l")+"\n"+
-    "🔩 Carga total levantada: "+Math.round(st.totalVolume).toLocaleString("pt-BR")+" kg\n"+
+    "💪 Carga total levantada: "+Math.round(st.totalVolume).toLocaleString("pt-BR")+" kg\n"+
     "🏅 "+unlocked+"/"+ACHIEVEMENTS.length+" conquistas desbloqueadas\n\n"+
-    "Bora treinar! 💪 #GYM";
+    "Bora treinar!";
 }
 var shareCurrentText="";
 function shareResult(kind){
