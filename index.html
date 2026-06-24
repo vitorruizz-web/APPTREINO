@@ -2639,6 +2639,47 @@ function restBeep(){
     setTimeout(function(){try{ctx.close();}catch(e){}},700);
   }catch(e){}
 }
+var REST_DONE=[
+  {icon:"⚽",msg:"SIUUUU! Descanso acabou — bora pra próxima série!"},
+  {icon:"🐐",msg:"Tempo! O GOAT não espera. Volta pra barra! SIUUU!"},
+  {icon:"💪",msg:"Acabou o descanso. SIUUUU, partiu próxima!"},
+  {icon:"🏟️",msg:"A torcida pede mais uma série. SIUUUU!"}
+];
+/* Comemoração de fim: apito + torcida de estádio + voz "SIUUUU" (sem áudio protegido) */
+function restSiu(){
+  try{
+    var Ctx=window.AudioContext||window.webkitAudioContext;
+    if(Ctx){
+      var ctx=new Ctx();var now=ctx.currentTime;
+      [0,0.15].forEach(function(t){            // apito de árbitro (chama atenção)
+        var o=ctx.createOscillator(),g=ctx.createGain();
+        o.type="square";o.frequency.value=1850;o.connect(g);g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001,now+t);
+        g.gain.exponentialRampToValueAtTime(0.22,now+t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,now+t+0.12);
+        o.start(now+t);o.stop(now+t+0.13);
+      });
+      var dur=1.4;                              // torcida = ruído filtrado que sobe e desce
+      var buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+      var data=buffer.getChannelData(0);
+      for(var i=0;i<data.length;i++){data[i]=(Math.random()*2-1)*Math.sin(Math.PI*(i/data.length));}
+      var src=ctx.createBufferSource();src.buffer=buffer;
+      var bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1100;bp.Q.value=0.6;
+      var cg=ctx.createGain();cg.gain.value=0.3;
+      src.connect(bp);bp.connect(cg);cg.connect(ctx.destination);
+      src.start(now+0.28);
+      setTimeout(function(){try{ctx.close();}catch(e){}},2200);
+    }
+  }catch(e){}
+  try{                                          // voz sintetizada gritando "SIUUUU"
+    if(window.speechSynthesis){
+      window.speechSynthesis.cancel();
+      var u=new SpeechSynthesisUtterance("Siuuuu!");
+      u.lang="pt-BR";u.rate=0.8;u.pitch=1.6;u.volume=1;
+      setTimeout(function(){try{window.speechSynthesis.speak(u);}catch(e){}},280);
+    }
+  }catch(e){}
+}
 function renderRest(){
   var fab=document.getElementById("restFab");if(!fab)return;
   var running=!!restTimer.interval;
@@ -2672,8 +2713,9 @@ function cancelRest(){clearInterval(restTimer.interval);restTimer.interval=null;
   var rp=document.getElementById("restPanel");if(rp)rp.classList.remove("open");}
 function finishRest(){
   clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();
-  restBeep();if(navigator.vibrate)navigator.vibrate([200,100,200,100,300]);
-  showToast("⏰","Descanso acabou! Bora pra próxima série 💪","pr");
+  restSiu();if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
+  var d=REST_DONE[Math.floor(Math.random()*REST_DONE.length)];
+  showToast(d.icon,d.msg,"pr");
 }
 function restTimerSuggest(){
   var rp=document.getElementById("restPanel");if(!rp||restTimer.interval)return;
@@ -2829,7 +2871,7 @@ function checkAchievements(announce){
 
   var panel=document.createElement("div");panel.className="rest-panel";panel.id="restPanel";
   panel.innerHTML=
-    '<div class="rest-panel-title">Descanso</div>'+
+    '<div class="rest-panel-title">⏱️ Descanso · escolha o tempo</div>'+
     '<div class="rest-chips" id="restChips">'+
       '<button class="rest-chip" data-sec="60">60s</button>'+
       '<button class="rest-chip" data-sec="90">90s</button>'+
