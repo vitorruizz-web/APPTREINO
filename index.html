@@ -452,6 +452,7 @@
       <button class="btn-tab active" id="tabTreino">Treino</button>
       <button class="btn-tab" id="tabHistorico">Hist&oacute;rico</button>
       <button class="btn-tab" id="tabSaude">💪 Sa&uacute;de</button>
+      <button class="btn-tab" id="tabConquistas" title="Conquistas">🏅</button>
       <button class="btn-tab" id="tabConfig">&#9881;</button>
       <button class="btn-logout" id="logoutBtn"><span class="logout-label">Sair</span></button>
     </div>
@@ -463,6 +464,7 @@
     <div class="hold-hint" id="holdHint">Arraste pelo &#9776; para reordenar &middot; Segure o card para substituir &middot; Clique no nome para o gr&aacute;fico</div>
     <div id="sessionBar" style="display:none;background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;text-align:center;padding:7px 1rem;letter-spacing:1px;position:sticky;top:52px;z-index:9;">
   🏋️ TREINO ATIVO — <span id="sessionTimer">00:00</span> &nbsp;·&nbsp; <span id="sessionExCount">0</span> exerc. &nbsp;·&nbsp; <span id="sessionVolume">0</span> kg vol. &nbsp;
+  <button onclick="shareResult('session')" style="background:rgba(0,0,0,0.25);border:none;color:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;margin-left:6px;">📤 Compartilhar</button>
   <button onclick="endSession()" style="background:rgba(0,0,0,0.25);border:none;color:#fff;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;margin-left:6px;">Encerrar</button>
 </div>  
   </div>
@@ -591,6 +593,14 @@
       <h3>📊 Histórico de Saúde</h3>
       <div id="saudeRegistrosList"></div>
     </div>
+  </div>
+
+  <div class="history-view" id="conquistasSection" style="display:none">
+    <div class="history-title">🏅 Conquistas</div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
+      <button class="btn-secondary" style="width:auto;padding:8px 16px;font-size:11px;" onclick="shareResult('stats')">📤 Compartilhar progresso</button>
+    </div>
+    <div class="freq-card" id="achvCard"></div>
   </div>
 </div>
 
@@ -1211,17 +1221,19 @@ window.addEventListener("DOMContentLoaded",async function(){
 
 function switchTab(tab){
   currentTab=tab;
-  var tabIds={treino:"tabTreino",historico:"tabHistorico",saude:"tabSaude",config:"tabConfig"};
+  var tabIds={treino:"tabTreino",historico:"tabHistorico",saude:"tabSaude",conquistas:"tabConquistas",config:"tabConfig"};
   Object.keys(tabIds).forEach(function(t){var btn=document.getElementById(tabIds[t]);if(btn)btn.classList.toggle("active",t===tab);});
   document.getElementById("treinoSection").style.display=tab==="treino"?"block":"none";
   document.getElementById("historicoSection").style.display=tab==="historico"?"block":"none";
   document.getElementById("configSection").style.display=tab==="config"?"block":"none";
   document.getElementById("saudeSection").style.display=tab==="saude"?"flex":"none";
+  document.getElementById("conquistasSection").style.display=tab==="conquistas"?"block":"none";
   document.getElementById("holdHint").style.display=tab==="treino"?"block":"none";
   var rf=document.getElementById("restFab");if(rf)rf.style.display=tab==="treino"?"flex":"none";
   var rp=document.getElementById("restPanel");if(rp&&tab!=="treino")rp.classList.remove("open");
   if(tab==="historico")renderHistory();if(tab==="config")buildAvatarGrid();
   if(tab==="saude"){renderSaudeRegistros();setSaudeDefaultDate();}
+  if(tab==="conquistas")renderConquistas();
 }
 
 function buildDaySelector(){
@@ -1967,7 +1979,7 @@ async function renderHistory(){
   fDiv.innerHTML=fDays.map(function(d){var label=d==="todos"?"Todos":DAY_LABELS[d];return'<button class="filter-btn'+(historyFilter===d?" active":"")+'" data-day="'+d+'">'+label+'</button>';}).join("");
   fDiv.querySelectorAll(".filter-btn").forEach(function(btn){btn.addEventListener("click",function(){historyFilter=btn.getAttribute("data-day");renderHistory();});});
   try{
-    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);buildFrequencyPanel(loads);buildAchievementsPanel(loads);
+    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);buildFrequencyPanel(loads);
     var allEx=[];DAYS.forEach(function(d){if(WORKOUT_DATA[d].exercises)WORKOUT_DATA[d].exercises.forEach(function(e){allEx.push(e);});});
     var archived=await sbGetArchived();archived.forEach(function(e){allEx.push(e);});
     var prMap={};allEx.forEach(function(ex){var h=getHistory(ex.id, ex.name);if(h.length>0)prMap[ex.id]=Math.max.apply(null,h.map(function(x){return x.kg;}));});
@@ -2817,7 +2829,7 @@ function computeAchvStats(loads){
 function buildAchievementsPanel(loads){
   var stats=computeAchvStats(loads&&loads.length?loads.map(function(r){return{ex_id:r.ex_id,kg:r.kg,date:r.date,sets_reps:r.sets_reps};}):loadsFromCache());
   var card=document.getElementById("achvCard");
-  if(!card){var fc=document.getElementById("freqCard");if(!fc)return;card=document.createElement("div");card.className="freq-card";card.id="achvCard";fc.parentNode.insertBefore(card,fc.nextSibling);}
+  if(!card)return;
   var unlocked=ACHIEVEMENTS.filter(function(a){return a.val(stats)>=a.goal;}).length;
   var items=ACHIEVEMENTS.map(function(a){
     var v=a.val(stats),done=v>=a.goal,pct=Math.min(100,Math.round(v/a.goal*100));
@@ -2830,7 +2842,7 @@ function buildAchievementsPanel(loads){
         : '<div style="height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:var(--accent);"></div></div><div style="font-size:9px;color:var(--muted);margin-top:3px;font-family:\'DM Mono\',monospace;">'+Math.min(v,a.goal)+'/'+a.goal+'</div>')+
     '</div>';
   }).join("");
-  card.innerHTML='<h3>🏅 Conquistas</h3><div class="freq-sub">'+unlocked+' de '+ACHIEVEMENTS.length+' desbloqueadas</div>'+
+  card.innerHTML='<h3>Seu progresso</h3><div class="freq-sub">'+unlocked+' de '+ACHIEVEMENTS.length+' desbloqueadas</div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:10px;">'+items+'</div>';
 }
 function getUnlockedSet(){if(!currentUser)return[];try{return JSON.parse(localStorage.getItem("gym_achv_"+currentUser.id)||"[]");}catch(e){return[];}}
@@ -2842,6 +2854,44 @@ function checkAchievements(announce){
   ACHIEVEMENTS.forEach(function(a){if(a.val(stats)>=a.goal){now.push(a.id);if(prev.indexOf(a.id)<0)newly.push(a);}});
   setUnlockedSet(now);
   if(announce){newly.forEach(function(a,i){setTimeout(function(){showToast(a.icon,"Conquista desbloqueada: "+a.title+"!","pr");},3600+i*3500);});}
+}
+async function renderConquistas(){
+  var card=document.getElementById("achvCard");
+  if(card&&!card.innerHTML)card.innerHTML='<div class="empty-state"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+  try{var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);buildAchievementsPanel(loads);}
+  catch(e){buildAchievementsPanel(loadsFromCache());}
+}
+
+/* ── Compartilhar resultados (Web Share API + fallback WhatsApp) ─────────── */
+function buildShareText(kind){
+  var nm=currentUser&&currentUser.username?currentUser.username:"";
+  if(kind==="session"){
+    var elapsed=sessionStart?Math.floor((Date.now()-sessionStart)/1000):0;
+    var m=Math.floor(elapsed/60),s=elapsed%60;
+    return "💪 Treino em andamento no GYM!\n"+
+      "⏱️ "+m+"min"+(s?" "+s+"s":"")+" · "+sessionSaved+" exercício"+(sessionSaved!==1?"s":"")+
+      " · "+Math.round(sessionVolume).toLocaleString("pt-BR")+" kg movidos\n"+
+      "Bora treinar! 🏋️ #GYM";
+  }
+  var st=computeAchvStats(loadsFromCache());
+  var unlocked=ACHIEVEMENTS.filter(function(a){return a.val(st)>=a.goal;}).length;
+  return "🏆 Meu progresso no GYM"+(nm?" ("+nm+")":"")+":\n"+
+    "📅 "+st.uniqueDays+" dias treinados\n"+
+    "🔥 Sequência atual: "+st.streak+" dia"+(st.streak!==1?"s":"")+"\n"+
+    "⭐ "+st.prCount+" recorde"+(st.prCount!==1?"s":"")+" pessoa"+(st.prCount!==1?"is":"l")+"\n"+
+    "🏋️ "+Math.round(st.totalVolume).toLocaleString("pt-BR")+" kg movidos no total\n"+
+    "🏅 "+unlocked+"/"+ACHIEVEMENTS.length+" conquistas\n"+
+    "Bora treinar! 💪 #GYM";
+}
+function shareResult(kind){
+  var text=buildShareText(kind);
+  if(navigator.share){
+    navigator.share({title:"Treino GYM",text:text}).catch(function(){});
+  }else{
+    try{if(navigator.clipboard)navigator.clipboard.writeText(text);}catch(e){}
+    window.open("https://wa.me/?text="+encodeURIComponent(text),"_blank");
+    showToast("📋","Texto copiado — abrindo WhatsApp!","first");
+  }
 }
 
 /* ── Injeção da UI (timer + modal de anilhas) ───────────────────────────── */
