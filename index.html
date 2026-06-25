@@ -3162,10 +3162,11 @@ function shareVia(target){
   ".rest-chip{padding:11px 0;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);cursor:pointer;text-align:center;}"+
   ".rest-chip:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent2);}"+
   ".rest-custom{display:grid;grid-template-columns:1fr auto;gap:7px;}"+
-  ".rest-custom-input{padding:11px 10px;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'DM Mono',monospace;font-weight:700;font-size:14px;color:var(--text);width:100%;box-sizing:border-box;-moz-appearance:textfield;}"+
+  ".rest-custom-input{padding:11px 8px;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'DM Mono',monospace;font-weight:700;font-size:14px;color:var(--text);width:100%;box-sizing:border-box;-moz-appearance:textfield;}"+
+  ".rest-custom-input::placeholder{font-size:11px;font-weight:600;letter-spacing:-0.2px;}"+
   ".rest-custom-input::-webkit-outer-spin-button,.rest-custom-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}"+
   ".rest-custom-input:focus{outline:none;border-color:var(--accent);}"+
-  ".rest-custom-go{padding:0 16px;border:0.5px solid var(--accent);border-radius:10px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}"+
+  ".rest-custom-go{padding:0 12px;border:0.5px solid var(--accent);border-radius:10px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}"+
   ".rest-run-ctrls{display:none;gap:7px;}"+
   ".rest-run-ctrls button{flex:1;padding:10px 0;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);cursor:pointer;}"+
   ".rest-run-ctrls button.cancel{color:var(--danger);border-color:var(--danger);}";
@@ -3186,7 +3187,7 @@ function shareVia(target){
       '<button class="rest-chip" data-sec="180">3min</button>'+
     '</div>'+
     '<div class="rest-custom" id="restCustom">'+
-      '<input id="restCustomSec" class="rest-custom-input" type="number" inputmode="numeric" min="1" max="3600" placeholder="ou digite os segundos">'+
+      '<input id="restCustomSec" class="rest-custom-input" type="number" inputmode="numeric" min="1" max="3600" placeholder="Digite os segundos">'+
       '<button class="rest-custom-go" id="restCustomGo">▶</button>'+
     '</div>'+
     '<div class="rest-run-ctrls" id="restRunCtrls">'+
