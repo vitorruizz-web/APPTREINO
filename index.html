@@ -6,7 +6,7 @@
 <title>Treino GYM</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#1D9E75" />
-<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -662,11 +662,14 @@
   .dur-wd-c{font-family:'DM Mono',monospace;color:var(--muted);}
   .dur-wd-total{font-family:'DM Mono',monospace;color:var(--accent2);font-weight:700;}
   .dur-wd-avg{font-family:'DM Mono',monospace;color:var(--muted);}
-  .dur-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:0.5px solid var(--border);}
+  .dur-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:0.5px solid var(--border);}
   .dur-row:last-child{border-bottom:none;}
+  .dur-row .dur-row-l{flex:1;min-width:0;}
   .dur-row-day{font-size:13px;font-weight:700;color:var(--text);}
   .dur-row-date{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px;}
   .dur-row-time{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent2);flex-shrink:0;}
+  .dur-del{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:2px 4px;border-radius:4px;flex-shrink:0;line-height:1;}
+  .dur-del:hover{color:var(--danger);}
   @media (max-width:680px){
     .header-right .btn-tab{display:none;}
     .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--surface);border-top:0.5px solid var(--border2);padding:4px 2px calc(4px + env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(0,0,0,0.06);}
@@ -2315,6 +2318,16 @@ function setHistMode(m){
   if(wc)wc.style.display=m==="cargas"?"block":"none";if(dc)dc.style.display=m==="duracao"?"block":"none";
   if(m==="duracao")renderDuracao();
 }
+function deleteWorkoutSession(startedAt){
+  if(!startedAt)return;
+  var arr=loadWorkoutSessions().slice();
+  var idx=-1;for(var i=0;i<arr.length;i++){if(arr[i].started_at===startedAt){idx=i;break;}}
+  if(idx<0)return;
+  if(!confirm("Excluir este treino do histórico de duração?"))return;
+  arr.splice(idx,1);
+  saveWorkoutSessions(arr);
+  renderDuracao();
+}
 function renderDuracao(){
   var el=document.getElementById("duracaoContent");if(!el)return;
   var sess=loadWorkoutSessions().slice().sort(function(a,b){return (b.started_at||"").localeCompare(a.started_at||"");});
@@ -2333,7 +2346,7 @@ function renderDuracao(){
   var listRows=sess.map(function(s){
     var wd=(typeof s.weekday==="number")?WD_LABELS[s.weekday]:"";
     var vol=s.volume?(" · "+Math.round(s.volume).toLocaleString("pt-BR")+" kg"):"";
-    return '<div class="dur-row"><div class="dur-row-l"><div class="dur-row-day">'+escapeHtml(s.day_label||"Treino")+'</div><div class="dur-row-date">'+(s.date||"")+(wd?" · "+wd:"")+vol+'</div></div><div class="dur-row-time">'+fmtDur(s.duration_sec||0)+'</div></div>';
+    return '<div class="dur-row"><div class="dur-row-l"><div class="dur-row-day">'+escapeHtml(s.day_label||"Treino")+'</div><div class="dur-row-date">'+(s.date||"")+(wd?" · "+wd:"")+vol+'</div></div><div class="dur-row-time">'+fmtDur(s.duration_sec||0)+'</div><button class="dur-del" title="Excluir este treino" onclick="deleteWorkoutSession(\''+(s.started_at||"")+'\')">🗑</button></div>';
   }).join("");
   var listCard='<div class="freq-card" style="margin-top:1rem"><h3>🗒 Cada treino</h3><div style="margin-top:6px">'+listRows+'</div></div>';
   el.innerHTML='<div class="freq-card"><h3>⏱ Duração dos treinos</h3>'+summary+'</div>'+wdCard+listCard;
