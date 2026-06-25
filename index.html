@@ -1250,6 +1250,7 @@ localStorage.setItem("gym_session",JSON.stringify(currentUser));await initApp();
 
 function logout(){
   localStorage.removeItem("gym_session");currentUser=null;userLoads={};WORKOUT_DATA=null;userVideoLinks={};
+  cancelRest();var rf=document.getElementById("restFab");if(rf)rf.style.display="none";
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
   var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
   document.getElementById("usernameInput").value=saved.username||"";
@@ -1478,7 +1479,6 @@ var list=document.getElementById("exerciseList");
         '<input class="load-input" type="number" min="0" step="0.5" value="'+lastKg+'" placeholder="0" id="inp-'+ex.id+'" />'+
         '<span class="load-unit">kg</span>'+
         '<button class="save-btn" id="btn-'+ex.id+'">Salvar</button>'+
-        '<button class="icon-btn" title="Calculadora de anilhas" onclick="openPlateModal(\''+ex.id+'\')" style="width:30px;height:30px;font-size:14px;">🧮</button>'+
         '<span class="load-meta" id="meta-'+ex.id+'">'+histTxt+" "+prTxt+'</span>'+
       '</div>'+
     (hasNote?'<div class="exercise-note" id="noteview-'+ex.id+'"><span class="exercise-note-label">\ud83d\udcdd Anota\u00e7\u00e3o</span>'+escapeHtml(ex.notes)+'</div>':'<div class="exercise-note" id="noteview-'+ex.id+'" style="display:none"></div>')+
@@ -2755,7 +2755,7 @@ document.getElementById("goalModal").addEventListener("click",function(e){if(e.t
 document.getElementById("goalInput").addEventListener("keydown",function(e){if(e.key==="Enter")confirmGoal();});
 
 /* ══════════════════════════════════════════════════════════════════════════
-   NOVAS FEATURES: 1RM/volume · timer de descanso · anilhas · conquistas · sync
+   NOVAS FEATURES: 1RM/volume · timer de descanso · conquistas · sync
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Helpers de séries/reps · 1RM (Epley) · volume ──────────────────────── */
@@ -2966,55 +2966,6 @@ function restTimerSuggest(){
   restSuggestTimer=setTimeout(function(){if(!restTimer.interval)rp.classList.remove("open");},5000);
 }
 
-/* ── Calculadora de anilhas ─────────────────────────────────────────────── */
-var PLATES=[25,20,15,10,5,2.5,1.25,0.5];
-var PLATE_COLORS={25:"#E24B4A",20:"#185FA5",15:"#D4A017",10:"#1D9E75",5:"#9aa0a6",2.5:"#534AB7",1.25:"#5F5E5A",0.5:"#888780"};
-var plateBar=20,plateTargetEx=null,plateLastTarget=60;
-function fmtPlate(n){return (Math.round(n*100)/100).toString().replace(/\.00$/,"").replace(/(\.\d)0$/,"$1");}
-function computePlates(target,bar){
-  var perSide=(target-bar)/2;
-  if(isNaN(perSide))return{error:"Informe um peso válido."};
-  if(perSide<-0.0001)return{error:"O peso é menor que a barra ("+bar+" kg)."};
-  var remaining=perSide,used=[];
-  PLATES.forEach(function(p){var n=Math.floor(remaining/p+1e-9);if(n>0){used.push({p:p,n:n});remaining-=n*p;}});
-  return{perSide:perSide,used:used,leftover:remaining};
-}
-function renderPlateResult(){
-  var target=parseFloat(document.getElementById("plateTarget").value)||0;plateLastTarget=target;
-  var box=document.getElementById("plateResult");var res=computePlates(target,plateBar);
-  document.querySelectorAll(".plate-bar-chip").forEach(function(c){c.classList.toggle("sel",parseFloat(c.getAttribute("data-bar"))===plateBar);});
-  if(res.error){box.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center;padding:0.5rem 0;font-weight:700;">'+res.error+'</div>';return;}
-  if(!res.used.length){box.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:0.75rem 0;">Só a barra ('+plateBar+' kg). Nenhuma anilha necessária.</div>';return;}
-  var visual=res.used.map(function(u){
-    return Array.apply(null,{length:u.n}).map(function(){
-      var h=24+u.p*1.6;return '<div title="'+fmtPlate(u.p)+' kg" style="width:9px;height:'+h+'px;background:'+(PLATE_COLORS[u.p]||"#888")+';border-radius:2px;"></div>';
-    }).join("");
-  }).join("");
-  var chips=res.used.map(function(u){
-    return '<span style="display:inline-flex;align-items:center;gap:5px;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--accent2);background:var(--accent-light);border:0.5px solid var(--accent);border-radius:8px;padding:3px 9px;"><span style="width:9px;height:9px;border-radius:2px;background:'+(PLATE_COLORS[u.p]||"#888")+';display:inline-block;"></span>'+u.n+'× '+fmtPlate(u.p)+' kg</span>';
-  }).join("");
-  var leftover=res.leftover>0.05?'<div style="font-size:11px;color:#7A5010;background:#FAEEDA;border:0.5px solid #f0a500;border-radius:8px;padding:6px 10px;margin-top:8px;">Sobram '+fmtPlate(res.leftover)+' kg por lado — não dá pra fechar com as anilhas padrão.</div>':"";
-  box.innerHTML=
-    '<div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:0.5px;margin-bottom:8px;">'+fmtPlate(res.perSide)+' kg DE CADA LADO</div>'+
-    '<div style="display:flex;align-items:flex-end;gap:7px;padding:10px 0;justify-content:center;min-height:60px;border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);">'+
-      '<div style="width:34px;height:6px;background:var(--border2);border-radius:3px;align-self:center;"></div>'+visual+
-      '<div style="flex:1;height:6px;background:var(--border2);border-radius:3px;align-self:center;max-width:30px;"></div>'+
-    '</div>'+
-    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">'+chips+'</div>'+leftover;
-}
-function setPlateBar(b){plateBar=b;renderPlateResult();}
-function openPlateModal(exId){
-  plateTargetEx=exId||null;
-  var f=exId?findExById(exId):null;
-  document.getElementById("plateSubtitle").textContent=f?f.ex.name:"Cálculo livre";
-  var inp=exId?document.getElementById("inp-"+exId):null;
-  var v=inp&&parseFloat(inp.value)>0?parseFloat(inp.value):plateLastTarget;
-  document.getElementById("plateTarget").value=v;
-  renderPlateResult();
-  document.getElementById("plateModal").classList.add("open");
-}
-function closePlateModal(){document.getElementById("plateModal").classList.remove("open");plateTargetEx=null;}
-
 /* ── Conquistas / gamificação ───────────────────────────────────────────── */
 var ACHIEVEMENTS=[
   {id:"first",icon:"🌱",title:"Primeiro passo",desc:"Registre sua 1ª carga",goal:1,val:function(s){return s.totalLoads;}},
@@ -3197,7 +3148,7 @@ function shareVia(target){
   if(urls[target])window.open(urls[target],"_blank");
 }
 
-/* ── Injeção da UI (timer + modal de anilhas) ───────────────────────────── */
+/* ── Injeção da UI (timer de descanso) ──────────────────────────────────── */
 (function(){
   var css=
   ".rest-fab{position:fixed;right:16px;bottom:18px;width:78px;height:78px;border-radius:50%;background:var(--accent);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:80;box-shadow:0 6px 20px rgba(0,0,0,0.28);font-family:'DM Mono',monospace;font-weight:700;font-size:32px;padding:0;}"+
@@ -3217,9 +3168,7 @@ function shareVia(target){
   ".rest-custom-go{padding:0 16px;border:0.5px solid var(--accent);border-radius:10px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}"+
   ".rest-run-ctrls{display:none;gap:7px;}"+
   ".rest-run-ctrls button{flex:1;padding:10px 0;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);cursor:pointer;}"+
-  ".rest-run-ctrls button.cancel{color:var(--danger);border-color:var(--danger);}"+
-  ".plate-bar-chip{padding:7px 12px;border:0.5px solid var(--border);border-radius:20px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--muted);cursor:pointer;}"+
-  ".plate-bar-chip.sel{background:var(--accent);color:#fff;border-color:var(--accent);}";
+  ".rest-run-ctrls button.cancel{color:var(--danger);border-color:var(--danger);}";
   var st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 
   var fab=document.createElement("button");
@@ -3252,33 +3201,6 @@ function shareVia(target){
   if(secInput)secInput.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();startCustomRest();}});
   panel.querySelector("[data-add]").addEventListener("click",function(){addRest(15);});
   panel.querySelector("[data-cancel]").addEventListener("click",cancelRest);
-
-  var pm=document.createElement("div");pm.className="modal-overlay";pm.id="plateModal";
-  pm.innerHTML=
-    '<div class="modal-sheet">'+
-      '<div class="modal-handle"></div>'+
-      '<div class="modal-title">🧮 Calculadora de anilhas</div>'+
-      '<div class="modal-subtitle" id="plateSubtitle"></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:0.9rem;">'+
-        '<span class="load-label">PESO ALVO</span>'+
-        '<input class="load-input" type="number" min="0" step="0.5" id="plateTarget" style="width:100px;" />'+
-        '<span class="load-unit">kg</span>'+
-      '</div>'+
-      '<div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:6px;">PESO DA BARRA</div>'+
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;">'+
-        '<span class="plate-bar-chip" data-bar="20">Olímpica 20kg</span>'+
-        '<span class="plate-bar-chip" data-bar="15">15kg</span>'+
-        '<span class="plate-bar-chip" data-bar="10">10kg</span>'+
-        '<span class="plate-bar-chip" data-bar="0">Sem barra</span>'+
-      '</div>'+
-      '<div id="plateResult"></div>'+
-      '<div class="modal-actions"><button class="btn-modal-cancel" id="plateCloseBtn" style="flex:1;">Fechar</button></div>'+
-    '</div>';
-  document.body.appendChild(pm);
-  document.getElementById("plateTarget").addEventListener("input",renderPlateResult);
-  pm.querySelectorAll(".plate-bar-chip").forEach(function(c){c.addEventListener("click",function(){setPlateBar(parseFloat(c.getAttribute("data-bar")));});});
-  document.getElementById("plateCloseBtn").addEventListener("click",closePlateModal);
-  pm.addEventListener("click",function(e){if(e.target===this)closePlateModal();});
 
   var shareTargets=[
     {t:"whatsapp",label:"WhatsApp",icon:"🟢"},
