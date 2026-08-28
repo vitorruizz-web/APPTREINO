@@ -295,6 +295,16 @@ if('serviceWorker' in navigator){
   .mus-val { font-family: "DM Mono",monospace; font-size: 11px; color: var(--accent-fg); white-space: nowrap; flex-shrink: 0; text-align: right; min-width: 74px; }
   .mus-sub { font-size: 9px; color: var(--muted); display: block; }
   @media (max-width: 380px) { .mus-name { width: 68px; font-size: 11px; } .mus-val { min-width: 62px; font-size: 10px; } }
+  /* drill down do grupo: toque abre os exercícios (barras relativas ao maior exercício DO GRUPO) */
+  .mus-row.mus-g { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .mus-chev { display: inline-block; width: 12px; color: var(--muted); font-size: 10px; }
+  .mus-exwrap { margin: 0 0 6px 10px; padding-left: 9px; border-left: 2px solid var(--surface2); }
+  .mus-ex { padding: 4px 0; gap: 8px; }
+  .mus-ex .mus-name { width: 112px; font-size: 10.5px; font-weight: 600; color: var(--text); line-height: 1.25; }
+  .mus-ex .mus-bar-wrap { height: 10px; }
+  .mus-ex .mus-bar { opacity: .55; }
+  .mus-ex .mus-val { font-size: 10px; min-width: 62px; }
+  @media (max-width: 380px) { .mus-ex .mus-name { width: 92px; font-size: 10px; } }
 
   /* EVOLUCAO (Saude) */
   .evo-seg { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -4165,6 +4175,7 @@ function muscleOf(name){
 
 /* ── Volume por grupo muscular (aba Histórico) ──────────────────────────── */
 var muscleDays=30;
+var muscleOpen={};   /* grupos abertos no drill (toque no grupo → exercícios); sobrevive à troca de período */
 function setMuscleDays(d){muscleDays=d;buildMusclePanel();}
 function weeklyVolume(){
   var loads=loadsFromCache(),now=new Date();now.setHours(0,0,0,0);
@@ -4189,8 +4200,11 @@ function buildMusclePanel(){
     var d=new Date(iso+"T00:00:00");if(d<cut||d>today)return;
     var sets=parseSetsForCalc(r.sets_reps)||1;
     var vol=setVolume(parseFloat(r.kg)||0,r.sets_reps);
-    if(!groups[g])groups[g]={sets:0,vol:0};
+    if(!groups[g])groups[g]={sets:0,vol:0,ex:{}};
     groups[g].sets+=sets;groups[g].vol+=vol;
+    var ek=normKey(r.ex_name);
+    var E=groups[g].ex[ek];if(!E)E=groups[g].ex[ek]={n:String(r.ex_name||"").trim(),sets:0,vol:0,last:null};
+    E.sets+=sets;E.vol+=vol;if(!E.last||iso>E.last)E.last=iso;
     totalSets+=sets;totalVol+=vol;dias[iso]=true;
   });
   function diasAtras(iso){
@@ -4210,22 +4224,42 @@ function buildMusclePanel(){
   }
   var maxSets=groups[keys[0]].sets||1;
   var rows=keys.map(function(k,i){
-    var g=groups[k];
+    var g=groups[k],open=!!muscleOpen[k];
     var pct=Math.max(4,Math.round(g.sets/maxSets*100));
     var op=Math.max(0.42,1-i*0.09);
-    return '<div class="mus-row">'+
-      '<span class="mus-name">'+escapeHtml(k)+'</span>'+
+    var h='<div class="mus-row mus-g" role="button" data-musgrp="'+encodeURIComponent(k)+'">'+
+      '<span class="mus-name"><span class="mus-chev">'+(open?"▾":"▸")+'</span>'+escapeHtml(k)+'</span>'+
       '<div class="mus-bar-wrap"><div class="mus-bar" style="width:'+pct+'%;opacity:'+op.toFixed(2)+'"></div></div>'+
       '<span class="mus-val">'+g.sets+' séries<span class="mus-sub">'+(g.vol>0?Math.round(g.vol).toLocaleString("pt-BR")+" kg · ":"")+textoDias(diasAtras(ultimoDoGrupo[k]))+'</span></span>'+
     '</div>';
+    if(open){
+      /* drill: exercícios do grupo NO PERÍODO, barra relativa ao maior do grupo */
+      var exs=Object.keys(g.ex).map(function(q){return g.ex[q];}).sort(function(a,b){return b.sets-a.sets||b.vol-a.vol;});
+      var mx=exs.length?(exs[0].sets||1):1;
+      h+='<div class="mus-exwrap">'+exs.map(function(E){
+        var p2=Math.max(4,Math.round(E.sets/mx*100));
+        return '<div class="mus-row mus-ex">'+
+          '<span class="mus-name">'+escapeHtml(E.n)+'</span>'+
+          '<div class="mus-bar-wrap"><div class="mus-bar" style="width:'+p2+'%"></div></div>'+
+          '<span class="mus-val">'+E.sets+' série'+(E.sets!==1?'s':'')+'<span class="mus-sub">'+(E.vol>0?Math.round(E.vol).toLocaleString("pt-BR")+" kg · ":"")+textoDias(diasAtras(E.last))+'</span></span>'+
+        '</div>';
+      }).join("")+'</div>';
+    }
+    return h;
   }).join("");
   var nd=Object.keys(dias).length;
   card.innerHTML='<h3>🧬 Volume por grupo muscular</h3>'+
-    '<div class="freq-sub">Séries por grupo · '+nd+' dia'+(nd!==1?'s':'')+' de treino no período</div>'+
+    '<div class="freq-sub">Séries por grupo · '+nd+' dia'+(nd!==1?'s':'')+' de treino no período · toque no grupo p/ ver os exercícios</div>'+
     segHtml+
     '<div style="margin-top:6px">'+rows+'</div>'+
     esquecidosHtml()+
     '<div class="saude-formula-note" style="text-align:left;padding-top:10px;line-height:1.5">Total: '+totalSets+' séries · '+Math.round(totalVol).toLocaleString("pt-BR")+' kg movidos. Exercícios sem "séries × reps" configurado contam como 1 série.</div>';
+  card.querySelectorAll("[data-musgrp]").forEach(function(el){
+    el.addEventListener("click",function(){
+      var k=decodeURIComponent(el.getAttribute("data-musgrp"));
+      muscleOpen[k]=!muscleOpen[k];buildMusclePanel();
+    });
+  });
   function esquecidosHtml(){
     var fora=Object.keys(ultimoDoGrupo).filter(function(g){return !groups[g];})
       .sort(function(a,b){return (ultimoDoGrupo[a]<ultimoDoGrupo[b])?-1:1;});
