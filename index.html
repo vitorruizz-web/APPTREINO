@@ -573,6 +573,8 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 
+  <div class="locked-banner" id="configLockedBanner" style="display:none"></div>
+
   <div id="treinoSection">
     <div class="streak-chip" id="streakChip" style="display:none"></div>
     <div class="pending-chip" id="pendingChip" style="display:none"></div>
@@ -799,6 +801,8 @@ if('serviceWorker' in navigator){
   .update-banner .ub-go{padding:8px 16px;background:#fff;color:var(--accent2);font-size:12px;}
   .update-banner .ub-x{padding:8px 10px;background:rgba(0,0,0,0.22);color:#fff;font-size:13px;line-height:1;}
   @media (max-width:680px){ .update-banner{bottom:76px;} }
+  .locked-banner{background:var(--warn-bg);color:var(--warn-fg);border-bottom:0.5px solid var(--warn);padding:10px 14px;font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;line-height:1.5;text-align:center;}
+  .locked-banner button{margin-left:8px;padding:5px 12px;border:0.5px solid var(--warn);border-radius:20px;background:transparent;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--warn-fg);cursor:pointer;white-space:nowrap;}
   .pending-chip button{padding:5px 12px;border:0.5px solid var(--warn);border-radius:20px;background:transparent;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--warn-fg);cursor:pointer;}
   .pr-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:0.5px solid var(--border);}
   .pr-row:last-child{border-bottom:none;}
@@ -1470,8 +1474,35 @@ function hideLoading(){document.getElementById("loadingOverlay").classList.remov
 async function sbGetUser(username){var r=await sbFetch("users?username=eq."+encodeURIComponent(username)+"&select=id,username,password");return r&&r.length>0?r[0]:null;}
 async function sbCreateUser(username,password){var r=await sbFetch("users?select=id,username",{method:"POST",prefer:"return=representation",body:{username:username,password:password}});return r&&r.length>0?r[0]:null;}
 async function sbUpdatePassword(userId,newPassword){await sbFetch("users?id=eq."+userId,{method:"PATCH",prefer:"return=minimal",body:{password:newPassword}});}
-async function sbGetWorkoutConfig(userId){var r=await sbFetch("workout_config?user_id=eq."+userId+"&select=data");return r&&r.length>0?r[0].data:null;}
-async function sbSaveWorkoutConfig(userId,data){await sbFetch("workout_config",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{user_id:userId,data:data,updated_at:new Date().toISOString()}});}
+function cfgKey(uid){return "gym_cfg_"+uid;}
+function cacheConfig(uid,data){try{localStorage.setItem(cfgKey(uid),JSON.stringify(data));}catch(e){}}
+function cachedConfig(uid){try{var t=localStorage.getItem(cfgKey(uid));return t?JSON.parse(t):null;}catch(e){return null;}}
+
+/* Trava de seguranca: se a configuracao nao foi lida do servidor nesta sessao,
+   NENHUMA gravacao pode acontecer — senao um app aberto sem internet gravaria
+   a configuracao vazia por cima dos treinos reais. */
+var configTravada=false;
+
+async function sbGetWorkoutConfig(userId){
+  var r=await sbFetch("workout_config?user_id=eq."+userId+"&select=data");
+  var data=(r&&r.length>0)?r[0].data:null;
+  if(data)cacheConfig(userId,data);
+  return data;
+}
+async function sbSaveWorkoutConfig(userId,data){
+  if(configTravada)throw new Error("Seus treinos n\u00e3o foram carregados do servidor nesta sess\u00e3o. Recarregue o app com internet antes de alterar \u2014 gravar agora apagaria seus dados.");
+  await sbFetch("workout_config",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{user_id:userId,data:data,updated_at:new Date().toISOString()}});
+  cacheConfig(userId,data);
+}
+function setConfigTravada(travada,motivo){
+  configTravada=!!travada;
+  var el=document.getElementById("configLockedBanner");if(!el)return;
+  if(!travada){el.style.display="none";return;}
+  el.style.display="block";
+  el.innerHTML='\u26a0\ufe0f '+motivo+' <button type="button" id="configReloadBtn">Recarregar</button>';
+  var b=document.getElementById("configReloadBtn");
+  if(b)b.onclick=function(){location.reload();};
+}
 async function sbGetUserLoads(userId){var r=await sbFetch("workout_loads?user_id=eq."+userId+"&order=created_at.asc&select=id,ex_id,ex_name,kg,date,strategy,sets_reps");return r||[];}
 async function sbSaveLoad(userId,exId,exName,kg,strategy,setsReps){await sbFetch("workout_loads",{method:"POST",prefer:"return=minimal",body:{user_id:userId,ex_id:exId,ex_name:exName,kg:parseFloat(kg),strategy:strategy||null,sets_reps:setsReps||null,date:new Date().toLocaleDateString("pt-BR"),created_at:new Date().toISOString()}});}
 async function sbInsertLoads(rows){
@@ -1596,7 +1627,7 @@ localStorage.setItem("gym_session",JSON.stringify(currentUser));await initApp();
 
 function logout(){
   localStorage.removeItem("gym_session");currentUser=null;userLoads={};WORKOUT_DATA=null;userVideoLinks={};
-  cancelRest();var rf=document.getElementById("restFab");if(rf)rf.style.display="none";
+  cancelRest();setConfigTravada(false);var rf=document.getElementById("restFab");if(rf)rf.style.display="none";
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
   var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
   document.getElementById("usernameInput").value=saved.username||"";
@@ -1616,18 +1647,26 @@ async function initApp(){
   try{
     var remoteConfig=null,fetchFailed=false;
     try{remoteConfig=await sbGetWorkoutConfig(currentUser.id);}catch(e){console.warn(e);fetchFailed=true;}
+    var usouCache=false;
+    if(fetchFailed){
+      var local=cachedConfig(currentUser.id);
+      if(local){remoteConfig=local;usouCache=true;console.warn("Servidor fora do ar - exibindo a ultima configuracao salva neste aparelho.");}
+    }
     if(remoteConfig)remoteConfig=migrateWorkoutData(remoteConfig);
     WORKOUT_DATA=remoteConfig||JSON.parse(JSON.stringify(DEFAULT_WORKOUT));
     DAYS.forEach(function(d){if(!WORKOUT_DATA[d])WORKOUT_DATA[d]={label:DAY_LABELS[d],exercises:[],rest:true};else WORKOUT_DATA[d].label=DAY_LABELS[d];});
+    /* so libera a gravacao se a configuracao veio mesmo do servidor */
+    setConfigTravada(fetchFailed, usouCache
+      ? "Sem conex\u00e3o com o servidor. Mostrando a \u00faltima vers\u00e3o salva neste aparelho \u2014 altera\u00e7\u00f5es nos treinos est\u00e3o bloqueadas."
+      : "N\u00e3o foi poss\u00edvel carregar seus treinos. Altera\u00e7\u00f5es est\u00e3o bloqueadas para n\u00e3o apagar seus dados.");
     if(!remoteConfig&&!fetchFailed){try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);}catch(e){}}
-    else if(fetchFailed){console.warn("Falha ao carregar config do servidor - autosave desabilitado nesta sess\u00e3o.");}
     var loads=[],loadsFailed=false;try{loads=await sbGetUserLoads(currentUser.id);}catch(e){console.warn(e);loadsFailed=true;}
     buildLoadsCache(loads);userVideoLinks=loadVideoLinksLocal(currentUser.id);
     if(!fetchFailed)migrateLocalToConfig();
     applyTheme(getPrefs().theme);
     renderPendingChip(); flushPending(true);
     checkAchievements(false);
-    if(loadsFailed)alert("N\u00e3o foi poss\u00edvel carregar seu hist\u00f3rico de cargas. Os gr\u00e1ficos podem aparecer vazios temporariamente.");
+    if(loadsFailed&&!fetchFailed)alert("N\u00e3o foi poss\u00edvel carregar seu hist\u00f3rico de cargas. Os gr\u00e1ficos podem aparecer vazios temporariamente.");
     document.getElementById("loginScreen").style.display="none";document.getElementById("mainApp").style.display="block";
     document.getElementById("headerUser").textContent=currentUser.username;document.getElementById("settingsUsername").textContent=currentUser.username;
     applyAvatar(loadAvatar(currentUser.id));buildDaySelector();
