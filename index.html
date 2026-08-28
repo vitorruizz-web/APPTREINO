@@ -628,6 +628,12 @@
       </div>
       <label class="pref-row"><input type="checkbox" id="prefRestAuto" /><span>Iniciar o descanso automaticamente ao salvar uma carga</span></label>
       <label class="pref-row"><input type="checkbox" id="prefAutoFinish" /><span>Finalizar o treino sozinho quando todos os exerc&iacute;cios do dia forem registrados</span></label>
+      <label class="pref-row"><input type="checkbox" id="prefKeepAwake" /><span>Manter a tela ligada durante o treino</span></label>
+      <label class="pref-row"><input type="checkbox" id="prefNotifyRest" /><span>Avisar quando o descanso acabar com o app em segundo plano</span></label>
+      <div id="prefNotifyBox" style="display:none;margin-top:0.6rem;">
+        <button class="btn-secondary" id="prefNotifyBtn" style="padding:9px;font-size:12px;">Permitir notifica&ccedil;&otilde;es</button>
+        <div id="prefNotifyMsg" style="font-size:11px;color:var(--muted);margin-top:0.4rem;line-height:1.5;"></div>
+      </div>
       <span class="pref-label">Tempo padr&atilde;o de descanso</span>
       <div class="pref-seg" id="prefRestSeg">
         <button type="button" data-v="45">45s</button>
@@ -649,6 +655,11 @@
     <div class="settings-card">
       <h3>Dados</h3>
       <p class="settings-info">Hist&oacute;rico salvo no servidor e sincronizado entre dispositivos.</p>
+      <button class="btn-secondary" id="backupBtn">&#11015; Baixar backup completo (JSON)</button>
+      <button class="btn-secondary" id="restoreBtn" style="margin-top:0.5rem;">&#11014; Restaurar backup</button>
+      <input type="file" id="restoreFileInput" accept="application/json,.json" style="display:none" />
+      <div class="settings-msg" id="backupMsg"></div>
+      <p class="settings-info" style="margin-top:1rem;">O backup guarda treinos, medidas de sa&uacute;de, dura&ccedil;&otilde;es, prefer&ecirc;ncias e todas as cargas.</p>
       <button class="btn-danger" id="clearHistoryBtn">Apagar meu hist&oacute;rico</button>
     </div>
   </div>
@@ -928,7 +939,21 @@
   </div>
 </div>
 
- <div class="modal-overlay" id="goalModal">
+ <div class="modal-overlay" id="groupModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nome do treino</div>
+    <div class="modal-subtitle" id="groupSubtitle"></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">Aparece no t&iacute;tulo e no seletor de dias. Deixe vazio para remover.</p>
+    <input class="replace-input" id="groupInput" maxlength="28" placeholder="Ex: Peito e Tr&iacute;ceps" autocomplete="off" />
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" id="groupCancelBtn">Cancelar</button>
+      <button class="btn-modal-confirm" id="groupConfirmBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="goalModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Meta de carga</div>
@@ -1028,13 +1053,15 @@ function escapeHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;
 function escapeAttr(s){return escapeHtml(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
 /* PREFERENCIAS do usuario — vivem em WORKOUT_DATA._prefs (sincroniza entre aparelhos) */
-var DEFAULT_PREFS={inc:2.5,restAuto:false,restDefault:90,theme:"auto",autoFinish:true};
+var DEFAULT_PREFS={inc:2.5,restAuto:false,restDefault:90,theme:"auto",autoFinish:true,keepAwake:true,notifyRest:true};
 function getPrefs(){
   var p=(typeof WORKOUT_DATA!=="undefined"&&WORKOUT_DATA&&WORKOUT_DATA._prefs)?WORKOUT_DATA._prefs:{};
   var t=null;try{t=localStorage.getItem("gym_theme");}catch(e){}
   return{inc:parseFloat(p.inc)||DEFAULT_PREFS.inc,
          restAuto:!!p.restAuto,
          autoFinish:p.autoFinish!==false,
+         keepAwake:p.keepAwake!==false,
+         notifyRest:p.notifyRest!==false,
          restDefault:parseInt(p.restDefault,10)||DEFAULT_PREFS.restDefault,
          theme:t||p.theme||DEFAULT_PREFS.theme};
 }
@@ -1095,7 +1122,7 @@ function updateDayProgressUI(day){
   var bar=document.querySelector(".day-progress-bar");
   if(bar&&p.total)bar.style.width=Math.round(p.done/p.total*100)+"%";
   var sub=document.querySelector(".workout-subtitle");
-  if(sub)sub.textContent=(d.grupo?d.grupo+" \u00b7 ":"")+n+" exerc\u00edcio"+(n!==1?"s":"")+
+  if(sub)sub.textContent=n+" exerc\u00edcio"+(n!==1?"s":"")+
     (p.total?" \u00b7 "+p.done+"/"+p.total+" feito"+(p.done!==1?"s":"")+" hoje":"");
 }
 /* marca/desmarca o cartao como feito hoje */
@@ -1382,6 +1409,12 @@ async function sbGetWorkoutConfig(userId){var r=await sbFetch("workout_config?us
 async function sbSaveWorkoutConfig(userId,data){await sbFetch("workout_config",{method:"POST",prefer:"resolution=merge-duplicates,return=minimal",body:{user_id:userId,data:data,updated_at:new Date().toISOString()}});}
 async function sbGetUserLoads(userId){var r=await sbFetch("workout_loads?user_id=eq."+userId+"&order=created_at.asc&select=id,ex_id,ex_name,kg,date,strategy,sets_reps");return r||[];}
 async function sbSaveLoad(userId,exId,exName,kg,strategy,setsReps){await sbFetch("workout_loads",{method:"POST",prefer:"return=minimal",body:{user_id:userId,ex_id:exId,ex_name:exName,kg:parseFloat(kg),strategy:strategy||null,sets_reps:setsReps||null,date:new Date().toLocaleDateString("pt-BR"),created_at:new Date().toISOString()}});}
+async function sbInsertLoads(rows){
+  if(!rows||!rows.length)return;
+  for(var i=0;i<rows.length;i+=200){
+    await sbFetch("workout_loads",{method:"POST",prefer:"return=minimal",body:rows.slice(i,i+200)});
+  }
+}
 async function sbClearUserLoads(userId){await sbFetch("workout_loads?user_id=eq."+userId,{method:"DELETE",prefer:"return=minimal"});}
 async function sbDeleteLoad(loadId){await sbFetch("workout_loads?id=eq."+loadId,{method:"DELETE",prefer:"return=minimal"});}
 async function sbUpdateLoad(loadId,patch){await sbFetch("workout_loads?id=eq."+loadId,{method:"PATCH",prefer:"return=minimal",body:patch});}
@@ -1538,7 +1571,10 @@ function buildDaySelector(){
     var d=WORKOUT_DATA[day];var btn=document.createElement("div");var hasEx=d.exercises&&d.exercises.length>0;
     btn.className="day-btn"+(d.rest&&!hasEx?" rest":"")+(day===currentDay?" active":"")+(d.diaRecomendado===hojeWd?" today":"");btn.id="daybtn-"+day;
     if(d.diaRecomendado===hojeWd)btn.title="Treino marcado para hoje";
-    var diaTxt=(d.diaRecomendado!==null&&d.diaRecomendado!==undefined)?'<br><small style="font-size:9px;opacity:0.8">'+WEEKDAYS[d.diaRecomendado]+'</small>':"";
+    var sub=[];
+    if(d.diaRecomendado!==null&&d.diaRecomendado!==undefined)sub.push(WEEKDAYS[d.diaRecomendado]);
+    if(d.grupo)sub.push(escapeHtml(d.grupo));
+    var diaTxt=sub.length?'<br><small style="font-size:9px;opacity:0.8">'+sub.join(" \u00b7 ")+'</small>':"";
     btn.innerHTML=DAY_LABELS[day]+diaTxt;
     btn.addEventListener("click",(function(k){return function(){ if(dayDnd.suppressClick) return; selectDay(k); };})(day));
     btn.addEventListener("mousedown",(function(k,i){return function(e){ dayBtnPointerDown(e,k,i,false); };})(day,idx));
@@ -1641,20 +1677,23 @@ function renderWorkout(day){
     wv.innerHTML='<div class="rest-day"><div class="big">\ud83d\udca4</div><p>Nenhum exerc\u00edcio neste treino \u2014 adicione agora!</p><button class="btn-add-exercise" id="addExRestBtn">+ Adicionar exerc\u00edcio</button></div>';
     document.getElementById("addExRestBtn").addEventListener("click",function(){openAddExerciseModal(day);});return;
   }
-  var titulo=DAY_LABELS[day];var _prog=dayProgress(day);
+  var titulo=DAY_LABELS[day]+(d.grupo?' <span style="font-weight:400;color:var(--muted);font-size:17px">\u00b7 '+escapeHtml(d.grupo)+'</span>':'');
+  var _prog=dayProgress(day);
   wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+
 '<select class="dia-recomendado-select" id="diaRecSelect" onchange="setDiaRecomendado(\''+day+'\',this.value)">'+
 '<option value="">+ Dia</option>'+
 WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?' selected':'')+'>'+w+'</option>';}).join("")+
 '</select>'+
-'<button class="icon-btn" id="shareDayBtn" title="Compartilhar este treino" style="margin-left:auto">\ud83d\udce4</button>'+
+'<button class="icon-btn" id="nameDayBtn" title="Nomear este treino" aria-label="Nomear este treino" style="margin-left:auto">\u270f\ufe0f</button>'+
+'<button class="icon-btn" id="shareDayBtn" title="Compartilhar este treino" aria-label="Compartilhar este treino">\ud83d\udce4</button>'+
 '<button class="icon-btn" id="dupDayBtn" title="Duplicar treino para outro dia">\ud83d\udccb</button>'+
-'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+
+'</div><div class="workout-subtitle">'+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+
 (_prog.total?' \u00b7 '+_prog.done+'/'+_prog.total+' feito'+(_prog.done!==1?'s':'')+' hoje':'')+'</div>'+
 (_prog.total?'<div class="day-progress"><div class="day-progress-bar" style="width:'+Math.round(_prog.done/_prog.total*100)+'%"></div></div>':'')+
 '</div><div id="exerciseList"></div>';
 document.getElementById("dupDayBtn").addEventListener("click",function(){openDuplicateModal(day);});
 document.getElementById("shareDayBtn").addEventListener("click",function(){shareResult("day");});
+document.getElementById("nameDayBtn").addEventListener("click",function(){openGroupModal(day);});
 var list=document.getElementById("exerciseList");
 
   d.exercises.forEach(function(ex,idx){
@@ -2468,6 +2507,67 @@ async function changePassword(){
   hideLoading();
 }
 
+function showBackupMsg(txt,cls){
+  var m=document.getElementById("backupMsg");if(!m)return;
+  m.className="settings-msg "+(cls||"");m.textContent=txt;m.style.display="block";
+}
+async function downloadBackup(){
+  var btn=document.getElementById("backupBtn"),orig=btn.textContent;
+  btn.textContent="Gerando...";btn.disabled=true;
+  try{
+    var loads=await sbGetUserLoads(currentUser.id);
+    var data={app:"Treino GYM",version:1,exported_at:new Date().toISOString(),
+              user:currentUser.username,config:WORKOUT_DATA,loads:loads};
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    var url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="backup_treino_"+currentUser.username+"_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    showBackupMsg("Backup baixado \u2014 "+loads.length+" registro(s) de carga.","ok");
+  }catch(e){showBackupMsg("Erro ao gerar o backup: "+e.message,"err");console.error(e);}
+  btn.textContent=orig;btn.disabled=false;
+}
+async function restoreBackup(file){
+  var data;
+  try{ data=JSON.parse(await file.text()); }
+  catch(e){ showBackupMsg("Arquivo inv\u00e1lido \u2014 n\u00e3o \u00e9 um JSON leg\u00edvel.","err"); return; }
+  if(!data||!data.config){ showBackupMsg("Este arquivo n\u00e3o parece um backup do Treino GYM.","err"); return; }
+  var nLoads=(data.loads||[]).length;
+  if(!confirm("Restaurar o backup de "+String(data.exported_at||"?").slice(0,10)+"?\n\n"+
+    "\u2022 Treinos, sa\u00fade, dura\u00e7\u00f5es e prefer\u00eancias ser\u00e3o SUBSTITU\u00cdDOS pelos do arquivo\n"+
+    "\u2022 Das "+nLoads+" cargas do arquivo, s\u00f3 as que faltarem ser\u00e3o recriadas (nada \u00e9 apagado)\n\n"+
+    "Continuar?"))return;
+  showLoading("Restaurando...");
+  try{
+    var cfg=migrateWorkoutData(data.config);
+    DAYS.forEach(function(d){
+      if(!cfg[d])cfg[d]={label:DAY_LABELS[d],exercises:[],rest:true};
+      else cfg[d].label=DAY_LABELS[d];
+    });
+    WORKOUT_DATA=cfg;
+    await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);
+    var novos=0;
+    if(nLoads){
+      var atuais=await sbGetUserLoads(currentUser.id);
+      var chave=function(r){return String(r.ex_id)+"|"+String(r.date)+"|"+(parseFloat(r.kg)||0);};
+      var tem={};atuais.forEach(function(r){tem[chave(r)]=true;});
+      var faltando=data.loads.filter(function(r){return r&&r.ex_id&&r.date&&!tem[chave(r)];}).map(function(r){
+        return {user_id:currentUser.id,ex_id:r.ex_id,ex_name:r.ex_name||"",kg:parseFloat(r.kg)||0,
+                date:r.date,strategy:r.strategy||null,sets_reps:r.sets_reps||null,
+                created_at:r.created_at||new Date().toISOString()};
+      });
+      await sbInsertLoads(faltando);
+      novos=faltando.length;
+    }
+    var loads=await sbGetUserLoads(currentUser.id);buildLoadsCache(loads);
+    applyTheme(getPrefs().theme);
+    buildDaySelector();selectDay(pickStartDay());
+    hideLoading();
+    showBackupMsg("Backup restaurado \u2014 "+novos+" carga(s) recriada(s).","ok");
+    showToast("\u2705","Backup restaurado!","first");
+  }catch(e){hideLoading();showBackupMsg("Erro ao restaurar: "+e.message,"err");console.error(e);}
+}
+
 async function clearHistory(){
   if(!confirm("Tem certeza? Isso apaga todo o seu hist\u00f3rico permanentemente."))return;showLoading("Apagando...");
   try{await sbClearUserLoads(currentUser.id);userLoads={};if(currentDay){(WORKOUT_DATA[currentDay].exercises||[]).forEach(function(ex){refreshCardUI(ex.id);});}alert("Hist\u00f3rico apagado com sucesso!");}catch(e){alert("Erro ao apagar: "+e.message);}
@@ -2486,6 +2586,11 @@ document.getElementById("tabConquistas").addEventListener("click",function(){swi
 document.getElementById("tabConfig").addEventListener("click",function(){switchTab("config");});
 document.getElementById("savePassBtn").addEventListener("click",changePassword);
 document.getElementById("clearHistoryBtn").addEventListener("click",clearHistory);
+document.getElementById("backupBtn").addEventListener("click",downloadBackup);
+document.getElementById("restoreBtn").addEventListener("click",function(){document.getElementById("restoreFileInput").click();});
+document.getElementById("restoreFileInput").addEventListener("change",function(){
+  var f=this.files&&this.files[0];this.value="";if(f)restoreBackup(f);
+});
 document.getElementById("exportHistoryBtn").addEventListener("click",exportHistoryToCSV);
 
 document.getElementById("addExCancelBtn").addEventListener("click",closeAddExModal);
@@ -2977,6 +3082,7 @@ function startSession(){
   if(sessionStart) return;
   sessionStart=Date.now(); sessionSaved=0; sessionVolume=0; sessionDay=currentDay||null; sessionExIds={};
   document.getElementById("sessionBar").style.display="block";
+  requestWakeLock();
   updateSessionBar(); updateWorkoutToggle();
   sessionInterval=setInterval(function(){
     var elapsed=Math.floor((Date.now()-sessionStart)/1000);
@@ -2995,6 +3101,7 @@ function endSession(){
   var rec={day:dayKey,day_label:dayKey?(DAY_LABELS[dayKey]||dayKey):"Treino",date:startedAt.toLocaleDateString("pt-BR"),weekday:startedAt.getDay(),duration_sec:elapsed,volume:Math.round(sessionVolume),ex_count:sessionSaved,started_at:startedAt.toISOString(),ended_at:endedAt.toISOString()};
   try{var arr=loadWorkoutSessions();arr.push(rec);saveWorkoutSessions(arr);}catch(e){console.warn("Falha ao salvar sessão:",e);}
   sessionStart=null; sessionInterval=null; sessionDay=null; sessionExIds={};
+  releaseWakeLock();
   document.getElementById("sessionBar").style.display="none";
   updateWorkoutToggle();
   if(histMode==="duracao")renderDuracao();
@@ -3055,6 +3162,29 @@ async function confirmGoal(){
   hideLoading();
 }
 
+var groupTargetDay=null;
+function openGroupModal(day){
+  groupTargetDay=day;
+  document.getElementById("groupSubtitle").textContent=DAY_LABELS[day];
+  document.getElementById("groupInput").value=(WORKOUT_DATA[day]&&WORKOUT_DATA[day].grupo)||"";
+  document.getElementById("groupModal").classList.add("open");
+  setTimeout(function(){document.getElementById("groupInput").focus();},250);
+}
+function closeGroupModal(){document.getElementById("groupModal").classList.remove("open");groupTargetDay=null;}
+async function confirmGroup(){
+  var day=groupTargetDay;if(!day)return;
+  var v=document.getElementById("groupInput").value.trim();
+  WORKOUT_DATA[day].grupo=v||null;
+  closeGroupModal();showLoading("Salvando...");
+  try{await sbSaveWorkoutConfig(currentUser.id,WORKOUT_DATA);buildDaySelector();renderWorkout(day);}
+  catch(e){alert("Erro ao salvar: "+e.message);}
+  hideLoading();
+}
+document.getElementById("groupCancelBtn").addEventListener("click",closeGroupModal);
+document.getElementById("groupConfirmBtn").addEventListener("click",confirmGroup);
+document.getElementById("groupInput").addEventListener("keydown",function(e){if(e.key==="Enter")confirmGroup();});
+document.getElementById("groupModal").addEventListener("click",function(e){if(e.target===this)closeGroupModal();});
+
 document.getElementById("goalCancelBtn").addEventListener("click",closeGoalModal);
 document.getElementById("goalConfirmBtn").addEventListener("click",confirmGoal);
 document.getElementById("goalModal").addEventListener("click",function(e){if(e.target===this)closeGoalModal();});
@@ -3101,7 +3231,7 @@ function migrateLocalToConfig(){
 }
 
 /* ── Timer de descanso ──────────────────────────────────────────────────── */
-var restTimer={remaining:0,total:0,interval:null};
+var restTimer={remaining:0,total:0,interval:null,endsAt:0};
 var restSuggestTimer=null;
 
 /* Áudio compartilhado — destravado no toque do usuário (celular bloqueia áudio sem gesto) */
@@ -3250,25 +3380,80 @@ function renderRest(){
     if(idle)idle.style.display="block";if(run)run.style.display="none";
   }
 }
+/* o tempo restante sai sempre do relogio: sobreviver ao app em segundo plano */
+function restTick(){
+  if(!restTimer.interval)return;
+  var left=Math.ceil((restTimer.endsAt-Date.now())/1000);
+  if(left<=0){finishRest();return;}
+  if(left!==restTimer.remaining){restTimer.remaining=left;renderRest();}
+}
 function startRest(sec){
   unlockAudio();
+  askRestNotifyIfNeeded();
   clearInterval(restTimer.interval);
-  restTimer.total=sec;restTimer.remaining=sec;
+  restTimer.total=sec;restTimer.remaining=sec;restTimer.endsAt=Date.now()+sec*1000;
   var _fab=document.getElementById("restFab");if(_fab)_fab.classList.remove("pulse");
   closeRestSheet();
-  restTimer.interval=setInterval(function(){
-    restTimer.remaining--;
-    if(restTimer.remaining<=0)finishRest();else renderRest();
-  },1000);
+  restTimer.interval=setInterval(restTick,250);
   renderRest();
 }
-function addRest(sec){if(!restTimer.interval)return;restTimer.remaining+=sec;restTimer.total+=sec;renderRest();}
-function cancelRest(){clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();closeRestSheet();}
+function addRest(sec){
+  if(!restTimer.interval)return;
+  restTimer.endsAt+=sec*1000;restTimer.total+=sec;restTick();renderRest();
+}
+function cancelRest(){clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;restTimer.endsAt=0;renderRest();closeRestSheet();}
 function finishRest(){
-  clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();
-  restSiu();if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
+  clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;restTimer.endsAt=0;renderRest();
   var d=REST_DONE[Math.floor(Math.random()*REST_DONE.length)];
+  if(document.hidden){
+    notifyRestDone(d.msg);
+    if(navigator.vibrate){try{navigator.vibrate([200,100,200,100,400]);}catch(e){}}
+  }else{
+    restSiu();if(navigator.vibrate){try{navigator.vibrate([200,100,200,100,400]);}catch(e){}}
+  }
   showToast(d.icon,d.msg,"pr");
+}
+/* volta do segundo plano: recalcula na hora em vez de esperar o proximo tick */
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden){restTick();if(sessionStart)requestWakeLock();}
+});
+
+/* ── Aviso do fim do descanso com o app em segundo plano ────────────────── */
+function notifyRestDone(msg){
+  try{
+    if(!("Notification" in window)||Notification.permission!=="granted")return;
+    var opts={body:msg,icon:"icon-192.png",badge:"icon-192.png",tag:"gym-rest",renotify:true,vibrate:[200,100,200]};
+    if(navigator.serviceWorker&&navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(function(reg){reg.showNotification("\u23f0 Descanso acabou!",opts);}).catch(function(){});
+    }else{ new Notification("\u23f0 Descanso acabou!",opts); }
+  }catch(e){}
+}
+function askRestNotifyIfNeeded(){
+  try{
+    if(!("Notification" in window))return;
+    if(Notification.permission!=="default")return;
+    if(!getPrefs().notifyRest)return;      /* so pergunta se o usuario ligou em Prefer\u00eancias */
+    Notification.requestPermission().then(function(){buildPrefsUI();}).catch(function(){});
+  }catch(e){}
+}
+function restNotifyState(){
+  if(!("Notification" in window))return "indisponivel";
+  return Notification.permission;          /* granted | denied | default */
+}
+
+/* ── Manter a tela ligada durante o treino ──────────────────────────────── */
+var _wakeLock=null;
+function requestWakeLock(){
+  try{
+    if(!("wakeLock" in navigator)||_wakeLock||!getPrefs().keepAwake)return;
+    navigator.wakeLock.request("screen").then(function(wl){
+      _wakeLock=wl;
+      wl.addEventListener("release",function(){_wakeLock=null;});
+    }).catch(function(){});
+  }catch(e){}
+}
+function releaseWakeLock(){
+  try{ if(_wakeLock){_wakeLock.release();_wakeLock=null;} }catch(e){}
 }
 /* nao abre nada na cara do usuario: so pisca o botao do timer */
 function restTimerSuggest(){
@@ -3606,6 +3791,25 @@ function buildPrefsUI(){
   if(chk){chk.checked=pf.restAuto;chk.onchange=function(){savePrefs({restAuto:chk.checked});};}
   var chk2=document.getElementById("prefAutoFinish");
   if(chk2){chk2.checked=pf.autoFinish;chk2.onchange=function(){savePrefs({autoFinish:chk2.checked});};}
+  var chk3=document.getElementById("prefKeepAwake");
+  if(chk3){chk3.checked=pf.keepAwake;chk3.onchange=function(){
+    savePrefs({keepAwake:chk3.checked});
+    if(chk3.checked&&sessionStart)requestWakeLock();else if(!chk3.checked)releaseWakeLock();};}
+  var chk4=document.getElementById("prefNotifyRest");
+  if(chk4){chk4.checked=pf.notifyRest;chk4.onchange=function(){savePrefs({notifyRest:chk4.checked});buildPrefsUI();};}
+  /* estado da permissao de notificacao */
+  var box=document.getElementById("prefNotifyBox"),msg=document.getElementById("prefNotifyMsg"),btn=document.getElementById("prefNotifyBtn");
+  if(box&&msg&&btn){
+    var st=restNotifyState();
+    if(!pf.notifyRest||st==="indisponivel"){box.style.display="none";}
+    else{
+      box.style.display="block";
+      if(st==="granted"){btn.style.display="none";msg.textContent="\u2713 Notifica\u00e7\u00f5es liberadas \u2014 voc\u00ea ser\u00e1 avisado mesmo com o celular no bolso.";}
+      else if(st==="denied"){btn.style.display="none";msg.textContent="Notifica\u00e7\u00f5es bloqueadas para este site. Libere nas configura\u00e7\u00f5es do navegador para receber o aviso.";}
+      else{btn.style.display="block";msg.textContent="Sem a permiss\u00e3o, o aviso s\u00f3 aparece com o app aberto na tela.";
+        btn.onclick=function(){try{Notification.requestPermission().then(function(){buildPrefsUI();});}catch(e){}};}
+    }
+  }
 }
 
 /* ── Grupo muscular a partir do nome do exercício ───────────────────────── */
@@ -3652,17 +3856,23 @@ function buildMusclePanel(){
   var loads=loadsFromCache();
   var today=new Date();today.setHours(0,0,0,0);
   var cut=new Date(today);cut.setDate(cut.getDate()-(muscleDays-1));
-  var groups={},totalSets=0,totalVol=0,dias={};
+  var groups={},totalSets=0,totalVol=0,dias={},ultimoDoGrupo={};
   loads.forEach(function(r){
     var iso=brToISO(r.date);if(!iso)return;
-    var d=new Date(iso+"T00:00:00");if(d<cut||d>today)return;
     var g=muscleOf(r.ex_name);
+    if(!ultimoDoGrupo[g]||iso>ultimoDoGrupo[g])ultimoDoGrupo[g]=iso;   /* varre todo o historico */
+    var d=new Date(iso+"T00:00:00");if(d<cut||d>today)return;
     var sets=parseSetsForCalc(r.sets_reps)||1;
     var vol=setVolume(parseFloat(r.kg)||0,r.sets_reps);
     if(!groups[g])groups[g]={sets:0,vol:0};
     groups[g].sets+=sets;groups[g].vol+=vol;
     totalSets+=sets;totalVol+=vol;dias[iso]=true;
   });
+  function diasAtras(iso){
+    if(!iso)return null;
+    return Math.round((today-new Date(iso+"T00:00:00"))/86400000);
+  }
+  function textoDias(n){return n===0?"hoje":(n===1?"ontem":"h\u00e1 "+n+" dias");}
   var segHtml='<div class="pref-seg" style="margin:10px 0 2px">'+
     [7,30,90].map(function(d){
       return '<button type="button" class="'+(muscleDays===d?"on":"")+'" onclick="setMuscleDays('+d+')">'+d+' dias</button>';
@@ -3681,7 +3891,7 @@ function buildMusclePanel(){
     return '<div class="mus-row">'+
       '<span class="mus-name">'+escapeHtml(k)+'</span>'+
       '<div class="mus-bar-wrap"><div class="mus-bar" style="width:'+pct+'%;opacity:'+op.toFixed(2)+'"></div></div>'+
-      '<span class="mus-val">'+g.sets+' séries<span class="mus-sub">'+(g.vol>0?Math.round(g.vol).toLocaleString("pt-BR")+" kg":"sem carga")+'</span></span>'+
+      '<span class="mus-val">'+g.sets+' séries<span class="mus-sub">'+(g.vol>0?Math.round(g.vol).toLocaleString("pt-BR")+" kg · ":"")+textoDias(diasAtras(ultimoDoGrupo[k]))+'</span></span>'+
     '</div>';
   }).join("");
   var nd=Object.keys(dias).length;
@@ -3689,7 +3899,17 @@ function buildMusclePanel(){
     '<div class="freq-sub">Séries por grupo · '+nd+' dia'+(nd!==1?'s':'')+' de treino no período</div>'+
     segHtml+
     '<div style="margin-top:6px">'+rows+'</div>'+
+    esquecidosHtml()+
     '<div class="saude-formula-note" style="text-align:left;padding-top:10px;line-height:1.5">Total: '+totalSets+' séries · '+Math.round(totalVol).toLocaleString("pt-BR")+' kg movidos. Exercícios sem "séries × reps" configurado contam como 1 série.</div>';
+  function esquecidosHtml(){
+    var fora=Object.keys(ultimoDoGrupo).filter(function(g){return !groups[g];})
+      .sort(function(a,b){return (ultimoDoGrupo[a]<ultimoDoGrupo[b])?-1:1;});
+    if(!fora.length)return "";
+    return '<div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);font-size:11px;color:var(--muted);line-height:1.6">'+
+      '<strong style="color:var(--warn-fg)">Sem treino no período:</strong> '+
+      fora.map(function(g){return escapeHtml(g)+' <span style="opacity:.75">('+textoDias(diasAtras(ultimoDoGrupo[g]))+')</span>';}).join(" · ")+
+      '</div>';
+  }
 }
 
 /* ── Saúde: gráficos de evolução ────────────────────────────────────────── */
