@@ -784,6 +784,12 @@ if('serviceWorker' in navigator){
 
 <style>
   .bottom-nav{display:none;}
+  /* iOS encolhe a viewport quando o teclado abre e deixa elementos position:fixed
+     presos no meio da tela; enquanto o teclado estiver aberto eles somem */
+  body.kb-open .bottom-nav{display:none !important;}
+  body.kb-open .rest-fab{display:none !important;}
+  body.kb-open .update-banner{display:none !important;}
+  body.kb-open .pending-chip{display:none !important;}
   .streak-chip{display:flex;align-items:center;justify-content:center;gap:8px;margin:0.75rem 1rem 0;padding:9px 12px;background:var(--accent-light);border:0.5px solid var(--accent);border-radius:var(--radius-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--accent-fg);}
   .streak-chip .sc-sep{color:var(--accent);opacity:0.45;}
   .pending-chip{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0.6rem 1rem 0;padding:9px 12px;background:var(--warn-bg);border:0.5px solid var(--warn);border-radius:var(--radius-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--warn-fg);}
@@ -1950,6 +1956,7 @@ async function handleSave(exId, exName, bodyweight) {
       return;
     }
   }
+  try{ if(inp&&document.activeElement===inp)inp.blur(); }catch(e){}
   var progAntes = dayProgress(currentDay);
   var histBefore = getHistory(exId, exName);
   var prevMax = histBefore.length > 0 ? Math.max.apply(null, histBefore.map(function(h) { return h.kg; })) : null;
@@ -4272,6 +4279,85 @@ if(window.matchMedia){
     if(_mq.addEventListener)_mq.addEventListener("change",_onMq);else if(_mq.addListener)_mq.addListener(_onMq);
   }catch(e){}
 }
+
+/* ── Teclado do iOS x elementos position:fixed ──────────────────────────────
+   Quando o teclado abre, o Safari encolhe a viewport e a barra inferior fica
+   "presa" no meio da tela mesmo depois que o teclado some. Aqui: escondemos os
+   elementos fixos enquanto o teclado esta aberto e forcamos o navegador a
+   recalcular o layout quando ele fecha. */
+(function(){
+  var vv=window.visualViewport;
+  var alturaCheia=vv?vv.height:window.innerHeight;
+  var nudgeTimer=null;
+
+  function marcarTeclado(aberto){
+    document.body.classList.toggle("kb-open",!!aberto);
+  }
+  /* obriga o Safari a recalcular a posicao dos elementos fixos */
+  function reposicionarFixos(){
+    clearTimeout(nudgeTimer);
+    nudgeTimer=setTimeout(function(){
+      ["bottomNav","restFab"].forEach(function(id){
+        var el=document.getElementById(id);if(!el)return;
+        var d=el.style.display;
+        el.style.display="none";
+        void el.offsetHeight;          /* forca o reflow */
+        el.style.display=d;
+      });
+      var y=window.scrollY||window.pageYOffset||0;
+      window.scrollTo(0,y+1);window.scrollTo(0,y);
+    },60);
+  }
+
+  if(vv){
+    var avaliar=function(){
+      if(vv.height>alturaCheia)alturaCheia=vv.height;
+      var aberto=(alturaCheia-vv.height)>120;   /* teclado ocupa bem mais que 120px */
+      var estava=document.body.classList.contains("kb-open");
+      marcarTeclado(aberto);
+      if(estava&&!aberto)reposicionarFixos();
+    };
+    vv.addEventListener("resize",avaliar);
+    vv.addEventListener("scroll",avaliar);
+  }
+
+  function ehCampo(el){
+    if(!el)return false;
+    var t=(el.tagName||"").toUpperCase();
+    return t==="INPUT"||t==="TEXTAREA"||el.isContentEditable;
+  }
+  /* sem visualViewport (navegadores antigos): usa foco/desfoco como pista do teclado.
+     Com visualViewport, quem manda e a medida dele — senao os dois brigam. */
+  if(!vv){
+    document.addEventListener("focusin",function(e){ if(ehCampo(e.target))marcarTeclado(true); });
+  }
+  document.addEventListener("focusout",function(e){
+    if(!ehCampo(e.target))return;
+    setTimeout(function(){
+      if(ehCampo(document.activeElement))return;   /* pulou direto para outro campo */
+      if(!vv)marcarTeclado(false);
+      reposicionarFixos();                          /* o empurrao vale nos dois casos */
+    },120);
+  });
+  window.addEventListener("orientationchange",function(){
+    alturaCheia=vv?vv.height:window.innerHeight;
+    reposicionarFixos();
+  });
+
+  /* SEGURANCA: se por qualquer motivo a marca do teclado ficar presa, a barra
+     inferior sumiria de vez. Em qualquer toque sem campo focado, ela volta. */
+  ["touchstart","mousedown"].forEach(function(ev){
+    document.addEventListener(ev,function(){
+      if(!document.body.classList.contains("kb-open"))return;
+      if(ehCampo(document.activeElement))return;
+      marcarTeclado(false);reposicionarFixos();
+    },true);
+  });
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden||ehCampo(document.activeElement))return;
+    marcarTeclado(false);
+  });
+})();
 
 /* ── Aviso de nova versao publicada ─────────────────────────────────────── */
 function showUpdateBanner(reg){
