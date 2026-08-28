@@ -2522,106 +2522,108 @@ async function renderHistory(){
       if(prMap[k]===undefined||kg>prMap[k])prMap[k]=kg;
       cntMap[k]=(cntMap[k]||0)+1;
     });
-    var rows=loads.map(function(r){return{loadId:r.id,name:r.ex_name,date:r.date,kg:parseFloat(r.kg),exId:r.ex_id,sr:r.sets_reps||null,st:r.strategy||null};});
+    var rows=loads.map(function(r){
+      var kg=parseFloat(r.kg);
+      return {loadId:r.id,name:r.ex_name,date:r.date,kg:kg,exId:r.ex_id,
+              sr:r.sets_reps||null,st:r.strategy||null,
+              iso:brToISO(r.date)||"",                 /* pre-calculado: filtro por data */
+              busca:normKey(r.ex_name||""),            /* pre-calculado: busca por nome */
+              pr:kg>0&&cntMap[r.ex_id]>1&&kg===prMap[r.ex_id]};
+    });
     if(historyFilter!=="todos"){var ids=(WORKOUT_DATA[historyFilter].exercises||[]).map(function(e){return e.id;});rows=rows.filter(function(r){return ids.indexOf(r.exId)>=0;});}
-    rows.sort(function(a,b){return b.date.split("/").reverse().join("").localeCompare(a.date.split("/").reverse().join(""));});
+    rows.sort(function(a,b){return b.iso.localeCompare(a.iso);});
     if(!rows.length){content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udcca</div><p>Nenhum registro ainda.<br>Salve suas cargas no treino!</p></div>';hideBulkBar();return;}
 
-    var rowsHtml=rows.map(function(r){
-      var pr=r.kg>0&&cntMap[r.exId]>1&&r.kg===prMap[r.exId];
-      var extra=[];
-      if(r.sr)extra.push(escapeHtml(r.sr.replace(/x/i,"\u00d7").replace(/-/g,"\u2013").replace(/F$/i,"falha")));
-      if(r.st)extra.push(escapeHtml(BADGE_LABELS[r.st]||r.st));
-      var safeName=escapeAttr(r.name).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-      return '<div class="history-row" data-load-id="'+r.loadId+'">'+
-        '<div class="h-check"><input type="checkbox" class="history-row-check" data-load-id="'+r.loadId+'" onchange="updateBulkBar()"></div>'+
-        '<div class="h-name">'+escapeHtml(r.name)+(extra.length?'<span class="h-sub">'+extra.join(" \u00b7 ")+'</span>':'')+'</div>'+
-        '<div class="h-date">'+r.date.substring(0,5)+'</div>'+
-        '<div class="h-load">'+fmtLoad(r.kg)+(pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
-        '<div class="h-actions">'+
-          '<button class="icon-btn" title="Editar carga e data" onclick="openEditLoadModal(\''+r.loadId+'\',\''+safeName+'\',\''+r.date+'\',\''+r.kg+'\')">&#9999;&#65039;</button>'+
-          '<button class="icon-btn danger" title="Excluir" onclick="deleteLoad(\''+r.loadId+'\')">\ud83d\uddd1</button>'+
-        '</div>'+
-      '</div>';
-    }).join("");
-
-    content.innerHTML='<div class="history-table">'+
-      '<div class="history-row hdr">'+
-        '<div class="h-check"><label class="select-all-wrap" title="Selecionar todos"><input type="checkbox" id="checkSelectAll" onchange="toggleSelectAll(this.checked)"></label></div>'+
-        '<div class="h-name">Exerc\u00edcio</div>'+
-        '<div class="h-date">Data</div>'+
-        '<div class="h-load">Carga</div>'+
-        '<div class="h-actions"></div>'+
-      '</div>'+
-      rowsHtml+
-    '</div><div class="count-line">'+rows.length+' registro'+(rows.length!==1?"s":"")+'</div>';
-
-    hideBulkBar();
-setupHistorySearch(rows);
+    historyRows=rows;
+    historyShown=HISTORY_PAGE;
+    setupHistoryFilters();
+    renderHistoryList();
   }catch(e){content.innerHTML='<div class="empty-state"><div class="icon">\u26a0\ufe0f</div><p>Erro ao carregar hist\u00f3rico.</p></div>';console.error(e);}
 }
 
-function setupHistorySearch(rows){
+/* ── Lista do histórico: renderiza por página e filtra sobre os dados ──────
+   Antes montava TODAS as linhas de uma vez e a busca varria o DOM a cada
+   tecla — com alguns milhares de registros isso trava no celular. */
+var HISTORY_PAGE=150;
+var historyRows=[], historyShown=HISTORY_PAGE, historyFiltersReady=false, historySearchTimer=null;
+
+function historyRowHtml(r){
+  var extra=[];
+  if(r.sr)extra.push(escapeHtml(r.sr.replace(/x/i,"\u00d7").replace(/-/g,"\u2013").replace(/F$/i,"falha")));
+  if(r.st)extra.push(escapeHtml(BADGE_LABELS[r.st]||r.st));
+  var safeName=escapeAttr(r.name).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+  return '<div class="history-row" data-load-id="'+r.loadId+'">'+
+    '<div class="h-check"><input type="checkbox" class="history-row-check" data-load-id="'+r.loadId+'" onchange="updateBulkBar()"></div>'+
+    '<div class="h-name">'+escapeHtml(r.name)+(extra.length?'<span class="h-sub">'+extra.join(" \u00b7 ")+'</span>':'')+'</div>'+
+    '<div class="h-date">'+r.date.substring(0,5)+'</div>'+
+    '<div class="h-load">'+fmtLoad(r.kg)+(r.pr?' <span class="h-pr">\u2605</span>':'')+'</div>'+
+    '<div class="h-actions">'+
+      '<button class="icon-btn" title="Editar carga e data" onclick="openEditLoadModal(\''+r.loadId+'\',\''+safeName+'\',\''+r.date+'\',\''+r.kg+'\')">&#9999;&#65039;</button>'+
+      '<button class="icon-btn danger" title="Excluir" onclick="deleteLoad(\''+r.loadId+'\')">\ud83d\uddd1</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function historyFiltrados(){
   var input=document.getElementById("historySearch");
-  var clearBtn=document.getElementById("historySearchClear");
-  var dateFrom=document.getElementById("historyDateFrom");
-  var dateTo=document.getElementById("historyDateTo");
-  var dateClear=document.getElementById("historyDateClear");
-  if(!input)return;
+  var q=input?normKey(input.value):"";
+  var de=document.getElementById("historyDateFrom").value;
+  var ate=document.getElementById("historyDateTo").value;
+  var bc=document.getElementById("historySearchClear");if(bc)bc.style.display=q?"block":"none";
+  var dc=document.getElementById("historyDateClear");if(dc)dc.style.display=(de||ate)?"block":"none";
+  if(!q&&!de&&!ate)return {lista:historyRows,filtrando:false};
+  return {lista:historyRows.filter(function(r){
+    if(q&&r.busca.indexOf(q)<0)return false;
+    if(de&&r.iso<de)return false;
+    if(ate&&r.iso>ate)return false;
+    return true;
+  }),filtrando:true};
+}
 
-  function rowDateToISO(dateStr){
-    // dateStr no formato dd/mm/yyyy
-    var p=dateStr.split("/");
-    return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:"";
+function renderHistoryList(){
+  var content=document.getElementById("historyContent");if(!content)return;
+  var res=historyFiltrados(),lista=res.lista;
+  if(!lista.length){
+    content.innerHTML='<div class="empty-state"><div class="icon">\ud83d\udd0d</div><p>Nenhum registro encontrado<br>com esses filtros.</p></div>';
+    hideBulkBar();return;
   }
+  var visiveis=lista.slice(0,historyShown), faltam=lista.length-visiveis.length;
+  content.innerHTML='<div class="history-table">'+
+    '<div class="history-row hdr">'+
+      '<div class="h-check"><label class="select-all-wrap" title="Selecionar os registros exibidos"><input type="checkbox" id="checkSelectAll" onchange="toggleSelectAll(this.checked)"></label></div>'+
+      '<div class="h-name">Exerc\u00edcio</div>'+
+      '<div class="h-date">Data</div>'+
+      '<div class="h-load">Carga</div>'+
+      '<div class="h-actions"></div>'+
+    '</div>'+
+    visiveis.map(historyRowHtml).join("")+
+  '</div>'+
+  '<div class="count-line">'+(faltam>0
+      ? "mostrando "+visiveis.length+" de "+lista.length+" registros"
+      : lista.length+" registro"+(lista.length!==1?"s":"")+(res.filtrando?" encontrado"+(lista.length!==1?"s":""):""))+'</div>'+
+  (faltam>0?'<div style="display:flex;justify-content:center;margin-top:0.5rem;"><button class="btn-secondary" id="historyMoreBtn" style="width:auto;padding:10px 22px;font-size:12px;">Mostrar mais '+Math.min(HISTORY_PAGE,faltam)+'</button></div>':'');
+  var mais=document.getElementById("historyMoreBtn");
+  if(mais)mais.addEventListener("click",function(){historyShown+=HISTORY_PAGE;renderHistoryList();});
+  hideBulkBar();
+}
 
-  function applyFilters(){
-    var q=input.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-    var from=dateFrom.value;
-    var to=dateTo.value;
-    clearBtn.style.display=q?"block":"none";
-    dateClear.style.display=(from||to)?"block":"none";
-
-    document.querySelectorAll(".history-row:not(.hdr)").forEach(function(row){
-      var name=row.querySelector(".h-name");
-      var dateEl=row.querySelector(".h-date");
-      if(!name||!dateEl)return;
-      var txt=name.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-      var matchName=(!q||txt.indexOf(q)>=0);
-
-      var loadId=row.getAttribute("data-load-id");
-      var rowData=rows.find(function(r){return String(r.loadId)===String(loadId);});
-      var iso=rowData?rowDateToISO(rowData.date):"";
-      var matchDate=true;
-      if(from&&iso<from)matchDate=false;
-      if(to&&iso>to)matchDate=false;
-
-      row.style.display=(matchName&&matchDate)?"":"none";
-    });
-
-    var countEl=document.querySelector(".count-line");
-    if(countEl){
-      var visible=document.querySelectorAll(".history-row:not(.hdr):not([style*='display: none'])").length;
-      var filtering=q||from||to;
-      countEl.textContent=visible+" registro"+(visible!==1?"s":"")+(filtering?" encontrado"+(visible!==1?"s":""):"");
-    }
-  }
-
-  input.removeEventListener("input",input._searchHandler);
-  input._searchHandler=applyFilters;
-  input.addEventListener("input",applyFilters);
-  clearBtn.addEventListener("click",function(){input.value="";applyFilters();input.focus();});
-
-  dateFrom.removeEventListener("change",dateFrom._handler);
-  dateTo.removeEventListener("change",dateTo._handler);
-  dateFrom._handler=applyFilters;
-  dateTo._handler=applyFilters;
-  dateFrom.addEventListener("change",applyFilters);
-  dateTo.addEventListener("change",applyFilters);
-
-  dateClear.addEventListener("click",function(){
-    dateFrom.value="";dateTo.value="";applyFilters();
+/* listeners registrados uma unica vez — antes eram reempilhados a cada render */
+function setupHistoryFilters(){
+  if(historyFiltersReady)return;
+  var input=document.getElementById("historySearch");if(!input)return;
+  historyFiltersReady=true;
+  var limparBusca=document.getElementById("historySearchClear");
+  var de=document.getElementById("historyDateFrom"), ate=document.getElementById("historyDateTo");
+  var limparDatas=document.getElementById("historyDateClear");
+  function refazer(){historyShown=HISTORY_PAGE;renderHistoryList();}
+  input.addEventListener("input",function(){
+    clearTimeout(historySearchTimer);
+    historySearchTimer=setTimeout(refazer,160);          /* nao refaz a lista a cada tecla */
   });
+  limparBusca.addEventListener("click",function(){input.value="";refazer();input.focus();});
+  de.addEventListener("change",refazer);
+  ate.addEventListener("change",refazer);
+  limparDatas.addEventListener("click",function(){de.value="";ate.value="";refazer();});
 }
  
 function hideBulkBar(){
