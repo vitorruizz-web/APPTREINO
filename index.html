@@ -163,8 +163,11 @@
 
   .day-selector { display: flex; gap: 8px; padding: 1rem 1.25rem; overflow-x: auto; background: var(--surface); border-bottom: 0.5px solid var(--border); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .day-selector::-webkit-scrollbar { display: none; }
-  .day-btn { flex-shrink: 0; padding: 8px 16px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--surface2); cursor: pointer; font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); transition: all 0.15s; text-align: center; user-select: none; }
+  .day-btn { position: relative; flex-shrink: 0; padding: 8px 16px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--surface2); cursor: pointer; font-family: "Syne",sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); transition: all 0.15s; text-align: center; user-select: none; }
   .day-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .day-btn.today::after { content: ""; position: absolute; top: 5px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
+  .day-btn.today.active::after { background: #fff; box-shadow: 0 0 0 2px var(--accent); }
+  .day-btn.today.rest { opacity: 0.85; }
   .day-btn.rest { opacity: 0.55; }
   .day-btn.rest:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent-fg); opacity: 1; }
   .day-btn:hover:not(.rest):not(.active) { background: var(--accent-light); border-color: var(--accent); color: var(--accent-fg); }
@@ -181,6 +184,11 @@
 
   .exercise-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1rem; margin-bottom: 10px; transition: border-color 0.15s, transform 0.1s, box-shadow 0.1s; user-select: none; -webkit-user-select: none; position: relative; }
   .exercise-card:hover { border-color: var(--border2); }
+  .exercise-card.done { border-color: var(--accent); }
+  .exercise-card.done::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
+  .done-chip { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; line-height: 1; }
+  .day-progress { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 9px; overflow: hidden; }
+  .day-progress-bar { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width 0.45s ease; }
   .exercise-card.pressing { transform: scale(0.98); box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
   .exercise-card.dragging { opacity: 0.4; border: 1.5px dashed var(--accent); background: var(--accent-light); transform: none !important; box-shadow: none !important; }
 
@@ -619,6 +627,7 @@
         <button type="button" data-v="10">10</button>
       </div>
       <label class="pref-row"><input type="checkbox" id="prefRestAuto" /><span>Iniciar o descanso automaticamente ao salvar uma carga</span></label>
+      <label class="pref-row"><input type="checkbox" id="prefAutoFinish" /><span>Finalizar o treino sozinho quando todos os exerc&iacute;cios do dia forem registrados</span></label>
       <span class="pref-label">Tempo padr&atilde;o de descanso</span>
       <div class="pref-seg" id="prefRestSeg">
         <button type="button" data-v="45">45s</button>
@@ -781,8 +790,7 @@
     .bnav-lb{font-size:9px;font-weight:700;letter-spacing:0.2px;font-family:'Syne',sans-serif;}
     .bnav-btn.active{color:var(--accent-fg);}
     .main-app{padding-bottom:64px;}
-    .rest-fab{bottom:78px !important;}
-    .rest-panel{bottom:144px !important;}
+    .rest-fab{bottom:76px !important;}
   }
 </style>
 
@@ -1020,12 +1028,13 @@ function escapeHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;
 function escapeAttr(s){return escapeHtml(s).replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 
 /* PREFERENCIAS do usuario — vivem em WORKOUT_DATA._prefs (sincroniza entre aparelhos) */
-var DEFAULT_PREFS={inc:2.5,restAuto:false,restDefault:90,theme:"auto"};
+var DEFAULT_PREFS={inc:2.5,restAuto:false,restDefault:90,theme:"auto",autoFinish:true};
 function getPrefs(){
   var p=(typeof WORKOUT_DATA!=="undefined"&&WORKOUT_DATA&&WORKOUT_DATA._prefs)?WORKOUT_DATA._prefs:{};
   var t=null;try{t=localStorage.getItem("gym_theme");}catch(e){}
   return{inc:parseFloat(p.inc)||DEFAULT_PREFS.inc,
          restAuto:!!p.restAuto,
+         autoFinish:p.autoFinish!==false,
          restDefault:parseInt(p.restDefault,10)||DEFAULT_PREFS.restDefault,
          theme:t||p.theme||DEFAULT_PREFS.theme};
 }
@@ -1050,6 +1059,55 @@ function sortHist(h){
     var pa=(a.date||"").split("/").reverse().join(""),pb=(b.date||"").split("/").reverse().join("");
     return pa<pb?-1:(pa>pb?1:0);
   });
+}
+
+/* o exercicio ja tem registro de hoje? */
+function todayBR(){return new Date().toLocaleDateString("pt-BR");}
+function loggedToday(exId,exName){
+  var h=getHistory(exId,exName),t=todayBR();
+  for(var i=0;i<h.length;i++){if(h[i].date===t)return true;}
+  return false;
+}
+function dayProgress(day){
+  var d=(typeof WORKOUT_DATA!=="undefined"&&WORKOUT_DATA)?WORKOUT_DATA[day]:null;
+  var exs=(d&&d.exercises)||[],done=0;
+  exs.forEach(function(e){if(loggedToday(e.id,e.name))done++;});
+  return {done:done,total:exs.length};
+}
+/* dia que deve abrir: o marcado para hoje na semana; senao o primeiro com exercicios */
+function pickStartDay(){
+  var wd=new Date().getDay(),order=getDayOrder(),comEx=null,marcadoVazio=null;
+  for(var i=0;i<order.length;i++){
+    var d=WORKOUT_DATA[order[i]];if(!d)continue;
+    var tem=!!(d.exercises&&d.exercises.length>0);
+    if(d.diaRecomendado===wd){
+      if(tem)return order[i];
+      if(marcadoVazio===null)marcadoVazio=order[i];
+    }
+    if(tem&&comEx===null)comEx=order[i];
+  }
+  return marcadoVazio||comEx||order[0]||DAYS[0];
+}
+/* atualiza subtitulo + barra de progresso sem redesenhar o treino inteiro */
+function updateDayProgressUI(day){
+  if(!day||!WORKOUT_DATA||!WORKOUT_DATA[day])return;
+  var p=dayProgress(day),d=WORKOUT_DATA[day],n=(d.exercises||[]).length;
+  var bar=document.querySelector(".day-progress-bar");
+  if(bar&&p.total)bar.style.width=Math.round(p.done/p.total*100)+"%";
+  var sub=document.querySelector(".workout-subtitle");
+  if(sub)sub.textContent=(d.grupo?d.grupo+" \u00b7 ":"")+n+" exerc\u00edcio"+(n!==1?"s":"")+
+    (p.total?" \u00b7 "+p.done+"/"+p.total+" feito"+(p.done!==1?"s":"")+" hoje":"");
+}
+/* marca/desmarca o cartao como feito hoje */
+function setCardDone(exId,feito){
+  var card=document.getElementById("card-"+exId);if(!card)return;
+  card.classList.toggle("done",!!feito);
+  var nb=card.querySelector(".exercise-name-badge");if(!nb)return;
+  var chip=nb.querySelector(".done-chip");
+  if(feito&&!chip){
+    chip=document.createElement("span");chip.className="done-chip";
+    chip.title="J\u00e1 registrado hoje";chip.textContent="\u2713";nb.appendChild(chip);
+  }else if(!feito&&chip){chip.remove();}
 }
 
 /* botoes +/- da carga */
@@ -1366,6 +1424,8 @@ function refreshCardUI(exId){
    if(hist.length===0){if(inp)inp.value="";meta.innerHTML="";if(cp)cp.innerHTML=buildChartInner([]);}
   else{var lastKg=hist[hist.length-1].kg;var maxKg=Math.max.apply(null,hist.map(function(h){return h.kg;}));var isPR=lastKg>0&&hist.length>1&&lastKg===maxKg;var prevKg=hist.length>1?hist[hist.length-2].kg:null;var histTxt=prevKg!==null?"ant: "+fmtLoad(prevKg):(hist.length===1?"1x reg.":"");meta.innerHTML=histTxt+" "+(isPR?'<span class="pr-badge">\u2605 PR</span>':"");if(inp)inp.value=lastKg>0?lastKg:"";}
   if(cp){cp.innerHTML=buildChartInner(hist);if(openCharts[exId])cp.classList.add("open");}
+  setCardDone(exId,loggedToday(exId,exName));
+  updateDayProgressUI(currentDay);
 }
 
 function setLoginMode(register){
@@ -1435,7 +1495,7 @@ async function initApp(){
     document.getElementById("loginScreen").style.display="none";document.getElementById("mainApp").style.display="block";
     document.getElementById("headerUser").textContent=currentUser.username;document.getElementById("settingsUsername").textContent=currentUser.username;
     applyAvatar(loadAvatar(currentUser.id));buildDaySelector();
-    var startDay=DAYS.find(function(d){return WORKOUT_DATA[d].exercises&&WORKOUT_DATA[d].exercises.length>0;})||DAYS[0];
+    var startDay=pickStartDay();
     selectDay(startDay);switchTab("treino");
   }catch(e){alert("Erro ao carregar dados: "+e.message);console.error(e);logout();}
   hideLoading();
@@ -1464,7 +1524,7 @@ function switchTab(tab){
   document.getElementById("conquistasSection").style.display=tab==="conquistas"?"block":"none";
   document.getElementById("holdHint").style.display=tab==="treino"?"block":"none";
   var rf=document.getElementById("restFab");if(rf)rf.style.display=tab==="treino"?"flex":"none";
-  var rp=document.getElementById("restPanel");if(rp&&tab!=="treino")rp.classList.remove("open");
+  if(tab!=="treino"&&typeof closeRestSheet==="function")closeRestSheet();
   if(tab==="historico")renderHistory();if(tab==="config"){buildAvatarGrid();buildPrefsUI();}
   if(tab==="saude"){renderSaudeRegistros();setSaudeDefaultDate();saudePrefillFromLast();buildSaudeEvolucao();}
   if(tab==="conquistas")renderConquistas();
@@ -1473,10 +1533,11 @@ function switchTab(tab){
 
 function buildDaySelector(){
   var sel=document.getElementById("daySelector");sel.innerHTML="";
-  var order=getDayOrder();
+  var order=getDayOrder(),hojeWd=new Date().getDay();
   order.forEach(function(day,idx){
     var d=WORKOUT_DATA[day];var btn=document.createElement("div");var hasEx=d.exercises&&d.exercises.length>0;
-    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"")+(day===currentDay?" active":"");btn.id="daybtn-"+day;
+    btn.className="day-btn"+(d.rest&&!hasEx?" rest":"")+(day===currentDay?" active":"")+(d.diaRecomendado===hojeWd?" today":"");btn.id="daybtn-"+day;
+    if(d.diaRecomendado===hojeWd)btn.title="Treino marcado para hoje";
     var diaTxt=(d.diaRecomendado!==null&&d.diaRecomendado!==undefined)?'<br><small style="font-size:9px;opacity:0.8">'+WEEKDAYS[d.diaRecomendado]+'</small>':"";
     btn.innerHTML=DAY_LABELS[day]+diaTxt;
     btn.addEventListener("click",(function(k){return function(){ if(dayDnd.suppressClick) return; selectDay(k); };})(day));
@@ -1580,7 +1641,7 @@ function renderWorkout(day){
     wv.innerHTML='<div class="rest-day"><div class="big">\ud83d\udca4</div><p>Nenhum exerc\u00edcio neste treino \u2014 adicione agora!</p><button class="btn-add-exercise" id="addExRestBtn">+ Adicionar exerc\u00edcio</button></div>';
     document.getElementById("addExRestBtn").addEventListener("click",function(){openAddExerciseModal(day);});return;
   }
-  var titulo=DAY_LABELS[day];
+  var titulo=DAY_LABELS[day];var _prog=dayProgress(day);
   wv.innerHTML='<div class="workout-header"><div class="workout-title">'+titulo+
 '<select class="dia-recomendado-select" id="diaRecSelect" onchange="setDiaRecomendado(\''+day+'\',this.value)">'+
 '<option value="">+ Dia</option>'+
@@ -1588,7 +1649,10 @@ WEEKDAYS.map(function(w,i){return '<option value="'+i+'"'+(d.diaRecomendado===i?
 '</select>'+
 '<button class="icon-btn" id="shareDayBtn" title="Compartilhar este treino" style="margin-left:auto">\ud83d\udce4</button>'+
 '<button class="icon-btn" id="dupDayBtn" title="Duplicar treino para outro dia">\ud83d\udccb</button>'+
-'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+'</div></div><div id="exerciseList"></div>';
+'</div><div class="workout-subtitle">'+(d.grupo?d.grupo+' \u00b7 ':'')+d.exercises.length+' exerc\u00edcio'+(d.exercises.length!==1?'s':'')+
+(_prog.total?' \u00b7 '+_prog.done+'/'+_prog.total+' feito'+(_prog.done!==1?'s':'')+' hoje':'')+'</div>'+
+(_prog.total?'<div class="day-progress"><div class="day-progress-bar" style="width:'+Math.round(_prog.done/_prog.total*100)+'%"></div></div>':'')+
+'</div><div id="exerciseList"></div>';
 document.getElementById("dupDayBtn").addEventListener("click",function(){openDuplicateModal(day);});
 document.getElementById("shareDayBtn").addEventListener("click",function(){shareResult("day");});
 var list=document.getElementById("exerciseList");
@@ -1605,7 +1669,8 @@ var list=document.getElementById("exerciseList");
 
     var indicator=document.createElement("div");indicator.className="drop-indicator";indicator.id="drop-"+idx;list.appendChild(indicator);
 
-    var card=document.createElement("div");card.className="exercise-card";card.id="card-"+ex.id;card.setAttribute("data-exid",ex.id);card.setAttribute("data-idx",idx);
+    var feitoHoje=loggedToday(ex.id,ex.name);
+    var card=document.createElement("div");card.className="exercise-card"+(feitoHoje?" done":"");card.id="card-"+ex.id;card.setAttribute("data-exid",ex.id);card.setAttribute("data-idx",idx);
 
     var srTagHtml=hasSR?'<div class="sets-reps-tag" id="srtag-'+ex.id+'">'+formatSetsRepsTag(ex.setsReps)+'</div>':'<div class="sets-reps-tag empty" id="srtag-'+ex.id+'"></div>';
 
@@ -1617,6 +1682,7 @@ var list=document.getElementById("exerciseList");
         '<div class="exercise-name-badge">'+
           '<span class="exercise-name" id="exname-'+ex.id+'" title="Ver gr\u00e1fico de evolu\u00e7\u00e3o">'+escapeHtml(ex.name)+'</span>'+
           getBadgeHtml(ex.badge)+
+          (feitoHoje?'<span class="done-chip" title="J\u00e1 registrado hoje">\u2713</span>':'')+
         '</div>'+
         '<div class="exercise-actions">'+
           '<button class="icon-btn '+(hasVideo?"has-link":"")+'" id="videobtn-'+ex.id+'" title="Link do v\u00eddeo" aria-label="Link do v\u00eddeo">\u25b6</button>'+
@@ -1748,6 +1814,7 @@ async function handleSave(exId, exName, bodyweight) {
       return;
     }
   }
+  var progAntes = dayProgress(currentDay);
   var histBefore = getHistory(exId, exName);
   var prevMax = histBefore.length > 0 ? Math.max.apply(null, histBefore.map(function(h) { return h.kg; })) : null;
   btn.textContent = "..."; btn.disabled = true; if (bwBtn) bwBtn.disabled = true;
@@ -1755,7 +1822,10 @@ async function handleSave(exId, exName, bodyweight) {
     var exObj=(WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises||[]).find(function(e){return e.id===exId;});
 await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
     addToCache(exId, exName, kg, exObj?exObj.badge:null, exObj?exObj.setsReps:null);
-    startSession(); sessionSaved++; sessionVolume+=setVolume(kg, exObj?exObj.setsReps:null); updateSessionBar();
+    startSession();
+    if(!sessionExIds[exId]){sessionExIds[exId]=true;sessionSaved++;}
+    sessionVolume+=setVolume(kg, exObj?exObj.setsReps:null);
+    setCardDone(exId,true); updateDayProgressUI(currentDay); updateSessionBar();
     var hist = sortHist(getHistory(exId, exName));
     var maxKg = Math.max.apply(null, hist.map(function(h) { return h.kg; }));
     var isPR = kg > 0 && hist.length > 1 && kg === maxKg;
@@ -1766,6 +1836,7 @@ await sbSaveLoad(currentUser.id, exId, exName, kg, exObj?exObj.badge:null, exObj
     triggerSaveToast(kg, prevMax, hist.length);
     var _pf = getPrefs();
     if (_pf.restAuto) startRest(_pf.restDefault); else restTimerSuggest();
+    maybeAutoFinish(currentDay, progAntes);
     checkAchievements(true);
     btn.textContent = "\u2713 Salvo"; btn.classList.add("saved");
     setTimeout(function() { btn.textContent = "Salvar"; btn.classList.remove("saved"); btn.disabled = false; if (bwBtn) bwBtn.disabled = false; }, 2000);
@@ -2900,11 +2971,11 @@ function showChartTip(evt,msg){
   evt.stopPropagation();
 }
 document.addEventListener("click",function(){var t=document.getElementById("chartTipEl");if(t)t.remove();});
-var sessionStart=null, sessionInterval=null, sessionSaved=0, sessionVolume=0, sessionDay=null;
+var sessionStart=null, sessionInterval=null, sessionSaved=0, sessionVolume=0, sessionDay=null, sessionExIds={};
 
 function startSession(){
   if(sessionStart) return;
-  sessionStart=Date.now(); sessionSaved=0; sessionVolume=0; sessionDay=currentDay||null;
+  sessionStart=Date.now(); sessionSaved=0; sessionVolume=0; sessionDay=currentDay||null; sessionExIds={};
   document.getElementById("sessionBar").style.display="block";
   updateSessionBar(); updateWorkoutToggle();
   sessionInterval=setInterval(function(){
@@ -2923,7 +2994,7 @@ function endSession(){
   var dayKey=sessionDay||currentDay||null;
   var rec={day:dayKey,day_label:dayKey?(DAY_LABELS[dayKey]||dayKey):"Treino",date:startedAt.toLocaleDateString("pt-BR"),weekday:startedAt.getDay(),duration_sec:elapsed,volume:Math.round(sessionVolume),ex_count:sessionSaved,started_at:startedAt.toISOString(),ended_at:endedAt.toISOString()};
   try{var arr=loadWorkoutSessions();arr.push(rec);saveWorkoutSessions(arr);}catch(e){console.warn("Falha ao salvar sessão:",e);}
-  sessionStart=null; sessionInterval=null; sessionDay=null;
+  sessionStart=null; sessionInterval=null; sessionDay=null; sessionExIds={};
   document.getElementById("sessionBar").style.display="none";
   updateWorkoutToggle();
   if(histMode==="duracao")renderDuracao();
@@ -2933,6 +3004,30 @@ function endSession(){
   showToast("🏁","Treino registrado! "+m+"min "+s+"s · "+sessionSaved+" exerc."+volTxt,"first");
 }
 function toggleWorkout(){ if(sessionStart)endSession(); else startSession(); }
+
+/* se o usuario registrou todos os exercicios do dia, encerra o treino sozinho
+   (espera os toasts do salvamento/conquistas passarem para nao atropelar a comemoracao) */
+var _autoFinishPend=false;
+function maybeAutoFinish(day,progAntes){
+  if(!sessionStart||_autoFinishPend||!day)return;
+  if(!getPrefs().autoFinish)return;
+  if(sessionDay&&sessionDay!==day)return;
+  var p=dayProgress(day);
+  if(!p.total||p.done<p.total)return;
+  /* so encerra quando ESTE registro completou o dia — repetir uma serie
+     num dia ja completo nao deve finalizar o treino de novo */
+  if(progAntes&&progAntes.total&&progAntes.done>=progAntes.total)return;
+  _autoFinishPend=true;
+  setTimeout(function(){
+    var tentativas=0;
+    (function esperaToast(){
+      var t=document.getElementById("gymToast");
+      if(t&&t.classList.contains("show")&&++tentativas<20){setTimeout(esperaToast,600);return;}
+      _autoFinishPend=false;
+      if(sessionStart)endSession();
+    })();
+  },3600);
+}
 function updateWorkoutToggle(){
   var b=document.getElementById("workoutToggleBtn");if(!b)return;
   if(sessionStart){b.textContent="🏁 Finalizar treino";b.className="wk-btn wk-stop";}
@@ -2983,8 +3078,10 @@ function parseRepsForCalc(sr){
 function est1RM(kg,reps){kg=parseFloat(kg);if(!kg||!reps||reps<1||reps>12)return null;return reps===1?kg:kg*(1+reps/30);}
 function setVolume(kg,sr){kg=parseFloat(kg)||0;var s=parseSetsForCalc(sr)||1,r=parseRepsForCalc(sr)||1;return kg*s*r;}
 function updateSessionBar(){
-  var total=(currentDay&&WORKOUT_DATA&&WORKOUT_DATA[currentDay]&&WORKOUT_DATA[currentDay].exercises)?WORKOUT_DATA[currentDay].exercises.length:0;
-  var c=document.getElementById("sessionExCount");if(c)c.textContent=total?(sessionSaved+"/"+total):sessionSaved;
+  var day=sessionDay||currentDay;
+  var p=day?dayProgress(day):{done:0,total:0};
+  var c=document.getElementById("sessionExCount");
+  if(c)c.textContent=p.total?(p.done+"/"+p.total):String(sessionSaved);
   var v=document.getElementById("sessionVolume");if(v)v.textContent=Math.round(sessionVolume).toLocaleString("pt-BR");
 }
 function brToISO(br){if(!br)return null;var p=br.split("/");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:null;}
@@ -3132,29 +3229,33 @@ function restSiu(){
     }
   }catch(e){}
 }
+function openRestSheet(){var el=document.getElementById("restSheet");if(!el)return;renderRest();el.classList.add("open");}
+function closeRestSheet(){var el=document.getElementById("restSheet");if(el)el.classList.remove("open");}
 function renderRest(){
   var fab=document.getElementById("restFab");if(!fab)return;
   var running=!!restTimer.interval;
   fab.classList.toggle("running",running);
   var lbl=fab.querySelector(".rest-fab-label");
-  var chips=document.getElementById("restChips"),ctrls=document.getElementById("restRunCtrls"),custom=document.getElementById("restCustom");
+  var idle=document.getElementById("restSheetIdle"),run=document.getElementById("restSheetRunning");
   if(running){
     var m=Math.floor(restTimer.remaining/60),s=restTimer.remaining%60;
-    lbl.textContent=m>0?(m+":"+(s<10?"0"+s:s)):s;
-    var deg=restTimer.total>0?(restTimer.remaining/restTimer.total)*360:0;
-    fab.style.setProperty("--rest-deg",deg+"deg");
-    if(chips)chips.style.display="none";if(custom)custom.style.display="none";if(ctrls)ctrls.style.display="flex";
+    lbl.textContent=m>0?(m+":"+(s<10?"0"+s:s)):String(s);
+    var big=document.getElementById("restBigTime");
+    if(big)big.textContent=(m<10?"0"+m:m)+":"+(s<10?"0"+s:s);
+    fab.style.setProperty("--rest-deg",(restTimer.total>0?(restTimer.remaining/restTimer.total)*360:0)+"deg");
+    if(idle)idle.style.display="none";if(run)run.style.display="block";
   }else{
     lbl.textContent="⏱";
     fab.style.setProperty("--rest-deg","0deg");
-    if(chips)chips.style.display="grid";if(custom)custom.style.display="grid";if(ctrls)ctrls.style.display="none";
+    if(idle)idle.style.display="block";if(run)run.style.display="none";
   }
 }
 function startRest(sec){
   unlockAudio();
   clearInterval(restTimer.interval);
   restTimer.total=sec;restTimer.remaining=sec;
-  var rp=document.getElementById("restPanel");if(rp)rp.classList.remove("open");
+  var _fab=document.getElementById("restFab");if(_fab)_fab.classList.remove("pulse");
+  closeRestSheet();
   restTimer.interval=setInterval(function(){
     restTimer.remaining--;
     if(restTimer.remaining<=0)finishRest();else renderRest();
@@ -3162,19 +3263,19 @@ function startRest(sec){
   renderRest();
 }
 function addRest(sec){if(!restTimer.interval)return;restTimer.remaining+=sec;restTimer.total+=sec;renderRest();}
-function cancelRest(){clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();
-  var rp=document.getElementById("restPanel");if(rp)rp.classList.remove("open");}
+function cancelRest(){clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();closeRestSheet();}
 function finishRest(){
   clearInterval(restTimer.interval);restTimer.interval=null;restTimer.remaining=0;renderRest();
   restSiu();if(navigator.vibrate)navigator.vibrate([200,100,200,100,400]);
   var d=REST_DONE[Math.floor(Math.random()*REST_DONE.length)];
   showToast(d.icon,d.msg,"pr");
 }
+/* nao abre nada na cara do usuario: so pisca o botao do timer */
 function restTimerSuggest(){
-  var rp=document.getElementById("restPanel");if(!rp||restTimer.interval)return;
-  rp.classList.add("open");
+  var fab=document.getElementById("restFab");if(!fab||restTimer.interval)return;
+  fab.classList.remove("pulse");void fab.offsetWidth;fab.classList.add("pulse");
   clearTimeout(restSuggestTimer);
-  restSuggestTimer=setTimeout(function(){if(!restTimer.interval)rp.classList.remove("open");},5000);
+  restSuggestTimer=setTimeout(function(){fab.classList.remove("pulse");},4000);
 }
 
 /* ── Conquistas / gamificação ───────────────────────────────────────────── */
@@ -3339,91 +3440,125 @@ function shareResult(kind){
   shareCurrentText=buildShareText(kind);
   var ta=document.getElementById("sharePreview");if(ta)ta.value=shareCurrentText;
   var nb=document.getElementById("shareNativeBtn");if(nb)nb.style.display=navigator.share?"flex":"none";
+  var nh=document.getElementById("shareNativeHint");if(nh)nh.style.display=navigator.share?"block":"none";
   document.getElementById("shareModal").classList.add("open");
 }
 function closeShareModal(){document.getElementById("shareModal").classList.remove("open");}
+function canNativeShare(){return typeof navigator!=="undefined"&&!!navigator.share;}
+function nativeShare(t){
+  /* so 'text': mandar title/url junto faz alguns apps descartarem o texto */
+  try{ navigator.share({text:t}).catch(function(){}); return true; }catch(e){ return false; }
+}
 function shareVia(target){
-  var t=shareCurrentText,enc=encodeURIComponent(t);
+  var t=shareCurrentText;
   if(target==="copy"){
     try{
       if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);}
-      else{var ta=document.getElementById("sharePreview");ta.focus();ta.select();document.execCommand("copy");}
+      else{var ta=document.getElementById("sharePreview");ta.removeAttribute("readonly");ta.focus();ta.setSelectionRange(0,t.length);document.execCommand("copy");ta.setAttribute("readonly","readonly");}
     }catch(e){}
     showToast("📋","Texto copiado!","first");return;
   }
-  if(target==="native"){if(navigator.share)navigator.share({title:"Treino GYM",text:t}).catch(function(){});return;}
+  if(target==="native"){ nativeShare(t); return; }
+  /* no celular, WhatsApp/Telegram vao pelo menu do sistema: o texto passa
+     direto, sem virar URL — e é isso que preserva os emojis */
+  if((target==="whatsapp"||target==="telegram")&&canNativeShare()){ nativeShare(t); return; }
+  var enc=encodeURIComponent(t);
   var appUrl="https://vitorruizz-web.github.io/APPTREINO/";
   var urls={
-    whatsapp:"https://wa.me/?text="+enc,
+    whatsapp:"https://api.whatsapp.com/send?text="+enc,
     telegram:"https://t.me/share/url?url="+encodeURIComponent(appUrl)+"&text="+enc,
     twitter:"https://twitter.com/intent/tweet?text="+enc,
     email:"mailto:?subject="+encodeURIComponent("Meu treino no GYM")+"&body="+enc
   };
-  if(urls[target])window.open(urls[target],"_blank");
+  if(urls[target])window.open(urls[target],"_blank","noopener");
 }
 
 /* ── Injeção da UI (timer de descanso) ──────────────────────────────────── */
 (function(){
   var css=
-  ".rest-fab{position:fixed;right:16px;bottom:18px;width:78px;height:78px;border-radius:50%;background:var(--accent);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:80;box-shadow:0 6px 20px rgba(0,0,0,0.28);font-family:'DM Mono',monospace;font-weight:700;font-size:32px;padding:0;}"+
+  ".rest-fab{position:fixed;right:16px;bottom:18px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:80;box-shadow:0 5px 18px rgba(0,0,0,0.26);font-family:'DM Mono',monospace;font-weight:700;font-size:23px;padding:0;transition:transform .12s ease;}"+
+  ".rest-fab:active{transform:scale(0.93);}"+
   ".rest-fab.running{background:conic-gradient(var(--accent) var(--rest-deg,0deg),var(--surface2) 0);}"+
   ".rest-fab .rest-fab-label{display:flex;align-items:center;justify-content:center;width:100%;height:100%;pointer-events:none;}"+
-  ".rest-fab.running .rest-fab-label{background:var(--accent2);width:62px;height:62px;border-radius:50%;font-size:22px;}"+
-  ".rest-panel{position:fixed;right:16px;bottom:84px;width:210px;background:var(--surface);border:0.5px solid var(--border2);border-radius:14px;padding:12px;display:none;flex-direction:column;gap:9px;z-index:81;box-shadow:0 12px 34px rgba(0,0,0,0.28);}"+
-  ".rest-panel.open{display:flex;}"+
-  ".rest-panel-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;}"+
-  ".rest-chips{display:grid;grid-template-columns:1fr 1fr;gap:7px;}"+
-  ".rest-chip{padding:11px 0;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);cursor:pointer;text-align:center;}"+
-  ".rest-chip:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent-fg);}"+
-  ".rest-custom{display:grid;grid-template-columns:1fr auto;gap:7px;}"+
-  ".rest-custom-input{padding:11px 8px;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'DM Mono',monospace;font-weight:700;font-size:14px;color:var(--text);width:100%;box-sizing:border-box;-moz-appearance:textfield;}"+
-  ".rest-custom-input::placeholder{font-size:11px;font-weight:600;letter-spacing:-0.2px;}"+
+  ".rest-fab.running .rest-fab-label{background:var(--accent2);width:46px;height:46px;border-radius:50%;font-size:15px;letter-spacing:-0.5px;}"+
+  ".rest-fab.pulse{animation:restPulse 1.1s ease-in-out 3;}"+
+  "@keyframes restPulse{0%,100%{box-shadow:0 5px 18px rgba(0,0,0,0.26),0 0 0 0 rgba(29,158,117,0.45);}50%{box-shadow:0 5px 18px rgba(0,0,0,0.26),0 0 0 13px rgba(29,158,117,0);}}"+
+  ".rest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}"+
+  ".rest-chip{padding:17px 0;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);cursor:pointer;text-align:center;transition:all .15s;}"+
+  ".rest-chip:hover,.rest-chip:active{background:var(--accent-light);border-color:var(--accent);color:var(--accent-fg);}"+
+  ".rest-custom{display:grid;grid-template-columns:1fr auto;gap:8px;}"+
+  ".rest-custom-input{padding:14px 12px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--text);width:100%;box-sizing:border-box;-moz-appearance:textfield;outline:none;}"+
+  ".rest-custom-input::placeholder{font-family:'Syne',sans-serif;font-size:12px;font-weight:600;letter-spacing:0;color:var(--muted);}"+
   ".rest-custom-input::-webkit-outer-spin-button,.rest-custom-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}"+
-  ".rest-custom-input:focus{outline:none;border-color:var(--accent);}"+
-  ".rest-custom-go{padding:0 12px;border:0.5px solid var(--accent);border-radius:10px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;}"+
-  ".rest-run-ctrls{display:none;gap:7px;}"+
-  ".rest-run-ctrls button{flex:1;padding:10px 0;border:0.5px solid var(--border);border-radius:10px;background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);cursor:pointer;}"+
+  ".rest-custom-input:focus{border-color:var(--accent);}"+
+  ".rest-custom-go{padding:0 22px;border:none;border-radius:var(--radius-md);background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;}"+
+  ".rest-big{font-family:'DM Mono',monospace;font-size:54px;font-weight:500;text-align:center;color:var(--accent-fg);letter-spacing:-1.5px;line-height:1;padding:6px 0 4px;}"+
+  ".rest-big-sub{text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px;}"+
+  ".rest-run-ctrls{display:flex;gap:8px;}"+
+  ".rest-run-ctrls button{flex:1;padding:15px 0;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text);cursor:pointer;}"+
   ".rest-run-ctrls button.cancel{color:var(--danger-fg);border-color:var(--danger-fg);}";
   var st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 
   var fab=document.createElement("button");
-  fab.className="rest-fab";fab.id="restFab";fab.innerHTML='<span class="rest-fab-label">⏱</span>';
-  fab.addEventListener("click",function(){var rp=document.getElementById("restPanel");if(rp)rp.classList.toggle("open");});
+  fab.className="rest-fab";fab.id="restFab";fab.title="Timer de descanso";
+  fab.setAttribute("aria-label","Timer de descanso");
+  fab.innerHTML='<span class="rest-fab-label">⏱</span>';
+  fab.addEventListener("click",function(){fab.classList.remove("pulse");openRestSheet();});
   document.body.appendChild(fab);
 
-  var panel=document.createElement("div");panel.className="rest-panel";panel.id="restPanel";
-  panel.innerHTML=
-    '<div class="rest-panel-title">⏱️ Descanso · escolha o tempo</div>'+
-    '<div class="rest-chips" id="restChips">'+
-      '<button class="rest-chip" data-sec="60">60s</button>'+
-      '<button class="rest-chip" data-sec="90">90s</button>'+
-      '<button class="rest-chip" data-sec="120">2min</button>'+
-      '<button class="rest-chip" data-sec="180">3min</button>'+
-    '</div>'+
-    '<div class="rest-custom" id="restCustom">'+
-      '<input id="restCustomSec" class="rest-custom-input" type="number" inputmode="numeric" min="1" max="3600" placeholder="Digite os segundos">'+
-      '<button class="rest-custom-go" id="restCustomGo">▶</button>'+
-    '</div>'+
-    '<div class="rest-run-ctrls" id="restRunCtrls">'+
-      '<button data-add="15">+15s</button>'+
-      '<button class="cancel" data-cancel="1">✕ Parar</button>'+
+  var sheet=document.createElement("div");sheet.className="modal-overlay";sheet.id="restSheet";
+  sheet.innerHTML=
+    '<div class="modal-sheet">'+
+      '<div class="modal-handle"></div>'+
+      '<div class="modal-title">⏱️ Descanso</div>'+
+      '<div id="restSheetIdle">'+
+        '<div class="modal-subtitle">Escolha o tempo ou digite os segundos</div>'+
+        '<div class="rest-grid">'+
+          '<button class="rest-chip" data-sec="30">30s</button>'+
+          '<button class="rest-chip" data-sec="45">45s</button>'+
+          '<button class="rest-chip" data-sec="60">60s</button>'+
+          '<button class="rest-chip" data-sec="90">90s</button>'+
+          '<button class="rest-chip" data-sec="120">2 min</button>'+
+          '<button class="rest-chip" data-sec="180">3 min</button>'+
+        '</div>'+
+        '<div class="rest-custom">'+
+          '<input id="restCustomSec" class="rest-custom-input" type="number" inputmode="numeric" min="1" max="3600" placeholder="Outro tempo, em segundos">'+
+          '<button class="rest-custom-go" id="restCustomGo">Iniciar</button>'+
+        '</div>'+
+      '</div>'+
+      '<div id="restSheetRunning" style="display:none">'+
+        '<div class="rest-big" id="restBigTime">00:00</div>'+
+        '<div class="rest-big-sub">restante</div>'+
+        '<div class="rest-run-ctrls">'+
+          '<button data-add="15">+15s</button>'+
+          '<button data-add="30">+30s</button>'+
+          '<button class="cancel" data-cancel="1">✕ Parar</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="modal-actions"><button class="btn-modal-cancel" id="restSheetClose" style="flex:1">Fechar</button></div>'+
     '</div>';
-  document.body.appendChild(panel);
-  panel.querySelectorAll(".rest-chip").forEach(function(b){b.addEventListener("click",function(){startRest(parseInt(b.getAttribute("data-sec"),10));});});
-  var secInput=panel.querySelector("#restCustomSec"),goBtn=panel.querySelector("#restCustomGo");
+  document.body.appendChild(sheet);
+  Array.prototype.forEach.call(sheet.querySelectorAll(".rest-chip"),function(b){
+    b.addEventListener("click",function(){startRest(parseInt(b.getAttribute("data-sec"),10));});
+  });
+  var secInput=sheet.querySelector("#restCustomSec"),goBtn=sheet.querySelector("#restCustomGo");
   function startCustomRest(){var v=parseInt(secInput.value,10);if(v>0){startRest(Math.min(v,3600));secInput.value="";secInput.blur();}}
-  if(goBtn)goBtn.addEventListener("click",startCustomRest);
-  if(secInput)secInput.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();startCustomRest();}});
-  panel.querySelector("[data-add]").addEventListener("click",function(){addRest(15);});
-  panel.querySelector("[data-cancel]").addEventListener("click",cancelRest);
+  goBtn.addEventListener("click",startCustomRest);
+  secInput.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();startCustomRest();}});
+  Array.prototype.forEach.call(sheet.querySelectorAll("[data-add]"),function(b){
+    b.addEventListener("click",function(){addRest(parseInt(b.getAttribute("data-add"),10));});
+  });
+  sheet.querySelector("[data-cancel]").addEventListener("click",cancelRest);
+  sheet.querySelector("#restSheetClose").addEventListener("click",closeRestSheet);
+  sheet.addEventListener("click",function(e){if(e.target===sheet)closeRestSheet();});
 
   var shareTargets=[
+    {t:"native",label:"Compartilhar",icon:"📲"},
     {t:"whatsapp",label:"WhatsApp",icon:"🟢"},
     {t:"telegram",label:"Telegram",icon:"✈️"},
-    {t:"twitter",label:"X / Twitter",icon:"𝕏"},
-    {t:"email",label:"E-mail",icon:"✉️"},
     {t:"copy",label:"Copiar texto",icon:"📋"},
-    {t:"native",label:"Mais opções…",icon:"📲"}
+    {t:"twitter",label:"X / Twitter",icon:"𝕏"},
+    {t:"email",label:"E-mail",icon:"✉️"}
   ];
   var sm=document.createElement("div");sm.className="modal-overlay";sm.id="shareModal";
   sm.innerHTML=
@@ -3436,6 +3571,7 @@ function shareVia(target){
           return '<button class="share-opt" data-target="'+s.t+'" '+(s.t==="native"?'id="shareNativeBtn"':'')+' style="display:flex;align-items:center;gap:9px;padding:12px 14px;border:0.5px solid var(--border);border-radius:var(--radius-md);background:var(--surface2);font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--text);cursor:pointer;text-align:left;"><span style="font-size:18px;line-height:1;">'+s.icon+'</span>'+s.label+'</button>';
         }).join("")+
       '</div>'+
+      '<div id="shareNativeHint" style="display:none;font-size:11px;color:var(--muted);line-height:1.5;margin-top:0.75rem;">No celular, <strong>WhatsApp</strong> e <strong>Telegram</strong> abrem o menu de compartilhamento do sistema \u2014 \u00e9 assim que os emojis chegam inteiros.</div>'+
       '<div class="modal-actions"><button class="btn-modal-cancel" id="shareCloseBtn" style="flex:1;">Fechar</button></div>'+
     '</div>';
   document.body.appendChild(sm);
@@ -3468,6 +3604,8 @@ function buildPrefsUI(){
   seg("prefRestSeg",pf.restDefault,function(v){savePrefs({restDefault:parseInt(v,10)});});
   var chk=document.getElementById("prefRestAuto");
   if(chk){chk.checked=pf.restAuto;chk.onchange=function(){savePrefs({restAuto:chk.checked});};}
+  var chk2=document.getElementById("prefAutoFinish");
+  if(chk2){chk2.checked=pf.autoFinish;chk2.onchange=function(){savePrefs({autoFinish:chk2.checked});};}
 }
 
 /* ── Grupo muscular a partir do nome do exercício ───────────────────────── */
