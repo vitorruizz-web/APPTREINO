@@ -1,5 +1,5 @@
 /* Service worker do Treino GYM — app shell offline + network-first p/ navegação */
-var CACHE = 'gym-v2';
+var CACHE = 'gym-v3';
 var ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
