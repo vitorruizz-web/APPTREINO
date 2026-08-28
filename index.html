@@ -546,7 +546,7 @@ if('serviceWorker' in navigator){
     <div class="login-error" id="loginError">Usu&aacute;rio ou senha incorretos.</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
   <input type="checkbox" id="saveCredentials" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
-  <label for="saveCredentials" style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none">Lembrar usuário e senha</label>
+  <label for="saveCredentials" style="font-size:12px;color:var(--muted);cursor:pointer;user-select:none">Manter conectado</label>
 </div>
 <button class="btn-primary" id="loginBtn">Entrar</button>
     <div class="login-toggle">N&atilde;o tem conta? <a id="toggleRegister">Criar conta</a></div>
@@ -1257,8 +1257,79 @@ var EXERCISE_DB = [
 var SUPABASE_URL = "https://gaecbtnwkjalwehbvkoh.supabase.co";
 var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZWNidG53a2phbHdlaGJ2a29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2MDY4NjIsImV4cCI6MjA5NjE4Mjg2Mn0.TRHo0oZ8YOLkg-5hlj27kmjDF_kV_aOvz1I8WwEhj5Q";
 
-async function sbFetch(path,opts){
-  var res=await fetch(SUPABASE_URL+"/rest/v1/"+path,{method:opts&&opts.method?opts.method:"GET",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json","Prefer":opts&&opts.prefer?opts.prefer:""},body:opts&&opts.body?JSON.stringify(opts.body):undefined});
+/* ═══════════════ Autenticacao (Supabase Auth) ═══════════════
+   Antes o login era uma consulta na tabela `users`, com a senha em texto puro,
+   lida pela chave publica que esta neste arquivo. Agora quem autentica e o
+   Supabase Auth, e cada requisicao vai assinada com o token do usuario — e o
+   RLS no banco so devolve as linhas dele. */
+var EMAIL_DOMAIN="@treino.local";
+function emailDe(u){return String(u||"").trim().toLowerCase()+EMAIL_DOMAIN;}
+
+var authSession=null;
+
+function persistirSessao(){return localStorage.getItem("gym_keep")!=="0";}
+function guardarSessao(d){
+  if(!d||!d.access_token){var x=new Error("Resposta de login inválida.");x.semSessao=true;throw x;}
+  authSession={access_token:d.access_token,refresh_token:d.refresh_token,
+    /* renova 1 min antes de vencer, para nao esbarrar no limite no meio de um save */
+    expiraEm:Date.now()+((d.expires_in||3600)*1000)-60000,
+    user:{id:d.user.id,email:d.user.email}};
+  if(persistirSessao()){try{localStorage.setItem("gym_auth",JSON.stringify(authSession));}catch(e){}}
+  return authSession;
+}
+function carregarSessao(){
+  try{var t=localStorage.getItem("gym_auth");authSession=t?JSON.parse(t):null;}catch(e){authSession=null;}
+  return authSession;
+}
+function limparSessao(){
+  authSession=null;
+  try{localStorage.removeItem("gym_auth");localStorage.removeItem("gym_session");}catch(e){}
+}
+
+async function authFetch(path,body,method){
+  var h={"apikey":SUPABASE_KEY,"Content-Type":"application/json"};
+  if(authSession&&authSession.access_token)h["Authorization"]="Bearer "+authSession.access_token;
+  var res=await fetch(SUPABASE_URL+"/auth/v1/"+path,{method:method||"POST",headers:h,body:JSON.stringify(body)});
+  var t=await res.text();var d=null;try{d=t?JSON.parse(t):null;}catch(e){}
+  if(!res.ok){
+    var e2=new Error((d&&(d.msg||d.error_description||d.message))||("Auth "+res.status));
+    e2.status=res.status;e2.code=d&&(d.error_code||d.error);throw e2;
+  }
+  return d;
+}
+
+async function sbSignIn(username,password){
+  return guardarSessao(await authFetch("token?grant_type=password",{email:emailDe(username),password:password}));
+}
+async function sbSignUp(username,password){
+  var d=await authFetch("signup",{email:emailDe(username),password:password,data:{username:username}});
+  /* sem sessao na resposta = e-mail ja cadastrado (o Supabase nao diz isso na cara) */
+  if(!d||!d.access_token){var e=new Error("Usuário já existe.");e.jaExiste=true;throw e;}
+  return guardarSessao(d);
+}
+async function sbRefresh(){
+  if(!authSession||!authSession.refresh_token){var e=new Error("Sessão expirada.");e.sessaoMorta=true;throw e;}
+  try{
+    return guardarSessao(await authFetch("token?grant_type=refresh_token",{refresh_token:authSession.refresh_token}));
+  }catch(e){
+    /* o servidor respondeu recusando: a sessao morreu mesmo.
+       erro de rede (sem status): pode ser so falta de internet — nao derruba o login. */
+    if(e.status&&e.status>=400&&e.status<500)e.sessaoMorta=true;
+    throw e;
+  }
+}
+async function tokenAtual(){
+  if(!authSession)return null;
+  if(Date.now()<authSession.expiraEm)return authSession.access_token;
+  await sbRefresh();
+  return authSession.access_token;
+}
+
+async function sbFetch(path,opts,reautenticou){
+  var token=await tokenAtual();
+  var res=await fetch(SUPABASE_URL+"/rest/v1/"+path,{method:opts&&opts.method?opts.method:"GET",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+(token||SUPABASE_KEY),"Content-Type":"application/json","Prefer":opts&&opts.prefer?opts.prefer:""},body:opts&&opts.body?JSON.stringify(opts.body):undefined});
+  /* token recusado no meio do caminho: renova uma vez e repete */
+  if(res.status===401&&authSession&&!reautenticou){await sbRefresh();return sbFetch(path,opts,true);}
   if(!res.ok){var e=await res.text();throw new Error("Supabase "+res.status+": "+e);}
   var t=await res.text();return t?JSON.parse(t):null;
 }
@@ -1471,9 +1542,6 @@ document.getElementById("headerAvatar").addEventListener("click",function(){swit
 function showLoading(msg){document.getElementById("loadingText").textContent=msg||"Carregando...";document.getElementById("loadingOverlay").classList.add("active");}
 function hideLoading(){document.getElementById("loadingOverlay").classList.remove("active");}
 
-async function sbGetUser(username){var r=await sbFetch("users?username=eq."+encodeURIComponent(username)+"&select=id,username,password");return r&&r.length>0?r[0]:null;}
-async function sbCreateUser(username,password){var r=await sbFetch("users?select=id,username",{method:"POST",prefer:"return=representation",body:{username:username,password:password}});return r&&r.length>0?r[0]:null;}
-async function sbUpdatePassword(userId,newPassword){await sbFetch("users?id=eq."+userId,{method:"PATCH",prefer:"return=minimal",body:{password:newPassword}});}
 function cfgKey(uid){return "gym_cfg_"+uid;}
 function cacheConfig(uid,data){try{localStorage.setItem(cfgKey(uid),JSON.stringify(data));}catch(e){}}
 function cachedConfig(uid){try{var t=localStorage.getItem(cfgKey(uid));return t?JSON.parse(t):null;}catch(e){return null;}}
@@ -1608,32 +1676,45 @@ async function tryLogin(){
   var errEl=document.getElementById("loginError");errEl.style.display="none";
   if(!username||!password){errEl.textContent="Preencha usu\u00e1rio e senha.";errEl.style.display="block";return;}
   showLoading(isRegisterMode?"Criando conta...":"Entrando...");document.getElementById("loginBtn").disabled=true;
+  function falhar(msg){errEl.textContent=msg;errEl.style.display="block";hideLoading();document.getElementById("loginBtn").disabled=false;}
+  localStorage.setItem("gym_keep",document.getElementById("saveCredentials").checked?"1":"0");
   try{
     if(isRegisterMode){
-      var existing=await sbGetUser(username);if(existing){errEl.textContent="Usu\u00e1rio j\u00e1 existe.";errEl.style.display="block";hideLoading();document.getElementById("loginBtn").disabled=false;return;}
-      var newUser=await sbCreateUser(username,password);if(!newUser)throw new Error("Falha ao criar usu\u00e1rio.");currentUser={id:newUser.id,username:newUser.username};
+      if(password.length<6)return falhar("A senha precisa ter 6 ou mais caracteres.");
+      try{await sbSignUp(username,password);}
+      catch(e){if(e.jaExiste||e.code==="user_already_exists")return falhar("Usu\u00e1rio j\u00e1 existe.");throw e;}
     }else{
-      var user=await sbGetUser(username);if(!user||user.password!==password){errEl.textContent="Usu\u00e1rio ou senha incorretos.";errEl.style.display="block";hideLoading();document.getElementById("loginBtn").disabled=false;return;}
-      currentUser={id:user.id,username:user.username};
+      try{await sbSignIn(username,password);}
+      catch(e){if(e.status===400)return falhar("Usu\u00e1rio ou senha incorretos.");throw e;}
     }
-    if(document.getElementById("saveCredentials").checked){
-  localStorage.setItem("gym_saved_credentials",JSON.stringify({username:username,password:password}));
-}else{
-  localStorage.removeItem("gym_saved_credentials");
-}
-localStorage.setItem("gym_session",JSON.stringify(currentUser));await initApp();
-  }catch(e){errEl.textContent="Erro de conex\u00e3o. Tente novamente.";errEl.style.display="block";console.error(e);hideLoading();document.getElementById("loginBtn").disabled=false;}
+    currentUser={id:authSession.user.id,username:username};
+    localStorage.removeItem("gym_saved_credentials");     /* nunca mais senha em texto puro no aparelho */
+    if(persistirSessao()){
+      localStorage.setItem("gym_ultimo_usuario",username);
+      localStorage.setItem("gym_session",JSON.stringify(currentUser));
+    }else{
+      localStorage.removeItem("gym_ultimo_usuario");
+    }
+    await initApp();
+  }catch(e){falhar("Erro de conex\u00e3o. Tente novamente.");console.error(e);}
 }
 
 function logout(){
-  localStorage.removeItem("gym_session");currentUser=null;userLoads={};WORKOUT_DATA=null;userVideoLinks={};
+  if(authSession)authFetch("logout",{}).catch(function(){});   /* invalida o refresh token no servidor */
+  limparSessao();currentUser=null;userLoads={};WORKOUT_DATA=null;userVideoLinks={};
   cancelRest();setConfigTravada(false);var rf=document.getElementById("restFab");if(rf)rf.style.display="none";
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
-  var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
-  document.getElementById("usernameInput").value=saved.username||"";
-  document.getElementById("pinInput").value=saved.password||"";
-  document.getElementById("saveCredentials").checked=!!(saved.username);
+  preencherLogin();
   document.getElementById("loginBtn").disabled=false;setLoginMode(false);
+}
+
+/* preenche so o usuario — a senha nao fica mais guardada em lugar nenhum */
+function preencherLogin(){
+  var u=localStorage.getItem("gym_ultimo_usuario")||"";
+  if(!u){try{u=(JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}").username)||"";}catch(e){}}
+  document.getElementById("usernameInput").value=u;
+  document.getElementById("pinInput").value="";
+  document.getElementById("saveCredentials").checked=localStorage.getItem("gym_keep")!=="0";
 }
 
 function migrateWorkoutData(data){
@@ -1645,8 +1726,9 @@ function migrateWorkoutData(data){
 async function initApp(){
   showLoading("Carregando treino...");
   try{
-    var remoteConfig=null,fetchFailed=false;
-    try{remoteConfig=await sbGetWorkoutConfig(currentUser.id);}catch(e){console.warn(e);fetchFailed=true;}
+    var remoteConfig=null,fetchFailed=false,erroCfg=null;
+    try{remoteConfig=await sbGetWorkoutConfig(currentUser.id);}catch(e){console.warn(e);fetchFailed=true;erroCfg=e;}
+    if(erroCfg&&erroCfg.sessaoMorta){hideLoading();alert("Sua sess\u00e3o expirou. Entre novamente.");logout();return;}
     var usouCache=false;
     if(fetchFailed){
       var local=cachedConfig(currentUser.id);
@@ -1677,12 +1759,27 @@ async function initApp(){
 }
 
 window.addEventListener("DOMContentLoaded",async function(){
+  carregarSessao();
   var session=localStorage.getItem("gym_session");
-  if(session){try{currentUser=JSON.parse(session);await initApp();return;}catch(e){localStorage.removeItem("gym_session");}}
-  var saved=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");
-  document.getElementById("usernameInput").value=saved.username||"";
-  document.getElementById("pinInput").value=saved.password||"";
-  document.getElementById("saveCredentials").checked=!!(saved.username);
+  /* so entra direto se houver token: uma sessao da versao antiga nao vale mais */
+  if(session&&authSession){
+    try{currentUser=JSON.parse(session);await initApp();return;}
+    catch(e){limparSessao();}
+  }
+  /* quem vem da versao antiga tem usuario e senha guardados aqui: entra uma
+     ultima vez com eles, ja no formato novo, e apaga a senha do aparelho. */
+  var antigo={};try{antigo=JSON.parse(localStorage.getItem("gym_saved_credentials")||"{}");}catch(e){}
+  if(!authSession&&antigo.username&&antigo.password){
+    try{
+      await sbSignIn(antigo.username,antigo.password);
+      currentUser={id:authSession.user.id,username:antigo.username};
+      localStorage.setItem("gym_session",JSON.stringify(currentUser));
+      localStorage.setItem("gym_ultimo_usuario",antigo.username);
+      localStorage.removeItem("gym_saved_credentials");
+      await initApp();return;
+    }catch(e){console.warn("migracao automatica do login falhou:",e);}
+  }
+  preencherLogin();
   document.getElementById("loginScreen").style.display="flex";document.getElementById("mainApp").style.display="none";
 });
 
@@ -2702,11 +2799,13 @@ async function deleteSelectedLoads(){
 async function changePassword(){
   var cur=document.getElementById("curPass").value;var nw=document.getElementById("newPass").value;var conf=document.getElementById("confPass").value;var msg=document.getElementById("settingsMsg");
   msg.className="settings-msg";msg.style.display="none";
-  try{var user=await sbGetUser(currentUser.username);if(!user||user.password!==cur){msg.textContent="Senha atual incorreta.";msg.classList.add("err");msg.style.display="block";return;}}catch(e){msg.textContent="Erro de conex\u00e3o.";msg.classList.add("err");msg.style.display="block";return;}
-  if(nw.length<4){msg.textContent="Nova senha precisa ter 4+ caracteres.";msg.classList.add("err");msg.style.display="block";return;}
+  if(nw.length<6){msg.textContent="Nova senha precisa ter 6+ caracteres.";msg.classList.add("err");msg.style.display="block";return;}
   if(nw!==conf){msg.textContent="As senhas n\u00e3o coincidem.";msg.classList.add("err");msg.style.display="block";return;}
   showLoading("Salvando...");
-  try{await sbUpdatePassword(currentUser.id,nw);msg.textContent="Senha alterada com sucesso!";msg.classList.add("ok");msg.style.display="block";["curPass","newPass","confPass"].forEach(function(id){document.getElementById(id).value="";});}catch(e){msg.textContent="Erro ao salvar.";msg.classList.add("err");msg.style.display="block";}
+  /* confere a senha atual do jeito certo: tentando entrar com ela */
+  try{await sbSignIn(currentUser.username,cur);}
+  catch(e){hideLoading();msg.textContent=(e.status===400)?"Senha atual incorreta.":"Erro de conex\u00e3o.";msg.classList.add("err");msg.style.display="block";return;}
+  try{await authFetch("user",{password:nw},"PUT");msg.textContent="Senha alterada com sucesso!";msg.classList.add("ok");msg.style.display="block";["curPass","newPass","confPass"].forEach(function(id){document.getElementById(id).value="";});}catch(e){msg.textContent="Erro ao salvar.";msg.classList.add("err");msg.style.display="block";}
   hideLoading();
 }
 
